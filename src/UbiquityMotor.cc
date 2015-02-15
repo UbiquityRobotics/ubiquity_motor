@@ -319,7 +319,7 @@ void UbiquityMotor::SetWheelVelocities(float left_vel, float right_vel) {
 }
 
 int main(int argc, char **argv) {
-  ros::init(argc, argv, "base_controller");
+  ros::init(argc, argv, "motor_node");
   UbiquityMotor hc;
   ros::spin();
 }
