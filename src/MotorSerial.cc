@@ -28,38 +28,34 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <stdint.h>
-#include <vector>
+#include <ubiquity_motor/MotorSerial.h>
 
-class UbiquityMotorCommand{
+#include <pthread.h>
 
-	public:
-		UbiquityMotorCommand() {};
-		~UbiquityMotorCommand() {};
+void *SerialReaderThread(void *arg){
+  MotorSerial *ms = 
+  		reinterpret_cast<MotorSerial *>(arg);
+  while(true){
+  	if(!ms->motors.available() < 8){
+  		std::vector<uint8_t> data;
+  		MotorCommand command;
+  		command.deserialize(data);
+  		ms -> m_cb -> mcbiCallbackFunction(command);
+  	}
+  }
+}
 
-		enum CommandTypes {
-			MOTOR_MSG_REQUEST_SPEED = 0x01,
-			MOTOR_MSG_REQUEST_ACCELERATION = 0x02,
-			MOTOR_MSG_ODOMETER = 0x03,
-		};
+MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
+	motors.setPort(port);
+	motors.setBaudrate(baud_rate);
 
-		void setVel(int16_t motor0, int16_t motor1);
-		void setAccel(int16_t motor0, int16_t motor1);
+	pthread_create(&reader_thread_, NULL, SerialReaderThread, this);
+}
 
-		int getOdom(int16_t *motor0, int16_t *motor1);
+MotorSerial::~MotorSerial(){
+	motors.close();
+}
 
-		std::vector<uint8_t> serialize();
-		int deserialize(std::vector<uint8_t> &serialized);
-
-	private:
-		void setType(UbiquityMotorCommand::CommandTypes t);
-
-		uint8_t signBinary(std::vector<uint8_t> data);
-
-		uint8_t crc8_;
-		uint8_t type_;
-
-		int16_t motor0_;
-		int16_t motor1_;
-
-};
+void MotorSerial::sendCommand(MotorCommand command){
+	motors.write(command.serialize());
+}

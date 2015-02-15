@@ -28,34 +28,29 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <ubiquity_motor/UbiquityMotorSerial.h>
+#ifndef MOTORSERIAL_H
+#define MOTORSERIAL_H
 
-#include <pthread.h>
+#include <ubiquity_motor/MotorCommand.h>
+#include <ubiquity_motor/MotorCallbackInterface.h>
 
-void *SerialReaderThread(void *arg){
-  UbiquityMotorSerial *ms = 
-  		reinterpret_cast<UbiquityMotorSerial *>(arg);
-  while(;;){
-  	if(!ms->motors.available() < 8){
-  		std::vector<uint8_t> data;
-  		UbiquityMotorCommand command;
-  		command.deserialize(data)
-  		ms -> m_cb -> mcbiCallbackFunction(command);
-  	}
-  }
-}
+#include <serial/serial.h>
 
-UbiquityMotorSerial::UbiquityMotorSerial(const std::string& port, uint32_t baud_rate){
-	motors.setPort(port);
-	motors.setBaudrate(baud_rate);
+class MotorSerial
+{
+	public:
+		MotorSerial(const std::string& port, uint32_t baud_rate);
+		~MotorSerial();
+		
+		void sendCommand(MotorCommand command);
+		void connectCommandCallback(MotorCallbackInterface *cb);
 
-	pthread_create(&reader_thread_, NULL, SerialReaderThread, this);
-}
+	private:
+		serial::Serial motors;
 
-UbiquityMotorSerial::~UbiquityMotorSerial(){
-	motors.close();
-}
+		friend void *SerialReaderThread(void *arg);
+		pthread_t reader_thread_;
 
-void UbiquityMotorSerial::sendCommand(UbiquityMotorCommand command){
-	motors.write(command.serialize());
-}
+		MotorCallbackInterface *m_cb;
+};
+#endif

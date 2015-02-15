@@ -28,25 +28,43 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <ubiquity_motor/UbiquityMotorCommand.h">
-#include <ubiquity_motor/MotorCallbackInterface.h">
+#ifndef MOTORCOMMAND_H
+#define MOTORCOMMAND_H
 
-#include <serial/serial.h>
+#include <stdint.h>
+#include <vector>
 
-class UbiquityMotorSerial
-{
+class MotorCommand{
+
 	public:
-		UbiquityMotorSerial(const std::string& port, uint32_t baud_rate);
-		~UbiquityMotorSerial();
-		
-		void sendCommand(UbiquityMotorCommand command);
-		void connectCommandCallback(MotorCallbackInterface *cb);
+		MotorCommand() {};
+		~MotorCommand() {};
+
+		enum CommandTypes {
+			MOTOR_MSG_REQUEST_SPEED = 0x01,
+			MOTOR_MSG_REQUEST_ACCELERATION = 0x02,
+			MOTOR_MSG_ODOMETER = 0x03,
+		};
+
+		void setVel(int16_t motor0, int16_t motor1);
+		void setAccel(int16_t motor0, int16_t motor1);
+
+		int getOdom(int16_t *motor0, int16_t *motor1);
+
+		std::vector<uint8_t> serialize();
+		int deserialize(std::vector<uint8_t> &serialized);
 
 	private:
-		serial::Serial motors;
+		void setType(MotorCommand::CommandTypes t);
 
-		friend void *SerialReaderThread(void *arg);
-		pthread_t reader_thread_;
+		uint8_t signBinary(std::vector<uint8_t> data);
 
-		MotorCallbackInterface *m_cb;
+		uint8_t crc8_;
+		uint8_t type_;
+
+		int16_t motor0_;
+		int16_t motor1_;
+
 };
+
+#endif

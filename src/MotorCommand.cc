@@ -28,23 +28,23 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <ubiquity_motor/UbiquityMotorCommand.h>
+#include <ubiquity_motor/MotorCommand.h>
 #include <cstring>
 #include "crc8.h"
 
-void UbiquityMotorCommand::setVel(int16_t motor0, int16_t motor1){
+void MotorCommand::setVel(int16_t motor0, int16_t motor1){
 	motor0_ = motor0;
 	motor1_ = motor1;
 	setType(MOTOR_MSG_REQUEST_SPEED);
 }
 
-void UbiquityMotorCommand::setAccel(int16_t motor0, int16_t motor1){
-	UbiquityMotorCommand::motor0_ = motor0;
-	UbiquityMotorCommand::motor1_ = motor1;
+void MotorCommand::setAccel(int16_t motor0, int16_t motor1){
+	motor0_ = motor0;
+	motor1_ = motor1;
 	setType(MOTOR_MSG_REQUEST_ACCELERATION);
 }
 
-int UbiquityMotorCommand::getOdom(int16_t *motor0, int16_t *motor1){
+int MotorCommand::getOdom(int16_t *motor0, int16_t *motor1){
 	if(type_ == MOTOR_MSG_ODOMETER){
 		motor0 = &motor0_;
 		motor1 = &motor1_;
@@ -55,7 +55,7 @@ int UbiquityMotorCommand::getOdom(int16_t *motor0, int16_t *motor1){
 }
 
 
-std::vector<uint8_t> UbiquityMotorCommand::serialize(){
+std::vector<uint8_t> MotorCommand::serialize(){
 	std::vector<uint8_t> data, mot0, mot1;
 
 	//Resize all vectors to required sizes
@@ -80,7 +80,7 @@ std::vector<uint8_t> UbiquityMotorCommand::serialize(){
 	return data;
 }
 
-int UbiquityMotorCommand::deserialize(std::vector<uint8_t> &serialized){
+int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
 	if (serialized[0] == 0xff && serialized[1] == 0xfe){
 		crc8_ = serialized[2];
 		if(crc8_ == signBinary(serialized)){
@@ -95,11 +95,11 @@ int UbiquityMotorCommand::deserialize(std::vector<uint8_t> &serialized){
 		return 1;
 }
 
-void UbiquityMotorCommand::setType(UbiquityMotorCommand::CommandTypes t) {
-	UbiquityMotorCommand::type_ = t;
+void MotorCommand::setType(MotorCommand::CommandTypes t) {
+	type_ = t;
 }
 
-uint8_t UbiquityMotorCommand::signBinary(std::vector<uint8_t> data) {
+uint8_t MotorCommand::signBinary(std::vector<uint8_t> data) {
 	uint8_t arr[5];
 	std::copy(data.begin()+3, data.end(), arr);
 	return crc8(arr,5);

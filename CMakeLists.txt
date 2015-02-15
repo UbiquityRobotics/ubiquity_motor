@@ -4,7 +4,7 @@ project(ubiquity_motor)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs tf nav_msgs )
+find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs tf nav_msgs serial)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -67,7 +67,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 # )
 
 ## Declare a cpp executable
-add_executable(motor_node src/UbiquityMotor.cc src/crc8.c)
+add_executable(motor_node src/UbiquityMotor.cc src/crc8.c src/MotorCommand.cc src/MotorSerial.cc)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
