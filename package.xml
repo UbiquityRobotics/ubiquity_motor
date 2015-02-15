@@ -19,6 +19,7 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>nav_msgs</build_depend>
+  <build_depend>serial</build_depend>
 
 
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
