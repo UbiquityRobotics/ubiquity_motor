@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <ubiquity_motor/UbiquityMotorCommand.h">
+#include <ubiquity_motor/MotorCallbackInterface.h">
+
 #include <serial/serial.h>
 
 class UbiquityMotorSerial
@@ -37,8 +39,14 @@ class UbiquityMotorSerial
 		UbiquityMotorSerial(const std::string& port, uint32_t baud_rate);
 		~UbiquityMotorSerial();
 		
-		void sendMessage(UbiquityMotorCommand command);
-		UbiquityMotorCommand readMessage();
+		void sendCommand(UbiquityMotorCommand command);
+		void connectCommandCallback(MotorCallbackInterface *cb);
+
 	private:
 		serial::Serial motors;
+
+		friend void *SerialReaderThread(void *arg);
+		pthread_t reader_thread_;
+
+		MotorCallbackInterface *m_cb;
 };
