@@ -24,7 +24,7 @@ install:
   - mkdir -p ~/ros/ws_uwsim/src
   - cd ~/ros/ws_uwsim/src
   - wstool init .
-  - git clone -b $ROS_DISTRO https://github.com/UbiquityRobotics/ubiquity_motor.git
+  - git clone -b refactoring https://github.com/UbiquityRobotics/ubiquity_motor.git
   - rm -rf $REPOSITORY_NAME
   - ln -s $CI_SOURCE_PATH . # Link the repo we are testing to the new workspace
   - cd ../
