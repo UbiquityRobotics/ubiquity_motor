@@ -40,6 +40,12 @@ const float UbiquityMotor::sensor_distance =
     UbiquityMotor::magnet_count /
     UbiquityMotor::transitions_per_magnet;
 
+const float UbiquityMotor::odom_covariance[] = { 0.2, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                                 0.0, 0.2, 0.0, 0.0, 0.0, 0.0,
+                                                 0.0, 0.0, 0.2, 0.0, 0.0, 0.0,
+                                                 0.0, 0.0, 0.0, 0.2, 0.0, 0.0,
+                                                 0.0, 0.0, 0.0, 0.0, 0.2, 0.0,
+                                                 0.0, 0.0, 0.0, 0.0, 0.0, 0.2 };
 namespace {
 
 void WriteAll(int fd, const void *data_, size_t size) {
@@ -178,6 +184,11 @@ void *UbiquityMotorReaderThread(void *arg) {
                   hc->odom_theta_);
 
               odom.pose.pose.orientation = odom_quat;
+
+              for (int i=0; i<36; i++) {
+                 odom.pose.covariance[i] = UbiquityMotor::odom_covariance[i];
+                 odom.twist.covariance[i] = UbiquityMotor::odom_covariance[i];
+              }
 
               hc->nav_odom_pub_.publish(odom);
 
