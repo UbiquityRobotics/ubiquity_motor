@@ -51,6 +51,9 @@ class UbiquityMotor {
   // Distance traveled for each Hall-effect sensor transition.
   static const float sensor_distance;
 
+  // Sent in Odometry messages
+  static const float odom_covariance[];
+
   // Callback function for "/cmd_vel"
   void CmdVelCallback(const geometry_msgs::Twist::ConstPtr &movement);
   void SetWheelVelocities(float left_vel, float right_vel);
