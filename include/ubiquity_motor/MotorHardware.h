@@ -8,11 +8,11 @@
 #include <ubiquity_motor/MotorCallbackInterface.h>
 #include <ubiquity_motor/MotorCommand.h>
 
-class MotorDriver : public hardware_interface::RobotHW, public MotorCallbackInterface
+class MotorHardware : public hardware_interface::RobotHW, public MotorCallbackInterface
 {
 	public:
-		MotorDriver();
-		~MotorDriver();
+		MotorHardware();
+		~MotorHardware();
 
 		void write();
 
