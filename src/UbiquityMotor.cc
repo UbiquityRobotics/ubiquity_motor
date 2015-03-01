@@ -175,6 +175,7 @@ void *UbiquityMotorReaderThread(void *arg) {
               nav_msgs::Odometry odom;
               odom.header.stamp = current_time;
               odom.header.frame_id = "odom";
+              odom.child_frame_id = "base_link";
 
               odom.pose.pose.position.x = hc->odom_x_;
               odom.pose.pose.position.y = hc->odom_y_;
