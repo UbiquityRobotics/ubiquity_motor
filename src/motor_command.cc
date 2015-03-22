@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ubiquity_motor/motor_command.h>
 #include <cstring>
+#include <math.h>
 
 void MotorCommand::setType(MotorCommand::CommandTypes type){
   this->type = type;
@@ -62,7 +63,17 @@ int32_t MotorCommand::getData(){
 }
 
 std::vector<uint8_t> MotorCommand::serialize(){
-
+  std::vector<uint8_t> out(9);
+  out[0] = delimeter;
+  out[1] = protocol_version;
+  out[2] = type;
+  out[3] = register_addr;
+  out[4] = data[0];
+  out[5] = data[1];
+  out[6] = data[2];
+  out[7] = data[3];
+  out[8] = generateChecksum(out);
+  return out;
 }
 
 int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
@@ -70,5 +81,16 @@ int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
 }
 
 uint8_t MotorCommand::generateChecksum(std::vector<uint8_t> data) {
-  
+  int sum = data [1] + data[2] + data[3] + data[4] + data[5] + data[6] + data[7];
+
+  if (sum > 0xFF) {
+    int tmp;
+    tmp = sum >> 8;
+    tmp = tmp << 8;
+    return 0xFF - (sum-tmp);
+  }
+  else {
+    return 0xFF - sum;
+  }
+
 }
