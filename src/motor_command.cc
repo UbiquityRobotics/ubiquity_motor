@@ -80,15 +80,21 @@ uint8_t const MotorCommand::valid_registers[] = {
 };
 
 void MotorCommand::setType(MotorCommand::CommandTypes type){
-  this->type = type;
+  if (verifyType(type)){
+    this->type = type;
+  }
 }
 
 MotorCommand::CommandTypes MotorCommand::getType(){
-  return static_cast<MotorCommand::CommandTypes>(this->type);
+  if (verifyType(this->type)){
+    return static_cast<MotorCommand::CommandTypes>(this->type);
+  }
 }
 
 void MotorCommand::setRegister(MotorCommand::Registers reg){
-  this->register_addr = reg;
+  if (verifyRegister(reg)){
+    this->register_addr = reg;
+  }
 }
 
 MotorCommand::Registers MotorCommand::getRegister(){

@@ -86,7 +86,7 @@ TEST(ubiquity_motor, motor_command_deserialize_bad_type) {
 TEST(ubiquity_motor, motor_command_deserialize_bad_register) {
 	MotorCommand mc;
 
-	//Test good message
+	//Test bad register with good checksum
 	uint8_t arr[] = {0x7E, 0x02, 0xBB, 0x30, 0x00, 0x00, 0x01, 0x2C, 0xE5};
 
 	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
