@@ -29,3 +29,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <ubiquity_motor/motor_serial.h>
+
+int MotorSerial::addCommand(MotorCommand command){
+	input_mtx_.lock();
+	this->input.push(command);
+	input_mtx_.unlock();
+}
+
+MotorCommand MotorSerial::getCommand(){
+	output_mtx_.lock();
+	MotorCommand mc = this->output.front();
+	this->output.pop();
+	output_mtx_.unlock();
+	return mc;
+}
