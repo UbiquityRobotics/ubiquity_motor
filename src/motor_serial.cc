@@ -30,16 +30,57 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ubiquity_motor/motor_serial.h>
 
-int MotorSerial::addCommand(MotorCommand command){
+MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
+	serial_thread = new boost::thread(&MotorSerial::SerialThread, this);
+}
+
+int MotorSerial::transmitCommand(MotorCommand command) {
 	input_mtx_.lock();
 	this->input.push(command);
 	input_mtx_.unlock();
+	return 0;
 }
 
-MotorCommand MotorSerial::getCommand(){
+MotorCommand MotorSerial::receiveCommand() {
+	MotorCommand mc;
 	output_mtx_.lock();
-	MotorCommand mc = this->output.front();
-	this->output.pop();
+	if(!this->output.empty()){
+		mc = this->output.front();
+		this->output.pop();
+	}
 	output_mtx_.unlock();
 	return mc;
+}
+
+int MotorSerial::commandAvailable() {
+	output_mtx_.lock();
+	int out = !(this->output.empty());
+	output_mtx_.unlock();
+	return out;
+}
+
+int MotorSerial::inputAvailable() {
+	input_mtx_.lock();
+	int out = !(this->input.empty());
+	input_mtx_.unlock();
+	return out;
+}
+
+void MotorSerial::appendOutput(MotorCommand command){
+	output_mtx_.lock();
+	this->output.push(command);
+	output_mtx_.unlock();
+}
+
+void MotorSerial::SerialThread(){
+	//while(1){
+	MotorCommand mc;
+
+	//Test good message
+	uint8_t arr[] = {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+
+	std::vector<uint8_t> in(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+	mc.deserialize(in);
+	this->appendOutput(mc);
+	//}
 }

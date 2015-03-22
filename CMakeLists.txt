@@ -131,7 +131,10 @@ target_link_libraries(ubiquity_motor
 
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)
-	catkin_add_gtest(ubiquity_motor_tests test/motor_test.cc test/motor_command_test.cc)
+	catkin_add_gtest(ubiquity_motor_tests 
+		test/motor_test.cc 
+		test/motor_command_test.cc
+		test/motor_serial_test.cc)
 	target_link_libraries(ubiquity_motor_tests  ubiquity_motor ${catkin_LIBRARIES})
 endif()
 

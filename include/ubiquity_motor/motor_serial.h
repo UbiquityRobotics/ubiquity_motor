@@ -40,18 +40,24 @@ class MotorSerial
 {
 	public:
 		MotorSerial(const std::string& port, uint32_t baud_rate);
-		~MotorSerial();
+		//~MotorSerial();
 
 		boost::mutex input_mtx_;
 		boost::mutex output_mtx_;
 		
-		int addCommand(MotorCommand command);
-		MotorCommand getCommand();
+		int transmitCommand(MotorCommand command);
+		MotorCommand receiveCommand();
+		int commandAvailable();
 
 	private:
 		serial::Serial motors;
 		std::queue<MotorCommand> input;
 		std::queue<MotorCommand> output;
+
+		boost::thread* serial_thread;
+
+		int inputAvailable();
+		void appendOutput(MotorCommand command);
 
 		void SerialThread();
 };
