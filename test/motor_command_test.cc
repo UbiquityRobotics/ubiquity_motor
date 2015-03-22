@@ -58,4 +58,10 @@ TEST(ubiquity_motor, motor_command_deserialize) {
 	ASSERT_EQ(300, mc.getData());
 	ASSERT_EQ(MotorCommand::TYPE_WRITE, mc.getType());
 	ASSERT_EQ(MotorCommand::REG_LEFT_SPEED_SET, mc.getRegister());
+
+	uint8_t arr1[] = {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0F};
+
+	std::vector<uint8_t> input1(arr1, arr1 + sizeof(arr1)/ sizeof(uint8_t));
+
+	ASSERT_EQ(1, mc.deserialize(input1));
 }
