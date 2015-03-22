@@ -1,7 +1,7 @@
 #include <ubiquity_motor/motor_command.h>
 #include <gtest/gtest.h>
 
-TEST(ubiquity_motor, motor_command_commandtype) {
+TEST(ubiquity_motor_command, motor_command_commandtype) {
 	MotorCommand mc;
 
 	mc.setType(MotorCommand::TYPE_READ);
@@ -11,7 +11,7 @@ TEST(ubiquity_motor, motor_command_commandtype) {
 	ASSERT_EQ(MotorCommand::TYPE_WRITE, mc.getType());
 }
 
-TEST(ubiquity_motor, motor_command_commandtype_bad) {
+TEST(ubiquity_motor_command, motor_command_commandtype_bad) {
 	MotorCommand mc;
 
 	mc.setType(static_cast<MotorCommand::CommandTypes>(0xF3));
@@ -21,7 +21,7 @@ TEST(ubiquity_motor, motor_command_commandtype_bad) {
 	ASSERT_NE(0xAB, mc.getType());
 }
 
-TEST(ubiquity_motor, motor_command_register) {
+TEST(ubiquity_motor_command, motor_command_register) {
 	MotorCommand mc;
 
 	mc.setRegister(MotorCommand::REG_BRAKE_STOP);
@@ -29,7 +29,7 @@ TEST(ubiquity_motor, motor_command_register) {
 	ASSERT_NE(MotorCommand::REG_STOP_START, mc.getRegister());
 }
 
-TEST(ubiquity_motor, motor_command_register_bad) {
+TEST(ubiquity_motor_command, motor_command_register_bad) {
 	MotorCommand mc;
 
 	mc.setRegister(static_cast<MotorCommand::Registers>(0xF3));
@@ -39,7 +39,7 @@ TEST(ubiquity_motor, motor_command_register_bad) {
 	ASSERT_NE(0x05, mc.getRegister());
 }
 
-TEST(ubiquity_motor, motor_command_data) {
+TEST(ubiquity_motor_command, motor_command_data) {
 	MotorCommand mc;
 	int32_t i = -0xABC;
 	mc.setData(i);
@@ -54,7 +54,7 @@ TEST(ubiquity_motor, motor_command_data) {
 	ASSERT_EQ(522, mc.getData());
 }
 
-TEST(ubiquity_motor, motor_command_serialize) {
+TEST(ubiquity_motor_command, motor_command_serialize) {
 	MotorCommand mc;
 	mc.setData(300);
 	mc.setType(MotorCommand::TYPE_WRITE);
@@ -67,7 +67,7 @@ TEST(ubiquity_motor, motor_command_serialize) {
 	ASSERT_EQ(expect, mc.serialize());
 }
 
-TEST(ubiquity_motor, motor_command_deserialize_good) {
+TEST(ubiquity_motor_command, motor_command_deserialize_good) {
 	MotorCommand mc;
 
 	//Test good message
@@ -81,7 +81,7 @@ TEST(ubiquity_motor, motor_command_deserialize_good) {
 	ASSERT_EQ(MotorCommand::REG_LEFT_SPEED_SET, mc.getRegister());
 }
 
-TEST(ubiquity_motor, motor_command_deserialize_bad_checksum) {
+TEST(ubiquity_motor_command, motor_command_deserialize_bad_checksum) {
 	MotorCommand mc;
 
 	//Test bad checksum
@@ -92,7 +92,7 @@ TEST(ubiquity_motor, motor_command_deserialize_bad_checksum) {
 	ASSERT_EQ(3, mc.deserialize(input1));
 }
 
-TEST(ubiquity_motor, motor_command_deserialize_bad_type) {
+TEST(ubiquity_motor_command, motor_command_deserialize_bad_type) {
 	MotorCommand mc;
 
 	//Test type with good checksum
@@ -103,7 +103,7 @@ TEST(ubiquity_motor, motor_command_deserialize_bad_type) {
 	ASSERT_EQ(4, mc.deserialize(input1));
 }
 
-TEST(ubiquity_motor, motor_command_deserialize_bad_register) {
+TEST(ubiquity_motor_command, motor_command_deserialize_bad_register) {
 	MotorCommand mc;
 
 	//Test bad register with good checksum
