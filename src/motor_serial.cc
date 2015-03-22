@@ -28,29 +28,34 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MOTORSERIAL_H
-#define MOTORSERIAL_H
+#include <ubiquity_motor/motor_serial.h>
 
-#include <ubiquity_motor/MotorCommand.h>
-#include <ubiquity_motor/MotorCallbackInterface.h>
+#include <pthread.h>
 
-#include <serial/serial.h>
+void *SerialReaderThread(void *arg){
+  MotorSerial *ms = 
+  		reinterpret_cast<MotorSerial *>(arg);
+  while(true){
+  	if(!ms->motors.available() < 8){
+  		std::vector<uint8_t> data;
+  		MotorCommand command;
+  		command.deserialize(data);
+  		ms -> m_cb -> mcbiCallbackFunction(command);
+  	}
+  }
+}
 
-class MotorSerial
-{
-	public:
-		MotorSerial(const std::string& port, uint32_t baud_rate);
-		~MotorSerial();
-		
-		void sendCommand(MotorCommand command);
-		void connectCommandCallback(MotorCallbackInterface *cb);
+MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
+	motors.setPort(port);
+	motors.setBaudrate(baud_rate);
 
-	private:
-		serial::Serial motors;
+	pthread_create(&reader_thread_, NULL, SerialReaderThread, this);
+}
 
-		friend void *SerialReaderThread(void *arg);
-		pthread_t reader_thread_;
+MotorSerial::~MotorSerial(){
+	motors.close();
+}
 
-		MotorCallbackInterface *m_cb;
-};
-#endif
+void MotorSerial::sendCommand(MotorCommand command){
+	motors.write(command.serialize());
+}

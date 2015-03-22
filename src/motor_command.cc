@@ -28,48 +28,34 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <ubiquity_motor/MotorCommand.h>
-#include <cstring>
-#include "crc8.h"
+#include <ubiquity_motor/motor_serial.h>
 
-void MotorCommand::setType(MotorCommand::CommandTypes type){
-	this.type = type;
+#include <pthread.h>
+
+void *SerialReaderThread(void *arg){
+  MotorSerial *ms = 
+  		reinterpret_cast<MotorSerial *>(arg);
+  while(true){
+  	if(!ms->motors.available() < 8){
+  		std::vector<uint8_t> data;
+  		MotorCommand command;
+  		command.deserialize(data);
+  		ms -> m_cb -> mcbiCallbackFunction(command);
+  	}
+  }
 }
 
-MotorCommand::CommandTypes MotorCommand::getType(){
-	return this.type;
+MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
+	motors.setPort(port);
+	motors.setBaudrate(baud_rate);
+
+	pthread_create(&reader_thread_, NULL, SerialReaderThread, this);
 }
 
-void MotorCommand::setRegister(MotorCommand::Registers reg){
-	this.register_addr = reg;
+MotorSerial::~MotorSerial(){
+	motors.close();
 }
 
-MotorCommand::Registers MotorCommand::getRegister(){
-	return this.register_addr;
-}
-
-void MotorCommand::setData(int32_t data){
-	this.data[3] = (data >> 0) & 0xFF;
-	this.data[2] = (data >> 8) & 0xFF;
-	this.data[1] = (data >> 16) & 0xFF;
-	this.data[0] = (data >> 24) & 0xFF;
-}
-
-int32_t MotorCommand::getData(){
-	return (this.data[0] << 24)
-               | (this.data[1] << 16)
-               | (this.data[2] << 8)
-               | (this.data[3] << 0);
-}
-
-std::vector<uint8_t> MotorCommand::serialize(){
-
-}
-
-int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
-
-}
-
-uint8_t MotorCommand::generateChecksum(std::vector<uint8_t> data) {
-	
+void MotorSerial::sendCommand(MotorCommand command){
+	motors.write(command.serialize());
 }

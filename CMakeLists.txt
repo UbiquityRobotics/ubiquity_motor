@@ -67,7 +67,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 # )
 
 ## Declare a cpp executable
-add_executable(motor_node src/crc8.c src/MotorCommand.cc src/MotorSerial.cc)
+add_executable(motor_node src/motor_command.cc src/motor_serial.cc)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
