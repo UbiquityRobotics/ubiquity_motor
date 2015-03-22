@@ -48,7 +48,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs tf nav_msgs serial 
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES Ubiquity
+  LIBRARIES ubiquity_motor
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -62,9 +62,9 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 ## Declare a cpp library
-# add_library(Ubiquity
-#   src/${PROJECT_NAME}/Ubiquity.cpp
-# )
+add_library(ubiquity_motor
+  src/motor_command.cc src/motor_serial.cc
+)
 
 ## Declare a cpp executable
 add_executable(motor_node src/motor_command.cc src/motor_serial.cc)
@@ -118,10 +118,10 @@ install(TARGETS motor_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_Ubiquity.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+if(CATKIN_ENABLE_TESTING)
+	catkin_add_gtest(ubiquity_motor_tests test/motor_test.cc test/motor_command_test.cc)
+	target_link_libraries(ubiquity_motor_tests  ubiquity_motor ${catkin_LIBRARIES})
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
