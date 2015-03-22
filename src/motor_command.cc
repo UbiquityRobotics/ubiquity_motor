@@ -29,8 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <ubiquity_motor/motor_command.h>
-#include <cstring>
-#include <math.h>
 
 void MotorCommand::setType(MotorCommand::CommandTypes type){
   this->type = type;
