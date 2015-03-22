@@ -30,6 +30,55 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ubiquity_motor/motor_command.h>
 
+uint8_t const MotorCommand::valid_types[] = {
+  TYPE_READ,
+  TYPE_WRITE,
+  TYPE_RESPONSE
+};
+
+uint8_t const MotorCommand::valid_registers[] = {
+  REG_STOP_START,
+  REG_BRAKE_STOP,
+  REG_CRUISE_STOP,
+  REG_LEFT_PWM,
+  REG_RIGHT_PWM,
+  REG_LEFT_SPEED_SET,
+  REG_RIGHT_SPEED_SET,
+  REG_LEFT_RAMP,
+  REG_RIGHT_RAMP,
+  REG_LEFT_ODOM,
+  REG_RIGHT_ODOM,
+  REG_DEADMAN,
+  REG_LEFT_CURRENT,
+  REG_RIGHT_CURRENT,
+  REG_ERROR_COUNT,
+  REG_5V_MAIN_ERROR,
+  REG_5V_AUX_ERROR,
+  REG_12V_MAIN_ERROR,
+  REG_12V_AUX_ERROR,
+  REG_5V_MAIN_OL,
+  REG_5V_AUX_OL,
+  REG_12V_MAIN_OL,
+  REG_12V_AUX_OL,
+  REG_LEFT_MOTOR_ERROR,
+  REG_RIGHT_MOTOR_ERROR,
+  REG_PARAM_P,
+  REG_PARAM_I,
+  REG_PARAM_D,
+  REG_PARAM_C,
+  REG_LED_1,
+  REG_LED_2,
+  REG_HARDWARE_VERSION,
+  REG_FIRMWARE_VERSION,
+  REG_BATTERY_VOLTAGE,
+  REG_5V_MAIN_CURRENT,
+  REG_12V_MAIN_CURRENT,
+  REG_5V_AUX_CURRENT,
+  REG_12V_AUX_CURRENT,
+  REG_LEFT_SPEED_MEASURED,
+  REG_RIGHT_SPEED_MEASURED
+};
+
 void MotorCommand::setType(MotorCommand::CommandTypes type){
   this->type = type;
 }
@@ -81,21 +130,58 @@ int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
     if (serialized[1] = protocol_version)
     {
       if (generateChecksum(serialized) == serialized[8]){
-        this->type = serialized[2];
-        this->register_addr = serialized[3];
-        this->data[0] = serialized[4];
-        this->data[1] = serialized[5];
-        this->data[2] = serialized[6];
-        this->data[3] = serialized[7];
-        return 0;
+        if (verifyType(serialized[2])){
+          if (verifyRegister(serialized[3])){
+            this->type = serialized[2];
+            this->register_addr = serialized[3];
+            this->data[0] = serialized[4];
+            this->data[1] = serialized[5];
+            this->data[2] = serialized[6];
+            this->data[3] = serialized[7];
+            return 0;
+          }
+          else 
+            return 5;
+        }
+        else 
+          return 4;
       }
       else
-        return 1;
+        return 3;
     }
-    else return 1;
+    else return 2;
   }
   else
     return 1;
+
+  // ERROR codes returned:
+  // 1 First char not delimeter
+  // 2 wrong protocol verstion
+  // 3 bad checksum
+  // 4 bad type
+  // 5 bad register
+} 
+
+int MotorCommand::verifyType(uint8_t t){
+  //Return 1 good
+  //Return 0 for bad
+  for (int i = 0; i < sizeof(valid_types) / sizeof(valid_types[0]); ++i)
+  {
+    if (t == valid_types[i])
+      return 1;
+  }
+  return 0;
+}
+
+int MotorCommand::verifyRegister(uint8_t r){
+  //Return 1 good
+  //Return 0 for bad
+  for (int i = 0; i < sizeof(valid_registers) / sizeof(valid_registers[0]); ++i)
+  {
+    if (r == valid_registers[i])
+      return 1;
+  }
+  return 0;
 }
 
 uint8_t MotorCommand::generateChecksum(std::vector<uint8_t> data) {

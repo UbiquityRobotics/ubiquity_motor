@@ -37,7 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class MotorCommand{
 
 	public:
-		//Using default constuctors and destructors
+		//Using default constructor and destructor
 		MotorCommand() {};
 		~MotorCommand() {};
 
@@ -118,6 +118,7 @@ class MotorCommand{
 		std::vector<uint8_t> serialize();
 		int deserialize(std::vector<uint8_t> &serialized);
 
+
 	private:
 		uint8_t type; // Type of message should be in MotorCommand::CommandTypes
 		uint8_t register_addr; // Register address should be in MotorCommand::Registers
@@ -125,6 +126,12 @@ class MotorCommand{
 
 		const static uint8_t delimeter = 0x7E; // Hard coded for now, should be parameterized
 		const static uint8_t protocol_version = 0x02; // Hard coded for now, should be parameterized
+
+		const static uint8_t valid_types[]; 
+		const static uint8_t valid_registers[];
+
+		int verifyType(uint8_t t);
+		int verifyRegister(uint8_t r);
 
 		uint8_t generateChecksum(std::vector<uint8_t> data);
 };
