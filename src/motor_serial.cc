@@ -40,7 +40,7 @@ void *SerialReaderThread(void *arg){
   		std::vector<uint8_t> data;
   		MotorCommand command;
   		command.deserialize(data);
-  		ms -> m_cb -> mcbiCallbackFunction(command);
+  		//ms -> m_cb -> mcbiCallbackFunction(command);
   	}
   }
 }
