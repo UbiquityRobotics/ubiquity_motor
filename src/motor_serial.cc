@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <ubiquity_motor/motor_serial.h>
+#include <ros/console.h>
 
 MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
 	switch (baud_rate) {
@@ -59,6 +60,7 @@ MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
 			break;
 	}
 	motors.setPort(port);
+
 	serial_thread = new boost::thread(&MotorSerial::SerialThread, this);
 }
 
@@ -101,12 +103,38 @@ void MotorSerial::appendOutput(MotorCommand command){
 }
 
 void MotorSerial::SerialThread(){
-	MotorCommand mc;
+	try {
+		try {
+			motors.open();
+		}
+		catch (const serial::IOException& e) {
+			ROS_ERROR("Can't open serial port");
+			throw;
+		}
 
-	//Test good message
-	uint8_t arr[] = {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+		while(motors.isOpen()){
 
-	std::vector<uint8_t> in(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-	mc.deserialize(in);
-	this->appendOutput(mc);
+		}
+		MotorCommand mc;
+
+		//Test good message
+		uint8_t arr[] = {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+
+		std::vector<uint8_t> in(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+		mc.deserialize(in);
+
+		this->appendOutput(mc);
+	}
+	catch (const boost::thread_interrupted& e) {
+
+	}
+	catch (const serial::IOException& e) {
+		
+	}
+	catch (const serial::PortNotOpenedException& e) {
+		
+	}
+	catch (...) {
+		throw;
+	}
 }

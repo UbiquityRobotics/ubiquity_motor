@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 TEST(ubiquity_motor_serial, motor_serial) {
-	MotorSerial motor_serial("/dev/tty", 9600);
+	MotorSerial motor_serial("/dev/ttyUSB0", 9600);
 	//sleep(1);
 	while(!motor_serial.commandAvailable()){
 		usleep(100);

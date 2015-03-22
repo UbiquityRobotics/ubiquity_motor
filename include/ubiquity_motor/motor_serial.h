@@ -51,6 +51,7 @@ class MotorSerial
 
 	private:
 		serial::Serial motors;
+
 		std::queue<MotorCommand> input;
 		std::queue<MotorCommand> output;
 
