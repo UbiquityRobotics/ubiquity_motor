@@ -37,16 +37,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class MotorCommand{
 
 	public:
+		//Using default constuctors and destructors
 		MotorCommand() {};
 		~MotorCommand() {};
 
+		// CommandTypes enum in class to avoid global namespace pollution
 		enum CommandTypes {
 			TYPE_READ = 0xAA,
 			TYPE_WRITE = 0xBB,
 			TYPE_RESPONSE = 0xCC
 		};
 
-		
+		// Registers enum in class to avoid global namespace pollution
 		enum Registers {
 			REG_STOP_START = 0x00,
 			REG_BRAKE_STOP = 0x01,
@@ -117,12 +119,12 @@ class MotorCommand{
 		int deserialize(std::vector<uint8_t> &serialized);
 
 	private:
-		uint8_t type;
-		uint8_t register_addr;
-		uint8_t data[4];
+		uint8_t type; // Type of message should be in MotorCommand::CommandTypes
+		uint8_t register_addr; // Register address should be in MotorCommand::Registers
+		uint8_t data[4]; // 4 bytes of data, numbers should be in big endian format
 
-		const static uint8_t delimeter = 0x7E;
-		const static uint8_t protocol_version = 0x02;
+		const static uint8_t delimeter = 0x7E; // Hard coded for now, should be parameterized
+		const static uint8_t protocol_version = 0x02; // Hard coded for now, should be parameterized
 
 		uint8_t generateChecksum(std::vector<uint8_t> data);
 };

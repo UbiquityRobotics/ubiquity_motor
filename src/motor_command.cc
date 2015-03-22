@@ -47,6 +47,7 @@ MotorCommand::Registers MotorCommand::getRegister(){
 }
 
 void MotorCommand::setData(int32_t data){
+  // Spilt 32 bit data (system byte order) into 4 8bit elements in big endian (network byte order)
   this->data[3] = (data >> 0) & 0xFF;
   this->data[2] = (data >> 8) & 0xFF;
   this->data[1] = (data >> 16) & 0xFF;
@@ -54,6 +55,7 @@ void MotorCommand::setData(int32_t data){
 }
 
 int32_t MotorCommand::getData(){
+  // Take big endian (network byte order) elements and return 32 bit int
   return (this->data[0] << 24)
                | (this->data[1] << 16)
                | (this->data[2] << 8)
