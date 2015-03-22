@@ -30,36 +30,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ubiquity_motor/motor_command.h>
 #include <cstring>
-#include "crc8.h"
 
 void MotorCommand::setType(MotorCommand::CommandTypes type){
-  this.type = type;
+  this->type = type;
 }
 
 MotorCommand::CommandTypes MotorCommand::getType(){
-  return this.type;
+  return static_cast<MotorCommand::CommandTypes>(this->type);
 }
 
 void MotorCommand::setRegister(MotorCommand::Registers reg){
-  this.register_addr = reg;
+  this->register_addr = reg;
 }
 
 MotorCommand::Registers MotorCommand::getRegister(){
-  return this.register_addr;
+  return static_cast<MotorCommand::Registers>(this->register_addr);
 }
 
 void MotorCommand::setData(int32_t data){
-  this.data[3] = (data >> 0) & 0xFF;
-  this.data[2] = (data >> 8) & 0xFF;
-  this.data[1] = (data >> 16) & 0xFF;
-  this.data[0] = (data >> 24) & 0xFF;
+  this->data[3] = (data >> 0) & 0xFF;
+  this->data[2] = (data >> 8) & 0xFF;
+  this->data[1] = (data >> 16) & 0xFF;
+  this->data[0] = (data >> 24) & 0xFF;
 }
 
 int32_t MotorCommand::getData(){
-  return (this.data[0] << 24)
-               | (this.data[1] << 16)
-               | (this.data[2] << 8)
-               | (this.data[3] << 0);
+  return (this->data[0] << 24)
+               | (this->data[1] << 16)
+               | (this->data[2] << 8)
+               | (this->data[3] << 0);
 }
 
 std::vector<uint8_t> MotorCommand::serialize(){
