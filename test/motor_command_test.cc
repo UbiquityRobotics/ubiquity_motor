@@ -11,12 +11,32 @@ TEST(ubiquity_motor, motor_command_commandtype) {
 	ASSERT_EQ(MotorCommand::TYPE_WRITE, mc.getType());
 }
 
+TEST(ubiquity_motor, motor_command_commandtype_bad) {
+	MotorCommand mc;
+
+	mc.setType(static_cast<MotorCommand::CommandTypes>(0xF3));
+	ASSERT_NE(0xF3, mc.getType());
+
+	mc.setType(static_cast<MotorCommand::CommandTypes>(0xAB));
+	ASSERT_NE(0xAB, mc.getType());
+}
+
 TEST(ubiquity_motor, motor_command_register) {
 	MotorCommand mc;
 
 	mc.setRegister(MotorCommand::REG_BRAKE_STOP);
 	ASSERT_EQ(MotorCommand::REG_BRAKE_STOP, mc.getRegister());
 	ASSERT_NE(MotorCommand::REG_STOP_START, mc.getRegister());
+}
+
+TEST(ubiquity_motor, motor_command_register_bad) {
+	MotorCommand mc;
+
+	mc.setRegister(static_cast<MotorCommand::Registers>(0xF3));
+	ASSERT_NE(0xF3, mc.getRegister());
+
+	mc.setRegister(static_cast<MotorCommand::Registers>(0x05));
+	ASSERT_NE(0x05, mc.getRegister());
 }
 
 TEST(ubiquity_motor, motor_command_data) {
