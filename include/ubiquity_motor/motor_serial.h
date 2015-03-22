@@ -36,6 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <boost/thread.hpp>
 #include <queue>
 
+#ifndef MOTORSERIAL_H
+#define MOTORSERIAL_H
 
 class MotorSerial
 {
@@ -56,4 +58,5 @@ class MotorSerial
 
 		void SerialThread();
 };
+
 #endif
