@@ -32,75 +32,44 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 #include "crc8.h"
 
-void MotorCommand::setVel(int16_t motor0, int16_t motor1){
-	motor0_ = motor0;
-	motor1_ = motor1;
-	setType(MOTOR_MSG_REQUEST_SPEED);
+void MotorCommand::setType(MotorCommand::CommandTypes type){
+	this.type = type;
 }
 
-void MotorCommand::setAccel(int16_t motor0, int16_t motor1){
-	motor0_ = motor0;
-	motor1_ = motor1;
-	setType(MOTOR_MSG_REQUEST_ACCELERATION);
+MotorCommand::CommandTypes MotorCommand::getType(){
+	return this.type;
 }
 
-int MotorCommand::getOdom(int16_t *motor0, int16_t *motor1){
-	if(type_ == MOTOR_MSG_ODOMETER){
-		motor0 = &motor0_;
-		motor1 = &motor1_;
-		return 0;
-	}
-	else
-		return 1;
+void MotorCommand::setRegister(MotorCommand::Registers reg){
+	this.register_addr = reg;
 }
 
+MotorCommand::Registers MotorCommand::getRegister(){
+	return this.register_addr;
+}
+
+void MotorCommand::setData(int32_t data){
+	this.data[3] = (data >> 0) & 0xFF;
+	this.data[2] = (data >> 8) & 0xFF;
+	this.data[1] = (data >> 16) & 0xFF;
+	this.data[0] = (data >> 24) & 0xFF;
+}
+
+int32_t MotorCommand::getData(){
+	return (this.data[0] << 24)
+               | (this.data[1] << 16)
+               | (this.data[2] << 8)
+               | (this.data[3] << 0);
+}
 
 std::vector<uint8_t> MotorCommand::serialize(){
-	std::vector<uint8_t> data, mot0, mot1;
 
-	//Resize all vectors to required sizes
-	data.resize(8);
-	mot0.resize(2);
-	mot1.resize(2);
-
-	data[0] = 0xff; // Sync Byte 0
-	data[1] = 0xfe; // Sync Byte 1
-
-	data[3]	= type_; // message type
-
-	std::memcpy(mot0.data(), &motor0_, sizeof(motor0_));
-	data.insert(data.end(), mot0.begin(), mot0.end());
-
-	std::memcpy(mot1.data(), &motor1_, sizeof(motor1_));
-	data.insert(data.end(), mot0.begin(), mot0.end());
-
-	signBinary(data); // sign the message with crc8 before serializing
-	data[2] = crc8_; // crc8
-
-	return data;
 }
 
 int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
-	if (serialized[0] == 0xff && serialized[1] == 0xfe){
-		crc8_ = serialized[2];
-		if(crc8_ == signBinary(serialized)){
-			type_ = serialized[3];
-			motor0_ = (serialized[5] << 8) | (serialized[6]);
-			motor1_ = (serialized[7] << 8) | (serialized[8]);
-		} 
-		else
-			return 1;
-	}
-	else
-		return 1;
+
 }
 
-void MotorCommand::setType(MotorCommand::CommandTypes t) {
-	type_ = t;
-}
-
-uint8_t MotorCommand::signBinary(std::vector<uint8_t> data) {
-	uint8_t arr[5];
-	std::copy(data.begin()+3, data.end(), arr);
-	return crc8(arr,5);
+uint8_t MotorCommand::generateChecksum(std::vector<uint8_t> data) {
+	
 }
