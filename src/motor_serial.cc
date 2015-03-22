@@ -29,33 +29,3 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <ubiquity_motor/motor_serial.h>
-
-#include <pthread.h>
-
-void *SerialReaderThread(void *arg){
-  MotorSerial *ms = 
-  		reinterpret_cast<MotorSerial *>(arg);
-  while(true){
-  	if(!ms->motors.available() < 8){
-  		std::vector<uint8_t> data;
-  		MotorCommand command;
-  		command.deserialize(data);
-  		//ms -> m_cb -> mcbiCallbackFunction(command);
-  	}
-  }
-}
-
-MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
-	motors.setPort(port);
-	motors.setBaudrate(baud_rate);
-
-	pthread_create(&reader_thread_, NULL, SerialReaderThread, this);
-}
-
-MotorSerial::~MotorSerial(){
-	motors.close();
-}
-
-void MotorSerial::sendCommand(MotorCommand command){
-	motors.write(command.serialize());
-}

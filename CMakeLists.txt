@@ -4,9 +4,18 @@ project(ubiquity_motor)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs tf nav_msgs serial hardware_interface controller_manager)
+find_package(catkin REQUIRED COMPONENTS 
+	roscpp 
+	geometry_msgs 
+	tf 
+	nav_msgs 
+	serial 
+	hardware_interface 
+	controller_manager)
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS 
+	system 
+	thread)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -65,18 +74,21 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 add_library(ubiquity_motor
   src/motor_command.cc src/motor_serial.cc
 )
+target_link_libraries(ubiquity_motor
+ ${catkin_LIBRARIES}
+)
 
 ## Declare a cpp executable
-add_executable(motor_node src/motor_command.cc src/motor_serial.cc)
+#add_executable(motor_node src/motor_command.cc src/motor_serial.cc)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 #add_dependencies(controller)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(motor_node
-  ${catkin_LIBRARIES}
-)
+#target_link_libraries(motor_node
+ # ${catkin_LIBRARIES}
+#)
 
 #############
 ## Install ##
@@ -93,11 +105,11 @@ target_link_libraries(motor_node
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS motor_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS motor_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/

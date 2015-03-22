@@ -32,24 +32,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MOTORSERIAL_H
 
 #include <ubiquity_motor/motor_command.h>
-
 #include <serial/serial.h>
+#include <boost/thread.hpp>
+#include <queue>
+
 
 class MotorSerial
 {
 	public:
 		MotorSerial(const std::string& port, uint32_t baud_rate);
 		~MotorSerial();
+
+		boost::mutex input_mtx_;
+		boost::mutex output_mtx_;
 		
-		void sendCommand(MotorCommand command);
-		//void connectCommandCallback(MotorCallbackInterface *cb);
+		int addCommand(MotorCommand command);
+		MotorCommand getCommand();
 
 	private:
 		serial::Serial motors;
+		std::queue<MotorCommand> input;
+		std::queue<MotorCommand> output;
 
-		friend void *SerialReaderThread(void *arg);
-		pthread_t reader_thread_;
-
-		//MotorCallbackInterface *m_cb;
+		void SerialThread();
 };
 #endif
