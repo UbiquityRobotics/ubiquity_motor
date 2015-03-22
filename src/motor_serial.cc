@@ -31,6 +31,34 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_serial.h>
 
 MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
+	switch (baud_rate) {
+		case 110 :
+		case 300 :
+		case 600 :
+		case 1200 :
+		case 2400 :
+		case 4800 :
+		case 9600 :
+		case 14400 :
+		case 19200 :
+		case 28800 :
+		case 38400 :
+		case 56000 :
+		case 57600 :
+		case 115200 :
+		case 128000 :
+		case 153600 :
+		case 230400 :
+		case 256000 :
+		case 460800 :
+		case 921600 :
+			motors.setBaudrate(baud_rate);
+			break;
+		default :
+			motors.setBaudrate(9600);
+			break;
+	}
+	motors.setPort(port);
 	serial_thread = new boost::thread(&MotorSerial::SerialThread, this);
 }
 
@@ -73,7 +101,6 @@ void MotorSerial::appendOutput(MotorCommand command){
 }
 
 void MotorSerial::SerialThread(){
-	//while(1){
 	MotorCommand mc;
 
 	//Test good message
@@ -82,5 +109,4 @@ void MotorSerial::SerialThread(){
 	std::vector<uint8_t> in(arr, arr + sizeof(arr)/ sizeof(uint8_t));
 	mc.deserialize(in);
 	this->appendOutput(mc);
-	//}
 }
