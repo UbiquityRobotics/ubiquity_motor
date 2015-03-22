@@ -120,7 +120,6 @@ class MotorCommand{
 		uint8_t type;
 		uint8_t register_addr;
 		uint8_t data[4];
-		uint8_t checksum;
 
 		const static uint8_t delimeter = 0x7E;
 		const static uint8_t protocol_version = 0x02;

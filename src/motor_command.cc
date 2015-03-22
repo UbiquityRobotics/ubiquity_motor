@@ -77,7 +77,25 @@ std::vector<uint8_t> MotorCommand::serialize(){
 }
 
 int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
-
+  if(serialized[0] = delimeter) {
+    if (serialized[1] = protocol_version)
+    {
+      if (generateChecksum(serialized) == serialized[8]){
+        this->type = serialized[2];
+        this->register_addr = serialized[3];
+        this->data[0] = serialized[4];
+        this->data[1] = serialized[5];
+        this->data[2] = serialized[6];
+        this->data[3] = serialized[7];
+        return 0;
+      }
+      else
+        return 1;
+    }
+    else return 1;
+  }
+  else
+    return 1;
 }
 
 uint8_t MotorCommand::generateChecksum(std::vector<uint8_t> data) {
