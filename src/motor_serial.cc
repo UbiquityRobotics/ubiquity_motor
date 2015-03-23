@@ -108,22 +108,24 @@ void MotorSerial::SerialThread(){
 			motors.open();
 		}
 		catch (const serial::IOException& e) {
-			ROS_ERROR("Can't open serial port");
-			throw;
+			ROS_ERROR("Can't open serial port %s", e.what());
 		}
 
-		while(motors.isOpen()){
+		//while(motors.isOpen()){
+			MotorCommand mc;
 
-		}
-		MotorCommand mc;
+			//Test good message
+			uint8_t arr[] = {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
 
-		//Test good message
-		uint8_t arr[] = {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+			std::vector<uint8_t> in(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+			mc.deserialize(in);
 
-		std::vector<uint8_t> in(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-		mc.deserialize(in);
+			this->appendOutput(mc);
 
-		this->appendOutput(mc);
+			// boost::posix_time::seconds workTime(3);
+			// boost::this_thread::sleep(workTime);
+		//}
+
 	}
 	catch (const boost::thread_interrupted& e) {
 
