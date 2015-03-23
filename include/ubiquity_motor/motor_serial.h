@@ -58,6 +58,7 @@ class MotorSerial
 		boost::thread* serial_thread;
 
 		int inputAvailable();
+		MotorCommand getInputCommand();
 		void appendOutput(MotorCommand command);
 
 		void SerialThread();

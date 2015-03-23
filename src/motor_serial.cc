@@ -96,6 +96,17 @@ int MotorSerial::inputAvailable() {
 	return out;
 }
 
+MotorCommand MotorSerial::getInputCommand() {
+	MotorCommand mc;
+	input_mtx_.lock();
+	if(!this->input.empty()){
+		mc = this->input.front();
+		this->input.pop();
+	}
+	input_mtx_.unlock();
+	return mc;
+}
+
 void MotorSerial::appendOutput(MotorCommand command){
 	output_mtx_.lock();
 	this->output.push(command);
@@ -111,20 +122,23 @@ void MotorSerial::SerialThread(){
 			ROS_ERROR("Can't open serial port %s", e.what());
 		}
 
-		//while(motors.isOpen()){
-			MotorCommand mc;
+		while(motors.isOpen()){
+			if(motors.available() >= 9){
+				std::vector<uint8_t> in(9);
+				motors.read(in, 9);
+				MotorCommand mc;
+				if (mc.deserialize(in) == 0) {
+					appendOutput(mc);
+				}
+			}
 
-			//Test good message
-			uint8_t arr[] = {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+			if(inputAvailable()){
+				motors.write(getInputCommand().serialize());
+			}
 
-			std::vector<uint8_t> in(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-			mc.deserialize(in);
-
-			this->appendOutput(mc);
-
-			// boost::posix_time::seconds workTime(3);
-			// boost::this_thread::sleep(workTime);
-		//}
+			boost::posix_time::milliseconds loopDelay(10);
+			boost::this_thread::sleep(loopDelay);
+		}
 
 	}
 	catch (const boost::thread_interrupted& e) {
