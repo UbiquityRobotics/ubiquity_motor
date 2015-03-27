@@ -142,13 +142,13 @@ void MotorSerial::SerialThread(){
 
 	}
 	catch (const boost::thread_interrupted& e) {
-
+		ROS_ERROR("%s", e.what());
 	}
 	catch (const serial::IOException& e) {
-		
+		ROS_ERROR("%s", e.what());
 	}
 	catch (const serial::PortNotOpenedException& e) {
-		
+		ROS_ERROR("%s", e.what());
 	}
 	catch (...) {
 		throw;
