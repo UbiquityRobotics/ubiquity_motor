@@ -28,40 +28,41 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MOTORSERIAL_H
-#define MOTORSERIAL_H
+#ifndef MOTORHARDWARE_H
+#define MOTORHARDWARE_H
 
-#include <ubiquity_motor/motor_command.h>
-#include <serial/serial.h>
-#include <boost/thread.hpp>
-#include <queue>
+#include "hardware_interface/joint_state_interface.h"
+#include "hardware_interface/joint_command_interface.h"
+#include "hardware_interface/robot_hw.h"
+#include "ros/ros.h"
+#include "sensor_msgs/JointState.h"
 
-class MotorSerial
-{
+#include <ubiquity_motor/motor_serial.h>
+
+class MotorHardware : public hardware_interface::RobotHW {
 	public:
-		MotorSerial(const std::string& port = "/dev/ttyUSB0" , uint32_t baud_rate = 9600);
-		//~MotorSerial();
-
-		boost::mutex input_mtx_;
-		boost::mutex output_mtx_;
-		
-		int transmitCommand(MotorCommand command);
-		MotorCommand receiveCommand();
-		int commandAvailable();
+		MotorHardware();
+		void readInputs();
+		void writeSpeeds();
+		void requestOdometry();
 
 	private:
-		serial::Serial motors;
+		ros::NodeHandle n;
+		hardware_interface::JointStateInterface joint_state_interface_;
+		hardware_interface::VelocityJointInterface velocity_joint_interface_;
 
-		std::queue<MotorCommand> input;
-		std::queue<MotorCommand> output;
+		struct Joint {
+			double position;
+			double velocity;
+			double effort;
+			double velocity_command;
 
-		boost::thread* serial_thread;
+			Joint() : position(0), velocity(0), effort(0), velocity_command(0) {
+			}
+		}
+		joints_[2];
 
-		int inputAvailable();
-		MotorCommand getInputCommand();
-		void appendOutput(MotorCommand command);
-
-		void SerialThread();
+		MotorSerial* motor_serial_;
 };
 
 #endif

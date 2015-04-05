@@ -15,7 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS 
 	system 
-	thread)
+	thread
+	chrono)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -72,14 +73,19 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 ## Declare a cpp library
 add_library(ubiquity_motor
-  src/motor_command.cc src/motor_serial.cc
+  src/motor_command.cc src/motor_serial.cc src/motor_hardware.cc
 )
 target_link_libraries(ubiquity_motor
  ${catkin_LIBRARIES}
+ ${Boost_LIBRARIES}
 )
 
 ## Declare a cpp executable
-#add_executable(motor_node src/motor_command.cc src/motor_serial.cc)
+add_executable(motor_node src/motor_node.cc src/motor_command.cc src/motor_serial.cc src/motor_hardware.cc)
+target_link_libraries(motor_node
+ ${catkin_LIBRARIES}
+ ${Boost_LIBRARIES}
+)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
