@@ -7,9 +7,11 @@ notifications:
     recipients:
       - rohan@aleopile.com
     on_success: change #[always|never|change] # default: change
-    on_failure: change #[always|never|change] # default: always
-slack:
+    on_failure: always #[always|never|change] # default: always
+  slack:
     secure: ikrc2CH4sYPM8/vwpRs7cpwPzfyEYK/vA2UavBkRaf+/qdN8ZpAxx7de/NWUS0R8zFCN5zkLsxLxii71F+wt3sSbhuocY140JTvXjlfJBZym09SBL+zXuVTEPJz8Iv6s+hgLKw3CYVitL5T15LBDv1Zw17c0EArgq+GDso/Cuhs=
+    on_success: always #[always|never|change] # default: change
+    on_failure: always #[always|never|change] # default: always
 before_install:
   - export ROS_DISTRO=hydro
   - export CI_SOURCE_PATH=$(pwd)
