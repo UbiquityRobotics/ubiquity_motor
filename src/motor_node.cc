@@ -12,8 +12,6 @@
 
 static const double BILLION = 1000000000.0;
 
-typedef boost::chrono::steady_clock time_source;
-
 main(int argc, char* argv[]) {
   ros::init(argc, argv, "motor_node");
   MotorHardware robot;
