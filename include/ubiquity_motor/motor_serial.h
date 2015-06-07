@@ -50,7 +50,10 @@ class MotorSerial
 		int commandAvailable();
 
 	private:
-		serial::Serial motors;
+		serial::Serial* motors;
+		
+		std::string _port;
+		uint32_t _baud_rate;
 
 		std::queue<MotorCommand> input;
 		std::queue<MotorCommand> output;
