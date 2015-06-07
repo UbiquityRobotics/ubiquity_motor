@@ -97,8 +97,8 @@ void MotorHardware::writeSpeeds(){
 	right.setRegister(MotorCommand::REG_RIGHT_SPEED_SET);
 	right.setType(MotorCommand::TYPE_WRITE);
 	right.setData(boost::math::iround(joints_[1].velocity_command/SENSOR_DISTANCE));
-	//ROS_ERROR("RIGHT %i", right.getData());
 	motor_serial_->transmitCommand(right);
+	ROS_ERROR("velocity_command %f %f", joints_[0].velocity_command, joints_[0].velocity_command);
 	//ROS_ERROR("SPEEDS %x %x", left.serialize()[7], right.serialize().data()[7]);
 }
 
