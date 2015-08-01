@@ -6,7 +6,7 @@ project(ubiquity_motor)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs tf nav_msgs )
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system thread)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -48,9 +48,9 @@ find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs tf nav_msgs )
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES Ubiquity
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+  LIBRARIES ubiquity
+  CATKIN_DEPENDS roscpp
+  DEPENDS system_lib
 )
 
 ###########
@@ -67,14 +67,20 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 # )
 
 ## Declare a cpp executable
-add_executable(motor_node src/UbiquityMotor.cc src/crc8.c)
+add_executable(ubiquity_motor src/ubiquity_motor.cpp
+                              src/CRC.cpp
+                              src/CRC.h
+                              src/MotorController.cpp
+                              src/MotorController.h
+                              src/MotorMessage.cpp
+                              src/MotorMessage.h)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 #add_dependencies(controller)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(motor_node
+target_link_libraries(ubiquity_motor
   ${catkin_LIBRARIES}
 )
 
@@ -93,7 +99,7 @@ target_link_libraries(motor_node
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS motor_node
+install(TARGETS ubiquity_motor
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -125,3 +131,10 @@ install(TARGETS motor_node
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+if(CATKIN_ENABLE_TESTING)
+	catkin_add_gtest(ubiquity_motor_tests 
+		test/MotorTest.cpp 
+		src/CRC.cpp
+        src/CRC.h)
+	target_link_libraries(ubiquity_motor_tests ${catkin_LIBRARIES})
+endif()

@@ -1,0 +1,62 @@
+%YAML 1.1
+---
+# ubiquity_motor Configuration File
+# 
+# Note:  Invalid values are ignored and defaults are used.
+
+  ubiquity:
+    motor:
+
+# device_name points to the communications device
+#   Case Sensitive : default = "/dev/ttyUSB0"
+      device_name : /dev/ttyUSB0
+
+# Valid baud rates are:
+# 110, 300, 600, 1200, 2400, 4800, 9600, 
+# 14400, 19200, 28800, 38400, 56000, 
+# 57600, 115200, 128000, 153600, 230400, 
+# 256000, 460800, and 921600 
+#
+# default = 9600
+      baud_rate : 9600
+
+# Valid byte sizes are 5, 6, 7, or 8
+# default = 8
+      byte_size : 8
+
+# Valid parity values are "none", "odd" and "even"
+# Case Insensitive.  Default = "none"
+      parity : "none"
+
+# Valid flow control values include "none", "software", and "hardware"
+# Case Insensitive.  Default = "none"
+      flow_control : "none"
+
+# The rate at which daignostics is collected off the board
+#
+      diag_rate : 2 # collect board diagnostic info once every 2 sec
+
+# The rate at which odometry is collected off the board
+#
+      odom_rate : 0.05 # collect odometry 20 times / sec
+
+# The rate at which odometry is collected off the board
+#
+      spin_rate : 0.01 # spin sleep 100 times / sec
+
+# The velocity topic
+#
+      velocity_topic : /cmd_vel
+
+# Configurable PID values read at startup
+      pid_proportional : 450
+      pid_integral : 120
+      pid_derivative : 70
+      pid_denominator : 1000
+
+# Configurable Deadman timer value read at startup
+# 0x00 equals NOOP for the deadman
+# 0x01 through 0xFF FF FF are increments of time in 
+# 1/5ths of a second.  i.e.  a value of "5" would set
+# the deadman to 1 second
+      deadman_timer : 1
