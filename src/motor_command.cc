@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <ubiquity_motor/motor_command.h>
-#include <ubiquity_motor/motor_command_registers.h>
+// #include <ubiquity_motor/motor_command_registers.h>
 
 uint8_t const MotorCommand::valid_types[] = {
   TYPE_READ,
