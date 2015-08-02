@@ -40,7 +40,7 @@ class MotorSerial
 {
 	public:
 		MotorSerial(const std::string& port = "/dev/ttyUSB0" , uint32_t baud_rate = 9600);
-		//~MotorSerial();
+		~MotorSerial();
 
 		boost::mutex input_mtx_;
 		boost::mutex output_mtx_;

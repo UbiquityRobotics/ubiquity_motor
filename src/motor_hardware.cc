@@ -35,8 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SENSOR_DISTANCE 0.00247525941
 
-MotorHardware::MotorHardware(){
-	ros::V_string joint_names = boost::assign::list_of("left_wheel")("right_wheel");
+MotorHardware::MotorHardware(ros::NodeHandle nh){
+	n = nh;
+	ros::V_string joint_names = boost::assign::list_of("left_wheel_joint")("right_wheel_joint");
 
 	for (unsigned int i = 0; i < joint_names.size(); i++) {
 		hardware_interface::JointStateHandle joint_state_handle(joint_names[i],
@@ -70,21 +71,25 @@ MotorHardware::MotorHardware(){
 	motor_serial_ = new MotorSerial(sPort,sBaud);
 }
 
+MotorHardware::~MotorHardware(){
+	delete motor_serial_;
+}
+
 void MotorHardware::readInputs(){
-	while(motor_serial_->commandAvailable()){
-		MotorCommand mc;
-		mc = motor_serial_-> receiveCommand();
-		if(mc.getType() == MotorCommand::TYPE_RESPONSE){
-			switch(mc.getRegister()){
-				case MotorCommand::REG_LEFT_ODOM:
-					joints_[0].position += mc.getData()*SENSOR_DISTANCE;
-					break;
-				case MotorCommand::REG_RIGHT_ODOM:
-					joints_[1].position += mc.getData()*SENSOR_DISTANCE;
-					break;
-			}
-		}
-	}
+	// while(motor_serial_->commandAvailable()){
+	// 	MotorCommand mc;
+	// 	mc = motor_serial_-> receiveCommand();
+	// 	if(mc.getType() == MotorCommand::TYPE_RESPONSE){
+	// 		switch(mc.getRegister()){
+	// 			case MotorCommand::REG_LEFT_ODOM:
+	// 				joints_[0].position += mc.getData()*SENSOR_DISTANCE;
+	// 				break;
+	// 			case MotorCommand::REG_RIGHT_ODOM:
+	// 				joints_[1].position += mc.getData()*SENSOR_DISTANCE;
+	// 				break;
+	// 		}
+	// 	}
+	// }
 }
 
 void MotorHardware::writeSpeeds(){
@@ -98,8 +103,8 @@ void MotorHardware::writeSpeeds(){
 	right.setType(MotorCommand::TYPE_WRITE);
 	right.setData(boost::math::iround(joints_[1].velocity_command/SENSOR_DISTANCE));
 	motor_serial_->transmitCommand(right);
-	ROS_ERROR("velocity_command %f %f", joints_[0].velocity_command, joints_[0].velocity_command);
-	//ROS_ERROR("SPEEDS %x %x", left.serialize()[7], right.serialize().data()[7]);
+	ROS_ERROR("velocity_command %f %f", joints_[0].velocity_command, joints_[1].velocity_command);
+	ROS_ERROR("SPEEDS %x %x", left.serialize()[7], right.serialize().data()[7]);
 }
 
 void MotorHardware::requestOdometry(){

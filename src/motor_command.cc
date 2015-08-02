@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <ubiquity_motor/motor_command.h>
+#include <ubiquity_motor/motor_command_registers.h>
 
 uint8_t const MotorCommand::valid_types[] = {
   TYPE_READ,
@@ -160,9 +161,11 @@ int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
   else
     return 1;
 
+  // TODO use exceptions instead of cryptic error codes
+
   // ERROR codes returned:
-  // 1 First char not delimeter
-  // 2 wrong protocol verstion
+  // 1 First char not delimiter
+  // 2 wrong protocol version
   // 3 bad checksum
   // 4 bad type
   // 5 bad register

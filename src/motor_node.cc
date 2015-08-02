@@ -1,5 +1,3 @@
-
-#include "ros/ros.h"
 #include <ubiquity_motor/motor_hardware.h>
 #include <ubiquity_motor/motor_command.h>
 #include <string>
@@ -12,24 +10,36 @@
 
 static const double BILLION = 1000000000.0;
 
-main(int argc, char* argv[]) {
-  ros::init(argc, argv, "motor_node");
-  MotorHardware robot;
-  controller_manager::ControllerManager cm(&robot);
-  
+void controlLoop(ros::Rate r,
+  MotorHardware &robot,
+  controller_manager::ControllerManager &cm){
+
   struct timespec last_time;
   struct timespec current_time;
-
   clock_gettime(CLOCK_MONOTONIC, &last_time);
 
-  ros::Rate r(50);
-  while (true) {
+  while (ros::ok()) {
+     ROS_ERROR("IN LOOP");
      clock_gettime(CLOCK_MONOTONIC, &current_time);
-  	 ros::Duration elapsed = ros::Duration(current_time.tv_sec - last_time.tv_sec + (current_time.tv_nsec - last_time.tv_nsec) / BILLION);
+     ros::Duration elapsed = ros::Duration(current_time.tv_sec - last_time.tv_sec + (current_time.tv_nsec - last_time.tv_nsec) / BILLION);
      last_time = current_time;
-     //robot.read();
+     //robot.readInputs();
      cm.update(ros::Time::now(), elapsed);
      robot.writeSpeeds();
      r.sleep();
   }
+
+}
+
+main(int argc, char* argv[]) {
+  ros::init(argc, argv, "motor_node");
+  ros::NodeHandle nh;
+  MotorHardware robot(nh);
+  controller_manager::ControllerManager cm(&robot,nh);
+
+  ros::Rate r(10);
+
+  boost::thread controlLoopThread(controlLoop, r , boost::ref(robot), boost::ref(cm));
+
+  ros::spin();
 }

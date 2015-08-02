@@ -41,7 +41,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class MotorHardware : public hardware_interface::RobotHW {
 	public:
-		MotorHardware();
+		MotorHardware(ros::NodeHandle nh);
+		~MotorHardware();
 		void readInputs();
 		void writeSpeeds();
 		void requestOdometry();

@@ -70,6 +70,13 @@ MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
 	serial_thread = new boost::thread(&MotorSerial::SerialThread, this);
 }
 
+MotorSerial::~MotorSerial(){
+	serial_thread->interrupt();
+	serial_thread->join();
+	delete motors;
+	delete serial_thread;
+}
+
 int MotorSerial::transmitCommand(MotorCommand command) {
 	// Make sure to lock mutex before accessing the input fifo
 	input_mtx_.lock();
@@ -122,19 +129,16 @@ void MotorSerial::appendOutput(MotorCommand command){
 
 void MotorSerial::SerialThread(){
 	try {
-		ROS_ERROR("Hello");
-		motors->write("Hello");
-
 		while(motors->isOpen()){
-			// if(motors->available() >= 9){
-			// 	ROS_WARN("motorsAvailable");
-			// 	std::vector<uint8_t> in(9);
-			// 	motors->read(in, 9);
-			// 	MotorCommand mc;
-			// 	if (mc.deserialize(in) == 0) {
-			// 		appendOutput(mc);
-			// 	}
-			// }
+			if(motors->available() >= 9){
+				ROS_WARN("motorsAvailable");
+				std::vector<uint8_t> in(9);
+				motors->read(in, 9);
+				MotorCommand mc;
+				if (mc.deserialize(in) == 0) {
+					appendOutput(mc);
+				}
+			}
 
 			if(inputAvailable()){
 				std::vector<uint8_t> out(9);
@@ -158,7 +162,7 @@ void MotorSerial::SerialThread(){
 
 	}
 	catch (const boost::thread_interrupted& e) {
-		ROS_INFO("boost::thread_interrupted");
+		ROS_ERROR("boost::thread_interrupted");
 		motors->close();
 	}
 	catch (const serial::IOException& e) {
