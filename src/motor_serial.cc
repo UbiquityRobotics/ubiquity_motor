@@ -73,6 +73,7 @@ MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
 MotorSerial::~MotorSerial(){
 	serial_thread->interrupt();
 	serial_thread->join();
+	motors->close();
 	delete motors;
 	delete serial_thread;
 }

@@ -33,7 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/math/special_functions/round.hpp>
 
-#define SENSOR_DISTANCE 0.00247525941
+//#define SENSOR_DISTANCE 0.002478
+
+// 60 tics per revolution of the motor (pre gearbox)
+//17.2328767123
+// gear ratio of 4.29411764706:1
+#define TICS_PER_RADIAN 41.0058030317
 
 MotorHardware::MotorHardware(ros::NodeHandle nh){
 	n = nh;
@@ -96,15 +101,15 @@ void MotorHardware::writeSpeeds(){
 	MotorCommand left;
 	left.setRegister(MotorCommand::REG_LEFT_SPEED_SET);
 	left.setType(MotorCommand::TYPE_WRITE);
-	left.setData(boost::math::iround(joints_[0].velocity_command/SENSOR_DISTANCE));
+	left.setData(boost::math::lround(joints_[0].velocity_command*TICS_PER_RADIAN));
 	motor_serial_->transmitCommand(left);
 	MotorCommand right;
 	right.setRegister(MotorCommand::REG_RIGHT_SPEED_SET);
 	right.setType(MotorCommand::TYPE_WRITE);
-	right.setData(boost::math::iround(joints_[1].velocity_command/SENSOR_DISTANCE));
+	right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN));
 	motor_serial_->transmitCommand(right);
-	ROS_ERROR("velocity_command %f %f", joints_[0].velocity_command, joints_[1].velocity_command);
-	ROS_ERROR("SPEEDS %x %x", left.serialize()[7], right.serialize().data()[7]);
+	ROS_ERROR("velocity_command %f rad/s %f rad/s", joints_[0].velocity_command, joints_[1].velocity_command);
+	ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
 }
 
 void MotorHardware::requestOdometry(){
