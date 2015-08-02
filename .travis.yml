@@ -22,10 +22,10 @@ before_install:
 - sudo rosdep init
 - rosdep update
 install:
-- mkdir -p ~/ros/ws_uwsim/src
-- cd ~/ros/ws_uwsim/src
+- mkdir -p ~/ros/catkin_ws/src
+- cd ~/ros/catkin_ws/src
 - wstool init .
-- git clone -b refactoring https://github.com/UbiquityRobotics/ubiquity_motor.git
+- git clone -b $TRAVIS_BRANCH https://github.com/UbiquityRobotics/ubiquity_motor.git
 - rm -rf $REPOSITORY_NAME
 - ln -s $CI_SOURCE_PATH .
 - cd ../
