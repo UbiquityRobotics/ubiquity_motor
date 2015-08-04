@@ -22,7 +22,7 @@ void controlLoop(ros::Rate r,
      clock_gettime(CLOCK_MONOTONIC, &current_time);
      ros::Duration elapsed = ros::Duration(current_time.tv_sec - last_time.tv_sec + (current_time.tv_nsec - last_time.tv_nsec) / BILLION);
      last_time = current_time;
-     //robot.readInputs();
+     robot.readInputs();
      cm.update(ros::Time::now(), elapsed);
      robot.writeSpeeds();
      r.sleep();
@@ -36,7 +36,7 @@ main(int argc, char* argv[]) {
   MotorHardware robot(nh);
   controller_manager::ControllerManager cm(&robot,nh);
 
-  ros::Rate r(20);
+  ros::Rate r(10);
 
   boost::thread controlLoopThread(controlLoop, r , boost::ref(robot), boost::ref(cm));
 

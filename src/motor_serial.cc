@@ -132,7 +132,6 @@ void MotorSerial::SerialThread(){
 	try {
 		while(motors->isOpen()){
 			if(motors->available() >= 9){
-				ROS_WARN("motorsAvailable");
 				std::vector<uint8_t> in(9);
 				motors->read(in, 9);
 				MotorCommand mc;
@@ -157,7 +156,7 @@ void MotorSerial::SerialThread(){
 				motors->write(out);
 			}
 
-			boost::posix_time::milliseconds loopDelay(50);
+			boost::posix_time::milliseconds loopDelay(10);
 			boost::this_thread::sleep(loopDelay);
 		}
 

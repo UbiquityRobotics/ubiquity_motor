@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TICS_PER_RADIAN 41.0058030317
 
 MotorHardware::MotorHardware(ros::NodeHandle nh){
-	n = nh;
+	// n = nh;
 	ros::V_string joint_names = boost::assign::list_of("left_wheel_joint")("right_wheel_joint");
 
 	for (unsigned int i = 0; i < joint_names.size(); i++) {
@@ -81,20 +81,20 @@ MotorHardware::~MotorHardware(){
 }
 
 void MotorHardware::readInputs(){
-	// while(motor_serial_->commandAvailable()){
-	// 	MotorCommand mc;
-	// 	mc = motor_serial_-> receiveCommand();
-	// 	if(mc.getType() == MotorCommand::TYPE_RESPONSE){
-	// 		switch(mc.getRegister()){
-	// 			case MotorCommand::REG_LEFT_ODOM:
-	// 				joints_[0].position += mc.getData()*SENSOR_DISTANCE;
-	// 				break;
-	// 			case MotorCommand::REG_RIGHT_ODOM:
-	// 				joints_[1].position += mc.getData()*SENSOR_DISTANCE;
-	// 				break;
-	// 		}
-	// 	}
-	// }
+	while(motor_serial_->commandAvailable()){
+		MotorCommand mc;
+		mc = motor_serial_-> receiveCommand();
+		if(mc.getType() == MotorCommand::TYPE_RESPONSE){
+			switch(mc.getRegister()){
+				case MotorCommand::REG_LEFT_ODOM:
+					joints_[0].position += mc.getData()/TICS_PER_RADIAN;
+					break;
+				case MotorCommand::REG_RIGHT_ODOM:
+					joints_[1].position += mc.getData()/TICS_PER_RADIAN;
+					break;
+			}
+		}
+	}
 }
 
 void MotorHardware::writeSpeeds(){
@@ -108,10 +108,17 @@ void MotorHardware::writeSpeeds(){
 	right.setType(MotorCommand::TYPE_WRITE);
 	right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN));
 	motor_serial_->transmitCommand(right);
-	ROS_ERROR("velocity_command %f rad/s %f rad/s", joints_[0].velocity_command, joints_[1].velocity_command);
-	ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
+	//ROS_ERROR("velocity_command %f rad/s %f rad/s", joints_[0].velocity_command, joints_[1].velocity_command);
+	//ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
 }
 
 void MotorHardware::requestOdometry(){
-
+	MotorCommand left;
+	left.setRegister(MotorCommand::REG_LEFT_ODOM);
+	left.setType(MotorCommand::TYPE_READ);
+	motor_serial_->transmitCommand(left);
+	MotorCommand right;
+	left.setRegister(MotorCommand::REG_RIGHT_ODOM);
+	left.setType(MotorCommand::TYPE_READ);
+	motor_serial_->transmitCommand(right);
 }
