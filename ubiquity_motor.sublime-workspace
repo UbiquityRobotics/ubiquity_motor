@@ -4,6 +4,26 @@
 		"selected_items":
 		[
 			[
+				"thea",
+				"thread_loop_delay"
+			],
+			[
+				"con",
+				"controller_loop_rate"
+			],
+			[
+				"set",
+				"setType"
+			],
+			[
+				"Mo",
+				"MotorHardware"
+			],
+			[
+				"cont",
+				"controlLoop"
+			],
+			[
 				"ST",
 				"START"
 			],
@@ -46,10 +66,6 @@
 			[
 				"out",
 				"output"
-			],
-			[
-				"Mo",
-				"MotorCommand"
 			],
 			[
 				"th",
@@ -143,23 +159,39 @@
 			"file": "include/ubiquity_motor/motor_serial.h",
 			"settings":
 			{
-				"buffer_size": 2278,
+				"buffer_size": 2351,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/motor_command.cc",
+			"file": "src/motor_serial.cc",
 			"settings":
 			{
-				"buffer_size": 5620,
+				"buffer_size": 4676,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "include/ubiquity_motor/motor_command.h",
+			"file": "include/ubiquity_motor/motor_hardware.h",
 			"settings":
 			{
-				"buffer_size": 4064,
+				"buffer_size": 2403,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/motor_hardware.cc",
+			"settings":
+			{
+				"buffer_size": 4575,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/motor_node.cc",
+			"settings":
+			{
+				"buffer_size": 1417,
 				"line_ending": "Unix"
 			}
 		}
@@ -171,10 +203,14 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 201.0,
-		"last_filter": "git com",
+		"height": 390.0,
+		"last_filter": "xml",
 		"selected_items":
 		[
+			[
+				"xml",
+				"Set Syntax: XML"
+			],
 			[
 				"git com",
 				"Git: Commit"
@@ -252,26 +288,28 @@
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test"
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src"
 	],
 	"file_history":
 	[
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command_registers.h",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/.travis.yml",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_node.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_hardware.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_command.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/magni-test.launch",
+		"/home/rohan/indigo_catkin/src/ubiquity/basic_magni.urdf",
+		"/home/rohan/indigo_catkin/src/ubiquity/magni.yaml",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command_registers.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/.travis.yml",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
 		"/home/rohan/.config/sublime-text-3/Packages/User/catkin.sublime-build",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/catkin.sublime-build",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_serial.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/package.xml",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_serial_test.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_command_test.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_command.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_test.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/MotorCommand.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/crc8.c",
@@ -305,6 +343,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"loopDelay",
+			"new",
+			"~",
 			"n",
 			"motors.",
 			"wri",
@@ -328,7 +369,7 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 1,
 			"sheets":
 			[
 				{
@@ -337,73 +378,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2278,
+						"buffer_size": 2351,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1955,
-								1955
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 714.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "src/motor_command.cc",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 5620,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1588,
-								1588
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 782.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "include/ubiquity_motor/motor_command.h",
-					"semi_transient": true,
-					"settings":
-					{
-						"buffer_size": 4064,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1663,
-								1663
+								2081,
+								2081
 							]
 						],
 						"settings":
@@ -412,10 +395,127 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 459.0,
+						"translation.y": 588.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/motor_serial.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4676,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3717,
+								3717
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2492.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "include/ubiquity_motor/motor_hardware.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2403,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1991,
+								1991
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 724.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/motor_hardware.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4575,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2701,
+								2701
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 808.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "src/motor_node.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1417,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1248,
+								1248
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 417.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
 					"type": "text"
 				}
 			]

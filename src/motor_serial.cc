@@ -29,10 +29,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <ubiquity_motor/motor_serial.h>
-#include <ros/console.h>
+#include <ros/ros.h>
 #include <serial/serial.h>
 
-MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
+MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate, double loopRate){
 	// Make sure baud rate is valid
 	switch (baud_rate) {
 		case 110 :
@@ -67,6 +67,8 @@ MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate){
 
 	motors = new serial::Serial(_port, _baud_rate, serial::Timeout::simpleTimeout(10000));
 
+	serial_loop_rate = new ros::Rate(loopRate);
+
 	serial_thread = new boost::thread(&MotorSerial::SerialThread, this);
 }
 
@@ -76,6 +78,7 @@ MotorSerial::~MotorSerial(){
 	motors->close();
 	delete motors;
 	delete serial_thread;
+	delete serial_loop_rate;
 }
 
 int MotorSerial::transmitCommand(MotorCommand command) {
@@ -129,13 +132,16 @@ void MotorSerial::appendOutput(MotorCommand command){
 }
 
 void MotorSerial::SerialThread(){
+	ros::Rate serial_loop_rate(100);
 	try {
-		while(motors->isOpen()){
-			if(motors->available() >= 9){
-				std::vector<uint8_t> in(9);
+		while(motors->isOpen() && ros::ok()){
+			while(motors->available() >= 9){
+				std::vector<uint8_t> in(0);
 				motors->read(in, 9);
+				// ROS_ERROR("Len:%d", (int) in.size());
 				MotorCommand mc;
 				if (mc.deserialize(in) == 0) {
+					// ROS_ERROR("appendOutput");
 					appendOutput(mc);
 				}
 			}
@@ -156,8 +162,9 @@ void MotorSerial::SerialThread(){
 				motors->write(out);
 			}
 
-			boost::posix_time::milliseconds loopDelay(10);
-			boost::this_thread::sleep(loopDelay);
+			// boost::posix_time::milliseconds loopDelay(10);
+			// boost::this_thread::sleep(loopDelay);
+			serial_loop_rate.sleep();
 		}
 
 	}

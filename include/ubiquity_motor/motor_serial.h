@@ -34,12 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_command.h>
 #include <serial/serial.h>
 #include <boost/thread.hpp>
+#include <ros/ros.h>
 #include <queue>
 
 class MotorSerial
 {
 	public:
-		MotorSerial(const std::string& port = "/dev/ttyUSB0" , uint32_t baud_rate = 9600);
+		MotorSerial(const std::string& port = "/dev/ttyUSB0" , uint32_t baud_rate = 9600, double loopRate = 100);
 		~MotorSerial();
 
 		boost::mutex input_mtx_;
@@ -59,6 +60,7 @@ class MotorSerial
 		std::queue<MotorCommand> output;
 
 		boost::thread* serial_thread;
+		ros::Rate* serial_loop_rate;
 
 		int inputAvailable();
 		MotorCommand getInputCommand();

@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ubiquity_motor/motor_command.h>
 // #include <ubiquity_motor/motor_command_registers.h>
+#include <ros/console.h>
 
 uint8_t const MotorCommand::valid_types[] = {
   TYPE_READ,
@@ -133,8 +134,8 @@ std::vector<uint8_t> MotorCommand::serialize(){
 }
 
 int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
-  if(serialized[0] = delimeter) {
-    if (serialized[1] = protocol_version)
+  if(serialized[0] == delimeter) {
+    if (serialized[1] == protocol_version)
     {
       if (generateChecksum(serialized) == serialized[8]){
         if (verifyType(serialized[2])){
