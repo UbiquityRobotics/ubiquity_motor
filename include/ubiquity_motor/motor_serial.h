@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MOTORSERIAL_H
 #define MOTORSERIAL_H
 
-#include <ubiquity_motor/motor_command.h>
+#include <ubiquity_motor/motor_message.h>
 #include <serial/serial.h>
 #include <boost/thread.hpp>
 #include <ros/ros.h>
@@ -46,8 +46,8 @@ class MotorSerial
 		boost::mutex input_mtx_;
 		boost::mutex output_mtx_;
 		
-		int transmitCommand(MotorCommand command);
-		MotorCommand receiveCommand();
+		int transmitCommand(MotorMessage command);
+		MotorMessage receiveCommand();
 		int commandAvailable();
 
 	private:
@@ -56,15 +56,15 @@ class MotorSerial
 		std::string _port;
 		uint32_t _baud_rate;
 
-		std::queue<MotorCommand> input;
-		std::queue<MotorCommand> output;
+		std::queue<MotorMessage> input;
+		std::queue<MotorMessage> output;
 
 		boost::thread* serial_thread;
 		ros::Rate* serial_loop_rate;
 
 		int inputAvailable();
-		MotorCommand getInputCommand();
-		void appendOutput(MotorCommand command);
+		MotorMessage getInputCommand();
+		void appendOutput(MotorMessage command);
 
 		void SerialThread();
 };

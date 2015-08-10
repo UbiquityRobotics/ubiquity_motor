@@ -72,7 +72,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 ## Declare a cpp library
 add_library(ubiquity_motor
-  src/motor_command.cc src/motor_serial.cc src/motor_hardware.cc
+  src/motor_message.cc src/motor_serial.cc src/motor_hardware.cc
 )
 target_link_libraries(ubiquity_motor
  ${catkin_LIBRARIES}
@@ -80,7 +80,7 @@ target_link_libraries(ubiquity_motor
 )
 
 ## Declare a cpp executable
-add_executable(motor_node src/motor_node.cc src/motor_command.cc src/motor_serial.cc src/motor_hardware.cc)
+add_executable(motor_node src/motor_node.cc src/motor_message.cc src/motor_serial.cc src/motor_hardware.cc)
 target_link_libraries(motor_node
  ${catkin_LIBRARIES}
  ${Boost_LIBRARIES}
@@ -138,7 +138,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 if(CATKIN_ENABLE_TESTING)
 	catkin_add_gtest(ubiquity_motor_tests 
 		test/motor_test.cc 
-		test/motor_command_test.cc
+		test/motor_message_test.cc
 		test/motor_serial_test.cc)
 	target_link_libraries(ubiquity_motor_tests  ubiquity_motor ${catkin_LIBRARIES})
 endif()

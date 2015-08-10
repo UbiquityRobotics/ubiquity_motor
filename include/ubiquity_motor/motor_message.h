@@ -28,21 +28,21 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MOTORCOMMAND_H
-#define MOTORCOMMAND_H
+#ifndef MOTORMESSAGE_H
+#define MOTORMESSAGE_H
 
 #include <stdint.h>
 #include <vector>
 
-class MotorCommand{
+class MotorMessage{
 
 	public:
 		//Using default constructor and destructor
-		MotorCommand() {};
-		~MotorCommand() {};
+		MotorMessage() {};
+		~MotorMessage() {};
 
-		// CommandTypes enum in class to avoid global namespace pollution
-		enum CommandTypes {
+		// MessageTypes enum in class to avoid global namespace pollution
+		enum MessageTypes {
 			TYPE_READ = 0xAA,
 			TYPE_WRITE = 0xBB,
 			TYPE_RESPONSE = 0xCC
@@ -106,11 +106,11 @@ class MotorCommand{
 			REG_RIGHT_SPEED_MEASURED = 0x29
 		};
 
-		void setType(MotorCommand::CommandTypes type);
-		MotorCommand::CommandTypes getType();
+		void setType(MotorMessage::MessageTypes type);
+		MotorMessage::MessageTypes getType();
 
-		void setRegister(MotorCommand::Registers reg);
-		MotorCommand::Registers getRegister();
+		void setRegister(MotorMessage::Registers reg);
+		MotorMessage::Registers getRegister();
 
 		void setData(int32_t data);
 		int32_t getData();
@@ -120,8 +120,8 @@ class MotorCommand{
 
 
 	private:
-		uint8_t type; // Type of message should be in MotorCommand::CommandTypes
-		uint8_t register_addr; // Register address should be in MotorCommand::Registers
+		uint8_t type; // Type of message should be in MotorMessage::MessageTypes
+		uint8_t register_addr; // Register address should be in MotorMessage::Registers
 		uint8_t data[4]; // 4 bytes of data, numbers should be in big endian format
 
 		const static uint8_t delimeter = 0x7E; // Hard coded for now, should be parameterized

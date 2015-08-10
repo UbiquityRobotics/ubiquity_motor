@@ -28,17 +28,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <ubiquity_motor/motor_command.h>
-// #include <ubiquity_motor/motor_command_registers.h>
+#include <ubiquity_motor/motor_message.h>
+// #include <ubiquity_motor/motor_message_registers.h>
 #include <ros/console.h>
 
-uint8_t const MotorCommand::valid_types[] = {
+uint8_t const MotorMessage::valid_types[] = {
   TYPE_READ,
   TYPE_WRITE,
   TYPE_RESPONSE
 };
 
-uint8_t const MotorCommand::valid_registers[] = {
+uint8_t const MotorMessage::valid_registers[] = {
   REG_STOP_START,
   REG_BRAKE_STOP,
   REG_CRUISE_STOP,
@@ -81,29 +81,29 @@ uint8_t const MotorCommand::valid_registers[] = {
   REG_RIGHT_SPEED_MEASURED
 };
 
-void MotorCommand::setType(MotorCommand::CommandTypes type){
+void MotorMessage::setType(MotorMessage::MessageTypes type){
   if (verifyType(type)){
     this->type = type;
   }
 }
 
-MotorCommand::CommandTypes MotorCommand::getType(){
+MotorMessage::MessageTypes MotorMessage::getType(){
   if (verifyType(this->type)){
-    return static_cast<MotorCommand::CommandTypes>(this->type);
+    return static_cast<MotorMessage::MessageTypes>(this->type);
   }
 }
 
-void MotorCommand::setRegister(MotorCommand::Registers reg){
+void MotorMessage::setRegister(MotorMessage::Registers reg){
   if (verifyRegister(reg)){
     this->register_addr = reg;
   }
 }
 
-MotorCommand::Registers MotorCommand::getRegister(){
-  return static_cast<MotorCommand::Registers>(this->register_addr);
+MotorMessage::Registers MotorMessage::getRegister(){
+  return static_cast<MotorMessage::Registers>(this->register_addr);
 }
 
-void MotorCommand::setData(int32_t data){
+void MotorMessage::setData(int32_t data){
   // Spilt 32 bit data (system byte order) into 4 8bit elements in big endian (network byte order)
   this->data[3] = (data >> 0) & 0xFF;
   this->data[2] = (data >> 8) & 0xFF;
@@ -111,7 +111,7 @@ void MotorCommand::setData(int32_t data){
   this->data[0] = (data >> 24) & 0xFF;
 }
 
-int32_t MotorCommand::getData(){
+int32_t MotorMessage::getData(){
   // Take big endian (network byte order) elements and return 32 bit int
   return (this->data[0] << 24)
                | (this->data[1] << 16)
@@ -119,7 +119,7 @@ int32_t MotorCommand::getData(){
                | (this->data[3] << 0);
 }
 
-std::vector<uint8_t> MotorCommand::serialize(){
+std::vector<uint8_t> MotorMessage::serialize(){
   std::vector<uint8_t> out(9);
   out[0] = delimeter;
   out[1] = protocol_version;
@@ -133,7 +133,7 @@ std::vector<uint8_t> MotorCommand::serialize(){
   return out;
 }
 
-int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
+int MotorMessage::deserialize(std::vector<uint8_t> &serialized){
   if(serialized[0] == delimeter) {
     if (serialized[1] == protocol_version)
     {
@@ -172,7 +172,7 @@ int MotorCommand::deserialize(std::vector<uint8_t> &serialized){
   // 5 bad register
 } 
 
-int MotorCommand::verifyType(uint8_t t){
+int MotorMessage::verifyType(uint8_t t){
   //Return 1 good
   //Return 0 for bad
   for (int i = 0; i < sizeof(valid_types) / sizeof(valid_types[0]); ++i)
@@ -183,7 +183,7 @@ int MotorCommand::verifyType(uint8_t t){
   return 0;
 }
 
-int MotorCommand::verifyRegister(uint8_t r){
+int MotorMessage::verifyRegister(uint8_t r){
   //Return 1 good
   //Return 0 for bad
   for (int i = 0; i < sizeof(valid_registers) / sizeof(valid_registers[0]); ++i)
@@ -194,7 +194,7 @@ int MotorCommand::verifyRegister(uint8_t r){
   return 0;
 }
 
-uint8_t MotorCommand::generateChecksum(std::vector<uint8_t> data) {
+uint8_t MotorMessage::generateChecksum(std::vector<uint8_t> data) {
   int sum = data [1] + data[2] + data[3] + data[4] + data[5] + data[6] + data[7];
 
   if (sum > 0xFF) {

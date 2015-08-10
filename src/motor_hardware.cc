@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 #include <boost/assign.hpp>
 #include <ubiquity_motor/motor_hardware.h>
-#include <ubiquity_motor/motor_command.h>
+#include <ubiquity_motor/motor_message.h>
 
 #include <boost/math/special_functions/round.hpp>
 
@@ -89,15 +89,15 @@ MotorHardware::~MotorHardware(){
 
 void MotorHardware::readInputs(){
 	while(motor_serial_->commandAvailable()){
-		MotorCommand mc;
-		mc = motor_serial_-> receiveCommand();
-		if(mc.getType() == MotorCommand::TYPE_RESPONSE){
-			switch(mc.getRegister()){
-				case MotorCommand::REG_LEFT_ODOM:
-					joints_[0].position += mc.getData()/TICS_PER_RADIAN;
+		MotorMessage mm;
+		mm = motor_serial_-> receiveCommand();
+		if(mm.getType() == MotorMessage::TYPE_RESPONSE){
+			switch(mm.getRegister()){
+				case MotorMessage::REG_LEFT_ODOM:
+					joints_[0].position += mm.getData()/TICS_PER_RADIAN;
 					break;
-				case MotorCommand::REG_RIGHT_ODOM:
-					joints_[1].position += mc.getData()/TICS_PER_RADIAN;
+				case MotorMessage::REG_RIGHT_ODOM:
+					joints_[1].position += mm.getData()/TICS_PER_RADIAN;
 					break;
 			}
 		}
@@ -106,14 +106,14 @@ void MotorHardware::readInputs(){
 
 void MotorHardware::writeSpeeds(){
 	requestOdometry();
-	MotorCommand left;
-	left.setRegister(MotorCommand::REG_LEFT_SPEED_SET);
-	left.setType(MotorCommand::TYPE_WRITE);
+	MotorMessage left;
+	left.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
+	left.setType(MotorMessage::TYPE_WRITE);
 	left.setData(boost::math::lround(joints_[0].velocity_command*TICS_PER_RADIAN));
 	motor_serial_->transmitCommand(left);
-	MotorCommand right;
-	right.setRegister(MotorCommand::REG_RIGHT_SPEED_SET);
-	right.setType(MotorCommand::TYPE_WRITE);
+	MotorMessage right;
+	right.setRegister(MotorMessage::REG_RIGHT_SPEED_SET);
+	right.setType(MotorMessage::TYPE_WRITE);
 	right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN));
 	motor_serial_->transmitCommand(right);
 	// ROS_ERROR("velocity_command %f rad/s %f rad/s", joints_[0].velocity_command, joints_[1].velocity_command);
@@ -121,14 +121,14 @@ void MotorHardware::writeSpeeds(){
 }
 
 void MotorHardware::requestOdometry(){
-	MotorCommand left;
-	left.setRegister(MotorCommand::REG_LEFT_ODOM);
-	left.setType(MotorCommand::TYPE_READ);
+	MotorMessage left;
+	left.setRegister(MotorMessage::REG_LEFT_ODOM);
+	left.setType(MotorMessage::TYPE_READ);
 	left.setData(0);
 	motor_serial_->transmitCommand(left);
-	MotorCommand right;
-	right.setRegister(MotorCommand::REG_RIGHT_ODOM);
-	right.setType(MotorCommand::TYPE_READ);
+	MotorMessage right;
+	right.setRegister(MotorMessage::REG_RIGHT_ODOM);
+	right.setType(MotorMessage::TYPE_READ);
 	right.setData(0);
 	motor_serial_->transmitCommand(right);
 }

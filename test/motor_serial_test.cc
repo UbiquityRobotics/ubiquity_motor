@@ -1,4 +1,4 @@
-#include <ubiquity_motor/motor_command.h>
+#include <ubiquity_motor/motor_message.h>
 #include <ubiquity_motor/motor_serial.h>
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -10,7 +10,7 @@
 // 		while(!motor_serial.commandAvailable()){
 // 			usleep(100);
 // 		}
-// 		MotorCommand mc = motor_serial.receiveCommand();
+// 		MotorMessage mc = motor_serial.receiveCommand();
 // 		ASSERT_EQ(0x07, mc.getRegister());
 // 		//break;
 // 	//}

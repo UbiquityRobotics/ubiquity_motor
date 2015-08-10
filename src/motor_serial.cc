@@ -81,7 +81,7 @@ MotorSerial::~MotorSerial(){
 	delete serial_loop_rate;
 }
 
-int MotorSerial::transmitCommand(MotorCommand command) {
+int MotorSerial::transmitCommand(MotorMessage command) {
 	// Make sure to lock mutex before accessing the input fifo
 	input_mtx_.lock();
 	this->input.push(command); // add latest command to end of fifo
@@ -89,8 +89,8 @@ int MotorSerial::transmitCommand(MotorCommand command) {
 	return 0;
 }
 
-MotorCommand MotorSerial::receiveCommand() {
-	MotorCommand mc;
+MotorMessage MotorSerial::receiveCommand() {
+	MotorMessage mc;
 	output_mtx_.lock();
 	if(!this->output.empty()){
 		mc = this->output.front();
@@ -114,8 +114,8 @@ int MotorSerial::inputAvailable() {
 	return out;
 }
 
-MotorCommand MotorSerial::getInputCommand() {
-	MotorCommand mc;
+MotorMessage MotorSerial::getInputCommand() {
+	MotorMessage mc;
 	input_mtx_.lock();
 	if(!this->input.empty()){
 		mc = this->input.front();
@@ -125,7 +125,7 @@ MotorCommand MotorSerial::getInputCommand() {
 	return mc;
 }
 
-void MotorSerial::appendOutput(MotorCommand command){
+void MotorSerial::appendOutput(MotorMessage command){
 	output_mtx_.lock();
 	this->output.push(command);
 	output_mtx_.unlock();
@@ -139,7 +139,7 @@ void MotorSerial::SerialThread(){
 				std::vector<uint8_t> in(0);
 				motors->read(in, 9);
 				// ROS_ERROR("Len:%d", (int) in.size());
-				MotorCommand mc;
+				MotorMessage mc;
 				if (mc.deserialize(in) == 0) {
 					// ROS_ERROR("appendOutput");
 					appendOutput(mc);

@@ -1,5 +1,5 @@
 #include <ubiquity_motor/motor_hardware.h>
-#include <ubiquity_motor/motor_command.h>
+#include <ubiquity_motor/motor_message.h>
 #include <string>
 #include <boost/asio/io_service.hpp>
 #include <boost/thread.hpp>
