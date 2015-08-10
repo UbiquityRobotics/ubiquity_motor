@@ -14,10 +14,10 @@ TEST(ubiquity_motor_message, motor_message_commandtype) {
 TEST(ubiquity_motor_message, motor_message_commandtype_bad) {
 	MotorMessage mc;
 
-	mc.setType(static_cast<MotorMessage::CommandTypes>(0xF3));
+	mc.setType(static_cast<MotorMessage::MessageTypes>(0xF3));
 	ASSERT_NE(0xF3, mc.getType());
 
-	mc.setType(static_cast<MotorMessage::CommandTypes>(0xAB));
+	mc.setType(static_cast<MotorMessage::MessageTypes>(0xAB));
 	ASSERT_NE(0xAB, mc.getType());
 }
 
