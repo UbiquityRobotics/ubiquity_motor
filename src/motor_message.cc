@@ -135,11 +135,10 @@ std::vector<uint8_t> MotorMessage::serialize(){
 
 int MotorMessage::deserialize(std::vector<uint8_t> &serialized){
   if(serialized[0] == delimeter) {
-    if (serialized[1] == protocol_version)
-    {
-      if (generateChecksum(serialized) == serialized[8]){
-        if (verifyType(serialized[2])){
-          if (verifyRegister(serialized[3])){
+    if (serialized[1] == protocol_version) {
+      if (generateChecksum(serialized) == serialized[8]) {
+        if (verifyType(serialized[2])) {
+          if (verifyRegister(serialized[3])) {
             this->type = serialized[2];
             this->register_addr = serialized[3];
             this->data[0] = serialized[4];

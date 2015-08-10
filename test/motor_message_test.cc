@@ -81,6 +81,28 @@ TEST(ubiquity_motor_message, motor_message_deserialize_good) {
 	ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
 }
 
+TEST(ubiquity_motor_message, motor_message_deserialize_bad_delimeter) {
+	MotorMessage mc;
+
+	//Test bad delimeter with good checksum
+	uint8_t arr[] = {0x67, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x00, 0x00, 0x3B};
+
+	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+
+	ASSERT_EQ(1, mc.deserialize(input));
+}
+
+TEST(ubiquity_motor_message, motor_message_deserialize_bad_protocol) {
+	MotorMessage mc;
+
+	//Test bad protocol_verstion with good checksum
+	uint8_t arr[] = {0x7E, 0x01, 0xBB, 0x07, 0x00, 0x00, 0x00, 0x00, 0x3C};
+
+	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+
+	ASSERT_EQ(2, mc.deserialize(input));
+}
+
 TEST(ubiquity_motor_message, motor_message_deserialize_bad_checksum) {
 	MotorMessage mc;
 
