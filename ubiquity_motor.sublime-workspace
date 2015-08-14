@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"in",
+				"include"
+			],
+			[
 				"thea",
 				"thread_loop_delay"
 			],
@@ -58,10 +62,6 @@
 			[
 				"if",
 				"ifndef"
-			],
-			[
-				"in",
-				"inc	#include \"…\""
 			],
 			[
 				"out",
@@ -156,42 +156,10 @@
 	"buffers":
 	[
 		{
-			"file": "include/ubiquity_motor/motor_serial.h",
-			"settings":
-			{
-				"buffer_size": 2351,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/motor_serial.cc",
-			"settings":
-			{
-				"buffer_size": 4676,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "include/ubiquity_motor/motor_hardware.h",
-			"settings":
-			{
-				"buffer_size": 2403,
-				"line_ending": "Unix"
-			}
-		},
-		{
 			"file": "src/motor_hardware.cc",
 			"settings":
 			{
-				"buffer_size": 4575,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/motor_node.cc",
-			"settings":
-			{
-				"buffer_size": 1417,
+				"buffer_size": 4636,
 				"line_ending": "Unix"
 			}
 		}
@@ -203,10 +171,30 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 390.0,
-		"last_filter": "xml",
+		"height": 392.0,
+		"last_filter": "git st",
 		"selected_items":
 		[
+			[
+				"git st",
+				"Git: Status"
+			],
+			[
+				":w",
+				":w - Save"
+			],
+			[
+				"git pu",
+				"Git: Push"
+			],
+			[
+				"git co",
+				"Git: Commit"
+			],
+			[
+				"git ad",
+				"Git: Add Current File"
+			],
 			[
 				"xml",
 				"Set Syntax: XML"
@@ -220,16 +208,8 @@
 				"Git: Status"
 			],
 			[
-				"git ad",
-				"Git: Add..."
-			],
-			[
 				"gi",
 				"Git: Status"
-			],
-			[
-				"git co",
-				"Git: Commit"
 			],
 			[
 				"git add",
@@ -288,27 +268,32 @@
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src"
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test"
 	],
 	"file_history":
 	[
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_node.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_message_test.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_message.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_hardware.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_message.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command_registers.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CHANGELOG.rst",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_serial_test.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_serial.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_node.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_command.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/package.xml",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/magni-test.launch",
 		"/home/rohan/indigo_catkin/src/ubiquity/basic_magni.urdf",
 		"/home/rohan/indigo_catkin/src/ubiquity/magni.yaml",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command.h",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command_registers.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/.travis.yml",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
 		"/home/rohan/.config/sublime-text-3/Packages/User/catkin.sublime-build",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/catkin.sublime-build",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_serial.h",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/package.xml",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_serial_test.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_command_test.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_test.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/MotorCommand.cc",
@@ -333,9 +318,10 @@
 	},
 	"find_in_files":
 	{
-		"height": 0.0,
+		"height": 93.0,
 		"where_history":
 		[
+			""
 		]
 	},
 	"find_state":
@@ -343,6 +329,16 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"Command",
+			"MotorCommand",
+			"CommandTypes",
+			"motor_command",
+			"command",
+			"motor_command",
+			"const",
+			"};\n",
+			"d",
+			"serialized",
 			"loopDelay",
 			"new",
 			"~",
@@ -358,6 +354,9 @@
 		"regex": false,
 		"replace_history":
 		[
+			"Message",
+			"MotorMessage",
+			"motor_message",
 			"motors->"
 		],
 		"reverse": false,
@@ -369,24 +368,24 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "include/ubiquity_motor/motor_serial.h",
-					"semi_transient": false,
+					"file": "src/motor_hardware.cc",
+					"semi_transient": true,
 					"settings":
 					{
-						"buffer_size": 2351,
+						"buffer_size": 4636,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2081,
-								2081
+								3542,
+								3542
 							]
 						],
 						"settings":
@@ -395,127 +394,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 588.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "src/motor_serial.cc",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 4676,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								3717,
-								3717
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 2492.0,
+						"translation.y": 1632.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "include/ubiquity_motor/motor_hardware.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2403,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1991,
-								1991
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 724.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "src/motor_hardware.cc",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 4575,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2701,
-								2701
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 808.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "src/motor_node.cc",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1417,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1248,
-								1248
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 417.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
 					"type": "text"
 				}
 			]

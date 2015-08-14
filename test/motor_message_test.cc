@@ -11,14 +11,26 @@ TEST(ubiquity_motor_message, motor_message_commandtype) {
 	ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
 }
 
-TEST(ubiquity_motor_message, motor_message_commandtype_bad) {
+TEST(ubiquity_motor_message, motor_message_commandtype_invalid) {
 	MotorMessage mc;
-
-	mc.setType(static_cast<MotorMessage::MessageTypes>(0xF3));
-	ASSERT_NE(0xF3, mc.getType());
 
 	mc.setType(static_cast<MotorMessage::MessageTypes>(0xAB));
 	ASSERT_NE(0xAB, mc.getType());
+}
+
+TEST(ubiquity_motor_message, motor_message_commandtype_overflow) {
+	MotorMessage mc;
+
+	mc.setType(static_cast<MotorMessage::MessageTypes>(0xFFFFFF));
+	ASSERT_NE(0xFFFFFF, mc.getType());
+}
+
+TEST(ubiquity_motor_message, motor_message_commandtype_neg) {
+	MotorMessage mc;
+
+	mc.setType(static_cast<MotorMessage::MessageTypes>(-0xAA));
+	ASSERT_NE(-0xAA, mc.getType());
+	ASSERT_NE(0xAA, mc.getType());
 }
 
 TEST(ubiquity_motor_message, motor_message_register) {
@@ -29,29 +41,110 @@ TEST(ubiquity_motor_message, motor_message_register) {
 	ASSERT_NE(MotorMessage::REG_STOP_START, mc.getRegister());
 }
 
-TEST(ubiquity_motor_message, motor_message_register_bad) {
+TEST(ubiquity_motor_message, motor_message_register_invalid) {
 	MotorMessage mc;
-
-	mc.setRegister(static_cast<MotorMessage::Registers>(0xF3));
-	ASSERT_NE(0xF3, mc.getRegister());
 
 	mc.setRegister(static_cast<MotorMessage::Registers>(0x05));
 	ASSERT_NE(0x05, mc.getRegister());
 }
 
-TEST(ubiquity_motor_message, motor_message_data) {
+TEST(ubiquity_motor_message, motor_message_register_overflow) {
+	MotorMessage mc;
+
+	mc.setRegister(static_cast<MotorMessage::Registers>(0xFFFFFF));
+	ASSERT_NE(0xFFFFFF, mc.getRegister());
+}
+
+TEST(ubiquity_motor_message, motor_message_register_neg) {
+	MotorMessage mc;
+
+	mc.setRegister(static_cast<MotorMessage::Registers>(-0x07));
+	ASSERT_NE(-0x07, mc.getRegister());
+	ASSERT_NE(0x07, mc.getRegister());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_64bit_pos) {
+	MotorMessage mc;
+	int64_t i = 0xABC;
+	mc.setData(i);
+	ASSERT_EQ(0xABC, mc.getData());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_64bit_zero) {
+	MotorMessage mc;
+	int64_t i = 0;
+	mc.setData(i);
+	ASSERT_EQ(0, mc.getData());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_64bit_neg) {
+	MotorMessage mc;
+	int64_t i = -0xABC;
+	mc.setData(i);
+	ASSERT_EQ(-0xABC, mc.getData());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_32bit_pos) {
+	MotorMessage mc;
+	int32_t i = 0xABC;
+	mc.setData(i);
+	ASSERT_EQ(0xABC, mc.getData());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_32bit_zero) {
+	MotorMessage mc;
+	int32_t i = 0;
+	mc.setData(i);
+	ASSERT_EQ(0, mc.getData());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_32bit_neg) {
 	MotorMessage mc;
 	int32_t i = -0xABC;
 	mc.setData(i);
 	ASSERT_EQ(-0xABC, mc.getData());
+}
 
-	int16_t abcd = -0xABC;
-	mc.setData(abcd);
+TEST(ubiquity_motor_message, motor_message_data_16bit_pos) {
+	MotorMessage mc;
+	int16_t i = 0xABC;
+	mc.setData(i);
+	ASSERT_EQ(0xABC, mc.getData());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_16bit_zero) {
+	MotorMessage mc;
+	int16_t i = 0;
+	mc.setData(i);
+	ASSERT_EQ(0, mc.getData());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_16bit_neg) {
+	MotorMessage mc;
+	int16_t i = -0xABC;
+	mc.setData(i);
 	ASSERT_EQ(-0xABC, mc.getData());
+}
 
-	abcd = 522;
-	mc.setData(abcd);
-	ASSERT_EQ(522, mc.getData());
+TEST(ubiquity_motor_message, motor_message_data_8bit_pos) {
+	MotorMessage mc;
+	int8_t i = 0x50;
+	mc.setData(i);
+	ASSERT_EQ(0x50, mc.getData());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_8bit_zero) {
+	MotorMessage mc;
+	int8_t i = 0;
+	mc.setData(i);
+	ASSERT_EQ(0, mc.getData());
+}
+
+TEST(ubiquity_motor_message, motor_message_data_8bit_neg) {
+	MotorMessage mc;
+	int8_t i = -0x50;
+	mc.setData(i);
+	ASSERT_EQ(-0x50, mc.getData());
 }
 
 TEST(ubiquity_motor_message, motor_message_serialize) {
