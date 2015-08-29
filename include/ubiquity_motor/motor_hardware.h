@@ -46,6 +46,7 @@ class MotorHardware : public hardware_interface::RobotHW {
 		void readInputs();
 		void writeSpeeds();
 		void requestOdometry();
+		void setPid(int32_t p, int32_t i, int32_t d, int32_t denominator);
 
 	private:
 		ros::NodeHandle n;

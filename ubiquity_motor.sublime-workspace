@@ -156,10 +156,29 @@
 	"buffers":
 	[
 		{
-			"file": "src/motor_hardware.cc",
+			"file": "test/motor_message_test.cc",
 			"settings":
 			{
-				"buffer_size": 4636,
+				"buffer_size": 5897,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/motor_message.cc",
+			"settings":
+			{
+				"buffer_size": 5649,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "/**\nCopyright (c) 2015, Ubiquity Robotics\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of ubiquity_motor nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN AiiiiiiiiiiiNY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n**/\n#include <boost/assign.hpp>\n#include <ubiquity_motor/motor_hardware.h>\n#include <ubiquity_motor/motor_message.h>\n\n#include <boost/math/special_functions/round.hpp>\n\n//#define SENSOR_DISTANCE 0.002478\n\n// 60 tics per revolution of the motor (pre gearbox)\n//17.2328767123\n// gear ratio of 4.29411764706:1\n#define TICS_PER_RADIAN 41.0058030317\n\nMotorHardware::MotorHardware(ros::NodeHandle nh){\n	ros::V_string joint_names = boost::assign::list_of(\"left_wheel_joint\")(\"right_wheel_joint\");\n\n	for (unsigned int i = 0; i < joint_names.size(); i++) {\n		hardware_interface::JointStateHandle joint_state_handle(joint_names[i],\n		    &joints_[i].position, &joints_[i].velocity, &joints_[i].effort);\n		joint_state_interface_.registerHandle(joint_state_handle);\n\n		hardware_interface::JointHandle joint_handle(\n		    joint_state_handle, &joints_[i].velocity_command);\n		velocity_joint_interface_.registerHandle(joint_handle);\n	}\n	registerInterface(&joint_state_interface_);\n	registerInterface(&velocity_joint_interface_);\n\n\n\n	std::string sPort;\n	int sBaud;\n\n	double sLoopRate;\n\n	if (!n.getParam(\"ubiquity_motor/serial_port\", sPort))\n	{\n		sPort.assign(\"/dev/ttyS0\");\n		n.setParam(\"ubiquity_motor/serial_port\", sPort);\n	}\n\n	if (!n.getParam(\"ubiquity_motor/serial_baud\", sBaud))\n	{\n		sBaud = 9600;\n		n.setParam(\"ubiquity_motor/serial_baud\", sBaud);\n	}\n\n	if (!n.getParam(\"ubiquity_motor/serial_loop_rate\", sLoopRate))\n	{\n		sLoopRate = 100;\n		n.setParam(\"ubiquity_motor/serial_loop_rate\", sLoopRate);\n	}\n\n	motor_serial_ = new MotorSerial(sPort,sBaud,sLoopRate);\n}\n\nMotorHardware::~MotorHardware(){\n	delete motor_serial_;\n}\n\nvoid MotorHardware::readInputs(){\n	while(motor_serial_->commandAvailable()){\n		MotorMessage mm;\n		mm = motor_serial_-> receiveCommand();\n		if(mm.getType() == MotorMessage::TYPE_RESPONSE){\n			switch(mm.getRegister()){\n				case MotorMessage::REG_LEFT_ODOM:\n					joints_[0].position += mm.getData()/TICS_PER_RADIAN;\n					break;\n				case MotorMessage::REG_RIGHT_ODOM:\n					joints_[1].position += mm.getData()/TICS_PER_RADIAN;\n					break;\n			}\n		}\n	}\n}\n\nvoid MotorHardware::writeSpeeds(){\n	requestOdometry();\n	MotorMessage left;\n	left.setRegister(MotorMessage::REG_LEFT_SPEED_SET);\n	left.setType(MotorMessage::TYPE_WRITE);\n	left.setData(boost::math::lround(joints_[0].velocity_command*TICS_PER_RADIAN));\n	motor_serial_->transmitCommand(left);\n	MotorMessage right;\n	right.setRegister(MotorMessage::REG_RIGHT_SPEED_SET);\n	right.setType(MotorMessage::TYPE_WRITE);\n	right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN));\n	motor_serial_->transmitCommand(right);\n	// ROS_ERROR(\"velocity_command %f rad/s %f rad/s\", joints_[0].velocity_command, joints_[1].velocity_command);\n	// ROS_ERROR(\"SPEEDS %d %d\", left.getData(), right.getData());\n}\n\nvoid MotorHardware::requestOdometry(){\n	MotorMessage left;\n	left.setRegister(MotorMessage::REG_LEFT_ODOM);\n	left.setType(MotorMessage::TYPE_READ);\n	left.setData(0);\n	motor_serial_->transmitCommand(left);\n	MotorMessage right;\n	right.setRegister(MotorMessage::REG_RIGHT_ODOM);\n	right.setType(MotorMessage::TYPE_READ);\n	right.setData(0);\n	motor_serial_->transmitCommand(right);\n}",
+			"file": "src/motor_hardware.cc",
+			"file_size": 4636,
+			"file_write_time": 130836439930358896,
+			"settings":
+			{
+				"buffer_size": 4647,
 				"line_ending": "Unix"
 			}
 		}
@@ -171,10 +190,14 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 392.0,
-		"last_filter": "git st",
+		"height": 159.0,
+		"last_filter": "git branc",
 		"selected_items":
 		[
+			[
+				"git branc",
+				"Git: Change Branch"
+			],
 			[
 				"git st",
 				"Git: Status"
@@ -368,24 +391,24 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 2,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "src/motor_hardware.cc",
-					"semi_transient": true,
+					"file": "test/motor_message_test.cc",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4636,
+						"buffer_size": 5897,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								3542,
-								3542
+								4138,
+								4138
 							]
 						],
 						"settings":
@@ -394,7 +417,66 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 1632.0,
+						"translation.y": 1530.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/motor_message.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5649,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5619,
+								5619
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3070.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/motor_hardware.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4647,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1486,
+								1486
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 306.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,

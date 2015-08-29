@@ -24,7 +24,7 @@ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN AiiiiiiiiiiiNY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 #include <boost/assign.hpp>
@@ -131,4 +131,27 @@ void MotorHardware::requestOdometry(){
 	right.setType(MotorMessage::TYPE_READ);
 	right.setData(0);
 	motor_serial_->transmitCommand(right);
+}
+
+void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set, int32_t denominator_set){
+	MotorMessage p;
+	p.setRegister(MotorMessage::REG_PARAM_P);
+	p.setType(MotorMessage::TYPE_WRITE);
+	p.setData(p_set);
+	motor_serial_->transmitCommand(p);
+	MotorMessage i;
+	i.setRegister(MotorMessage::REG_PARAM_I);
+	i.setType(MotorMessage::TYPE_READ);
+	i.setData(i_set);
+	motor_serial_->transmitCommand(i);
+	MotorMessage d;
+	d.setRegister(MotorMessage::REG_PARAM_D);
+	d.setType(MotorMessage::TYPE_READ);
+	d.setData(d_set);
+	motor_serial_->transmitCommand(d);
+	MotorMessage denominator;
+	denominator.setRegister(MotorMessage::REG_PARAM_D);
+	denominator.setType(MotorMessage::TYPE_READ);
+	denominator.setData(denominator_set);
+	motor_serial_->transmitCommand(denominator);
 }
