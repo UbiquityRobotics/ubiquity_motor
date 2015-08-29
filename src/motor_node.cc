@@ -66,8 +66,8 @@ main(int argc, char* argv[]) {
 		nh.setParam("ubiquity_motor/pid_denominator", pid_denominator);
 	}
 
-
-
+	robot.setPid(pid_propotional,pid_integral,pid_derivative,pid_denominator);
+	
 	double controller_loop_rate;
 	if (!nh.getParam("ubiquity_motor/controller_loop_rate", controller_loop_rate))
 	{
