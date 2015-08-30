@@ -22,6 +22,7 @@ void controlLoop(ros::Rate r,
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
 		ros::Duration elapsed = ros::Duration(current_time.tv_sec - last_time.tv_sec + (current_time.tv_nsec - last_time.tv_nsec) / BILLION);
 		last_time = current_time;
+		robot.sendPid();
 		robot.readInputs();
 		cm.update(ros::Time::now(), elapsed);
 		robot.writeSpeeds();
@@ -37,15 +38,15 @@ main(int argc, char* argv[]) {
 	controller_manager::ControllerManager cm(&robot,nh);
 
 
-	int32_t pid_propotional;
+	int32_t pid_proportional;
 	int32_t pid_integral;
 	int32_t pid_derivative;
 	int32_t pid_denominator;
 
-	if (!nh.getParam("ubiquity_motor/pid_propotional", pid_propotional))
+	if (!nh.getParam("ubiquity_motor/pid_proportional", pid_proportional))
 	{
-		pid_propotional = 450;
-		nh.setParam("ubiquity_motor/pid_propotional", pid_propotional);
+		pid_proportional = 450;
+		nh.setParam("ubiquity_motor/pid_proportional", pid_proportional);
 	}
 
 	if (!nh.getParam("ubiquity_motor/pid_integral", pid_integral))
@@ -66,7 +67,8 @@ main(int argc, char* argv[]) {
 		nh.setParam("ubiquity_motor/pid_denominator", pid_denominator);
 	}
 
-	robot.setPid(pid_propotional,pid_integral,pid_derivative,pid_denominator);
+	robot.setPid(pid_proportional,pid_integral,pid_derivative,pid_denominator);
+	robot.sendPid();
 	
 	double controller_loop_rate;
 	if (!nh.getParam("ubiquity_motor/controller_loop_rate", controller_loop_rate))
