@@ -124,7 +124,7 @@ void MotorHardware::writeSpeeds(){
 	right.setType(MotorMessage::TYPE_WRITE);
 	right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ));
 	motor_serial_->transmitCommand(right);
-	ROS_ERROR("velocity_command %f rad/s %f rad/s", joints_[0].velocity_command, joints_[1].velocity_command);
+	//ROS_ERROR("velocity_command %f rad/s %f rad/s", joints_[0].velocity_command, joints_[1].velocity_command);
 	// ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
 }
 
