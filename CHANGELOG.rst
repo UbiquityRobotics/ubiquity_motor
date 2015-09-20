@@ -4,6 +4,16 @@ Changelog for package ubiquity_motor
 
 Forthcoming
 -----------
+* Remove annoying debug print
+* Fix numerous PID issues. First, add velocity reporting. Second, fix 10x unit error between specified velocity and actual. Third, make PID parameter changes actually world.
+* actually calling the function now
+* added pid params (hopefully)
+* added more unit tests
+* added some more unit test coverage, b/c I spent half an hour on an avoidable wild goose chase
+* updated unit tests
+* renamed motor command to motor message
+* Contributors: Jim Vaughan, Rohan Agrawal
+
 * Updated package.xml with new dependencies, bumped version number
 * updated travis button
 * Merge refactoring branch into indigo-devel
