@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.1 (2015-10-12)
+------------------
 * fixed install rules for Cmake
 * added license to test code
 * Contributors: Rohan Agrawal
