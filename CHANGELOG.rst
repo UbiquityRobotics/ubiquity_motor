@@ -2,6 +2,12 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fixed install rules for Cmake
+* added license to test code
+* Contributors: Rohan Agrawal
+
 0.3.0 (2015-09-20)
 ------------------
 * Remove annoying debug print
