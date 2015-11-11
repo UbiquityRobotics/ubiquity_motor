@@ -55,7 +55,8 @@ class MotorSerial
 		
 		std::string _port;
 		uint32_t _baud_rate;
-
+                
+		bool have_input;
 		std::queue<MotorMessage> input;
 		std::queue<MotorMessage> output;
 
