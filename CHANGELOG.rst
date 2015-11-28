@@ -2,6 +2,12 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Many fixes for bad odometery, more robust serial protocol
+* Add code to speed up serial. Major improvements in latency to the motor board
+* Contributors: atp42
+
 0.3.1 (2015-10-12)
 ------------------
 * fixed install rules for Cmake
