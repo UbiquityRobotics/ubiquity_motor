@@ -103,6 +103,10 @@ MotorMessage::Registers MotorMessage::getRegister(){
   return static_cast<MotorMessage::Registers>(this->register_addr);
 }
 
+/*bool MotorMessage::isDelimeter(uint8_t data) {
+  return (delimeter == data);
+  }*/
+
 void MotorMessage::setData(int32_t data){
   // Spilt 32 bit data (system byte order) into 4 8bit elements in big endian (network byte order)
   this->data[3] = (data >> 0) & 0xFF;

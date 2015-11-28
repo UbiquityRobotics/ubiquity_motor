@@ -38,8 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 60 tics per revolution of the motor (pre gearbox)
 //17.2328767123
 // gear ratio of 4.29411764706:1
-#define TICS_PER_RADIAN 41.0058030317
+#define TICS_PER_RADIAN (41.0058030317/2)
 #define SECONDS_PER_VELOCITY_READ 10.0 //read = ticks / (100 ms), so we have scale of 10 for ticks/second
+#define CURRENT_FIRMWARE_VERSION 18
 
 MotorHardware::MotorHardware(ros::NodeHandle nh){
 	ros::V_string joint_names = boost::assign::list_of("left_wheel_joint")("right_wheel_joint");
@@ -94,8 +95,15 @@ void MotorHardware::readInputs(){
 		mm = motor_serial_-> receiveCommand();
 		if(mm.getType() == MotorMessage::TYPE_RESPONSE){
 			switch(mm.getRegister()){
+			        case MotorMessage::REG_FIRMWARE_VERSION:
+				        if (mm.getData() != CURRENT_FIRMWARE_VERSION) { 
+                 		                ROS_ERROR("Firmware version %d, expect %d",
+							  mm.getData(), CURRENT_FIRMWARE_VERSION);
+					}
+					break;
 				case MotorMessage::REG_LEFT_ODOM:
-					joints_[0].position += mm.getData()/TICS_PER_RADIAN;
+				  //ROS_ERROR("TICK: %d", mm.getData());
+				        joints_[0].position += mm.getData()/TICS_PER_RADIAN;
 					break;
 				case MotorMessage::REG_RIGHT_ODOM:
 					joints_[1].position += mm.getData()/TICS_PER_RADIAN;
@@ -114,6 +122,7 @@ void MotorHardware::readInputs(){
 void MotorHardware::writeSpeeds(){
 	requestOdometry();
 	requestVelocity();
+	//requestVersion();
 	MotorMessage left;
 	left.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
 	left.setType(MotorMessage::TYPE_WRITE);
@@ -128,7 +137,17 @@ void MotorHardware::writeSpeeds(){
 	// ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
 }
 
+void MotorHardware::requestVersion(){                                                                                          
+        MotorMessage version;
+	version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
+	version.setType(MotorMessage::TYPE_READ);
+	version.setData(0);
+	motor_serial_->transmitCommand(version);
+
+}
+
 void MotorHardware::requestOdometry(){
+  //ROS_ERROR("TICKR");
 	MotorMessage left;
 	left.setRegister(MotorMessage::REG_LEFT_ODOM);
 	left.setType(MotorMessage::TYPE_READ);
