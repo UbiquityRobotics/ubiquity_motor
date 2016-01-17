@@ -21,6 +21,10 @@ before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -qq -y ros-$ROS_DISTRO-ros-base ros-$ROS_DISTRO-catkin python-rosdep python-wstool
 - sudo apt-get install -y python-catkin-pkg
+- sudo rm -rf /usr/local/lib/python2.7/dist-packages/catkin*
+- sudo dpkg -L python-catkin-pkg
+- python -c 'import catkin_pkg; print(catkin_pkg.__file__)'
+- python -c 'import sys; print(sys.path)'
 - sudo rosdep init
 - rosdep update
 install:
