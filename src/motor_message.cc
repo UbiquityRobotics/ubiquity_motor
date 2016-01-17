@@ -173,8 +173,7 @@ int MotorMessage::deserialize(std::vector<uint8_t> &serialized){
   // 3 bad checksum
   // 4 bad type
   // 5 bad register
-} 
-
+}
 int MotorMessage::verifyType(uint8_t t){
   //Return 1 good
   //Return 0 for bad
