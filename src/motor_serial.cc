@@ -92,6 +92,19 @@ int MotorSerial::transmitCommand(MotorMessage command) {
     return 0;
 }
 
+int MotorSerial::transmitCommands(std::vector<MotorMessage> commands) {
+    // Make sure to lock mutex before accessing the input fifo
+    input_mtx_.lock();
+    for (std::vector<MotorMessage>::iterator it = commands.begin(); it != commands.end(); ++it)
+    {
+        this->input.push(*it);
+        this->have_input = true; //Used to avoid input locking
+    }
+    //this->input.push(command); // add latest command to end of fifo
+    input_mtx_.unlock();
+    return 0;
+}
+
 MotorMessage MotorSerial::receiveCommand() {
     MotorMessage mc;
     output_mtx_.lock();

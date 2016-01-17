@@ -50,6 +50,8 @@ class MotorSerial
 		boost::mutex output_mtx_;
 		
 		int transmitCommand(MotorMessage command);
+		int transmitCommands(std::vector<MotorMessage> commands);
+		
 		MotorMessage receiveCommand();
 		int commandAvailable();
 

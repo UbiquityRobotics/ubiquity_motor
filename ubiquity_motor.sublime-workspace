@@ -4,6 +4,14 @@
 		"selected_items":
 		[
 			[
+				"comm",
+				"commands"
+			],
+			[
+				"moo",
+				"motor_serial_"
+			],
+			[
 				"in",
 				"include"
 			],
@@ -74,10 +82,6 @@
 			[
 				"c",
 				"catch"
-			],
-			[
-				"comm",
-				"commandAvailable"
 			],
 			[
 				"ver",
@@ -156,13 +160,18 @@
 	"buffers":
 	[
 		{
-			"contents": "cmake_minimum_required(VERSION 2.8.3)\nproject(ubiquity_motor)\n\n## Find catkin macros and libraries\n## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)\n## is used, also find other catkin packages\nfind_package(catkin REQUIRED COMPONENTS \n	roscpp \n	geometry_msgs \n	tf \n	nav_msgs \n	serial \n	hardware_interface \n	controller_manager)\n## System dependencies are found with CMake's conventions\nfind_package(Boost REQUIRED COMPONENTS \n	system \n	thread)\n\n\n## Uncomment this if the package has a setup.py. This macro ensures\n## modules and global scripts declared therein get installed\n## See http://ros.org/doc/groovy/api/catkin/html/user_guide/setup_dot_py.html\n# catkin_python_setup()\n\n#######################################\n## Declare ROS messages and services ##\n#######################################\n\n## Generate messages in the 'msg' folder\n# add_message_files(\n#   FILES\n#   Message1.msg\n#   Message2.msg\n# )\n\n## Generate services in the 'srv' folder\n# add_service_files(\n#   FILES\n#   Service1.srv\n#   Service2.srv\n# )\n\n## Generate added messages and services with any dependencies listed here\n# generate_messages(\n#   DEPENDENCIES\n#   std_msgs  # Or other packages containing msgs\n# )\n\n###################################\n## catkin specific configuration ##\n###################################\n## The catkin_package macro generates cmake config files for your package\n## Declare things to be passed to dependent projects\n## LIBRARIES: libraries you create in this project that dependent projects also need\n## CATKIN_DEPENDS: catkin_packages dependent projects also need\n## DEPENDS: system dependencies of this project that dependent projects also need\ncatkin_package(\n  INCLUDE_DIRS include\n  LIBRARIES ubiquity_motor\n#  CATKIN_DEPENDS other_catkin_pkg\n#  DEPENDS system_lib\n)\n\n###########\n## Build ##\n###########\n   	\n## Specify additional locations of header files\n## Your package locations should be listed before other locations\ninclude_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})\n\n## Declare a cpp library\nadd_library(ubiquity_motor\n  src/motor_message.cc src/motor_serial.cc src/motor_hardware.cc\n)\ntarget_link_libraries(ubiquity_motor\n ${catkin_LIBRARIES}\n ${Boost_LIBRARIES}\n)\n\n## Declare a cpp executable\nadd_executable(motor_node src/motor_node.cc src/motor_message.cc src/motor_serial.cc src/motor_hardware.cc)\ntarget_link_libraries(motor_node\n ${catkin_LIBRARIES}\n ${Boost_LIBRARIES}\n)\n\n## Add cmake target dependencies of the executable/library\n## as an example, message headers may need to be generated before nodes\n#add_dependencies(controller)\n\n## Specify libraries to link a library or executable target against\n#target_link_libraries(motor_node\n # ${catkin_LIBRARIES}\n#)\n\n#############\n## Install ##\n#############\n\n# all install targets should use catkin DESTINATION variables\n# See http://ros.org/doc/groovy/api/catkin/html/adv_user_guide/variables.html\n\n## Mark executable scripts (Python etc.) for installation\n## in contrast to setup.py, you can choose the destination\n# install(PROGRAMS\n#   scripts/my_python_script\n#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}\n# )\n\n## Mark executables and/or libraries for installation\ninstall(TARGETS ubiquity_motor motor_node\n  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}\n  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}\n  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}\n)\n\n## Mark cpp header files for installation\ninstall(DIRECTORY include/${PROJECT_NAME}/\n  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}\n  FILES_MATCHING PATTERN \"*.h\"\n  PATTERN \".svn\" EXCLUDE\n)\n\n## Mark other files for installation (e.g. launch and bag files, etc.)\n# install(FILES\n#   # myfile1\n#   # myfile2\n#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}\n# )\n\n#############\n## Testing ##\n#############\n\n## Add gtest based cpp test target and link libraries\nif(CATKIN_ENABLE_TESTING)\n	catkin_add_gtest(ubiquity_motor_tests \n		test/motor_test.cc \n		test/motor_message_test.cc\n		test/motor_serial_test.cc)\n	target_link_libraries(ubiquity_motor_tests  ubiquity_motor ${catkin_LIBRARIES})\nendif()\n\n## Add folders to be run by python nosetests\n# catkin_add_nosetests(test)\n\n\n",
-			"file": "CMakeLists.txt",
-			"file_size": 4178,
-			"file_write_time": 130933329062157930,
+			"file": "src/motor_node.cc",
 			"settings":
 			{
-				"buffer_size": 4182,
+				"buffer_size": 2296,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/motor_hardware.cc",
+			"settings":
+			{
+				"buffer_size": 7278,
 				"line_ending": "Unix"
 			}
 		},
@@ -170,15 +179,7 @@
 			"file": "include/ubiquity_motor/motor_serial.h",
 			"settings":
 			{
-				"buffer_size": 2670,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "/home/rohan/PCBs/Odin/RevB/QTC.xml",
-			"settings":
-			{
-				"buffer_size": 64236,
+				"buffer_size": 2733,
 				"line_ending": "Unix"
 			}
 		},
@@ -186,15 +187,7 @@
 			"file": "src/motor_serial.cc",
 			"settings":
 			{
-				"buffer_size": 6795,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/motor_message.cc",
-			"settings":
-			{
-				"buffer_size": 5734,
+				"buffer_size": 7267,
 				"line_ending": "Unix"
 			}
 		}
@@ -320,30 +313,30 @@
 	],
 	"file_history":
 	[
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/.travis.yml",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_message.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
 		"/home/rohan/PCBs/Odin/RevB/QTC.xml",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_serial.h",
 		"/home/rohan/build/kicad/kicad-source-mirror/eeschema/plugins/bom2csv.xsl",
 		"/home/rohan/build/kicad/kicad-source-mirror/eeschema/plugins/CMakeLists.txt",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_serial.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
 		"/home/rohan/PCBs/Odin/RevB/QTC.kicad_pcb",
 		"/home/rohan/build/kicad/kicad.bzr/pcbnew/eagle_plugin.cpp",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_message_test.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_message.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_hardware.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_message.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command_registers.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CHANGELOG.rst",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_serial_test.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_node.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_command.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/package.xml",
 		"/home/rohan/indigo_catkin/src/ubiquity/magni-test.launch",
 		"/home/rohan/indigo_catkin/src/ubiquity/basic_magni.urdf",
 		"/home/rohan/indigo_catkin/src/ubiquity/magni.yaml",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/.travis.yml",
 		"/home/rohan/.config/sublime-text-3/Packages/User/catkin.sublime-build",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/catkin.sublime-build",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_command_test.cc",
@@ -424,52 +417,24 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 1,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "CMakeLists.txt",
+					"file": "src/motor_node.cc",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4182,
+						"buffer_size": 2296,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2148,
-								2148
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/CMake/CMake.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 1020.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "include/ubiquity_motor/motor_serial.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2670,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1872,
-								1872
+								544,
+								544
 							]
 						],
 						"settings":
@@ -478,37 +443,65 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 570.0,
+						"translation.y": 102.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
-					"file": "/home/rohan/PCBs/Odin/RevB/QTC.xml",
+					"buffer": 1,
+					"file": "src/motor_hardware.cc",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 64236,
+						"buffer_size": 7278,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4077,
-								4077
+								4551,
+								4551
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/XML/XML.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 663.0,
+						"translation.y": 1836.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "include/ubiquity_motor/motor_serial.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2733,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2039,
+								2039
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 612.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 3,
@@ -520,15 +513,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6795,
+						"buffer_size": 7267,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								6239,
-								6239
+								3135,
+								3135
 							]
 						],
 						"settings":
@@ -537,41 +530,11 @@
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
-						"translation.x": 0.0,
-						"translation.y": 3053.0,
+						"translation.x": -0.0,
+						"translation.y": 1275.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "src/motor_message.cc",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 5734,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2522,
-								2522
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 1224.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
 					"type": "text"
 				}
 			]

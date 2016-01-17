@@ -120,19 +120,25 @@ void MotorHardware::readInputs(){
 }
 
 void MotorHardware::writeSpeeds(){
-	requestOdometry();
-	requestVelocity();
+	std::vector<MotorMessage> commands;
+	//requestOdometry();
+	//requestVelocity();
 	//requestVersion();
+
 	MotorMessage left;
 	left.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
 	left.setType(MotorMessage::TYPE_WRITE);
 	left.setData(boost::math::lround(joints_[0].velocity_command*TICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ));
-	motor_serial_->transmitCommand(left);
+	commands.push_back(left);
+
 	MotorMessage right;
 	right.setRegister(MotorMessage::REG_RIGHT_SPEED_SET);
 	right.setType(MotorMessage::TYPE_WRITE);
-	right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ));
-	motor_serial_->transmitCommand(right);
+	right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ));	
+	commands.push_back(right);
+
+	motor_serial_->transmitCommands(commands);
+
 	//ROS_ERROR("velocity_command %f rad/s %f rad/s", joints_[0].velocity_command, joints_[1].velocity_command);
 	// ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
 }
