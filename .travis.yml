@@ -1,5 +1,8 @@
 sudo: required
 dist: trusty
+language:
+- cpp
+- python
 notifications:
   email:
     recipients:
@@ -17,6 +20,7 @@ before_install:
 - sudo apt-key adv --keyserver hkp://pool.sks-keyservers.net --recv-key 0xB01FA116
 - sudo apt-get update -qq
 - sudo apt-get install -qq -y ros-$ROS_DISTRO-ros-base ros-$ROS_DISTRO-catkin python-rosdep python-wstool
+- sudo apt-get install -y python-catkin-pkg
 - sudo rosdep init
 - rosdep update
 install:
