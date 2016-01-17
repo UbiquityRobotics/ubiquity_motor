@@ -13,7 +13,7 @@ before_install:
 - export CI_SOURCE_PATH=$(pwd)
 - export REPOSITORY_NAME=${PWD##*/}
 - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-- sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
+- sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 - sudo apt-key adv --keyserver hkp://pool.sks-keyservers.net --recv-key 0xB01FA116
 - sudo apt-get update -qq
 - sudo apt-get install -qq -y ros-$ROS_DISTRO-ros-base ros-$ROS_DISTRO-catkin  python-catkin-pkg python-rosdep python-wstool
@@ -22,7 +22,7 @@ before_install:
 install:
 - mkdir -p ~/ros/catkin_ws/src
 - cd ~/ros/catkin_ws/src
-- wstool init .
+- catkin_init_workspace
 - git clone -b $TRAVIS_BRANCH https://github.com/UbiquityRobotics/ubiquity_motor.git
 - rm -rf $REPOSITORY_NAME
 - ln -s $CI_SOURCE_PATH .
