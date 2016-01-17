@@ -1,8 +1,6 @@
 sudo: required
 dist: trusty
-language:
-- cpp
-- python
+language: generic
 notifications:
   email:
     recipients:
