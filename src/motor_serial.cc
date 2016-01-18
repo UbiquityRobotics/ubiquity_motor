@@ -100,7 +100,6 @@ int MotorSerial::transmitCommands(std::vector<MotorMessage> commands) {
         this->input.push(*it);
         this->have_input = true; //Used to avoid input locking
     }
-    //this->input.push(command); // add latest command to end of fifo
     input_mtx_.unlock();
     return 0;
 }

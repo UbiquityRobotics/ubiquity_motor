@@ -65,7 +65,7 @@ class MotorSerial
 		bool have_input;
 		// queue for messages that are to be transmitted
 		std::queue<MotorMessage> input; 
-
+		
 		//queue for messages that have been received
 		std::queue<MotorMessage> output; 
 
