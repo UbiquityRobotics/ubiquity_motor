@@ -137,6 +137,24 @@ void MotorHardware::writeSpeeds(){
 	right_odom.setData(0);
 	commands.push_back(right_odom);
 
+
+
+
+	MotorMessage left_vel;
+	left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
+	left_vel.setType(MotorMessage::TYPE_READ);
+	left_vel.setData(0);
+	commands.push_back(left_vel);
+
+	MotorMessage right_vel;
+	right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
+	right_vel.setType(MotorMessage::TYPE_READ);
+	right_vel.setData(0);
+	commands.push_back(right_vel);
+
+
+
+
 	MotorMessage left;
 	left.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
 	left.setType(MotorMessage::TYPE_WRITE);
@@ -188,17 +206,17 @@ void MotorHardware::requestOdometry(){
 void MotorHardware::requestVelocity(){
 	std::vector<MotorMessage> commands;
 
-	MotorMessage left;
-	left.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
-	left.setType(MotorMessage::TYPE_READ);
-	left.setData(0);
-	commands.push_back(left);
+	MotorMessage left_vel;
+	left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
+	left_vel.setType(MotorMessage::TYPE_READ);
+	left_vel.setData(0);
+	commands.push_back(left_vel);
 
-	MotorMessage right;
-	right.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
-	right.setType(MotorMessage::TYPE_READ);
-	right.setData(0);
-	commands.push_back(right);
+	MotorMessage right_vel;
+	right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
+	right_vel.setType(MotorMessage::TYPE_READ);
+	right_vel.setData(0);
+	commands.push_back(right_vel);
 
 	motor_serial_->transmitCommands(commands);
 }
@@ -212,24 +230,31 @@ void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set, int32_t 
 }
 
 void MotorHardware::sendPid() {
+	std::vector<MotorMessage> commands;
+
 	MotorMessage p;
 	p.setRegister(MotorMessage::REG_PARAM_P);
 	p.setType(MotorMessage::TYPE_WRITE);
 	p.setData(p_value);
-	motor_serial_->transmitCommand(p);
+	commands.push_back(p);
+
 	MotorMessage i;
 	i.setRegister(MotorMessage::REG_PARAM_I);
 	i.setType(MotorMessage::TYPE_WRITE);
 	i.setData(i_value);
-	motor_serial_->transmitCommand(i);
+	commands.push_back(i);
+
 	MotorMessage d;
 	d.setRegister(MotorMessage::REG_PARAM_D);
 	d.setType(MotorMessage::TYPE_WRITE);
 	d.setData(d_value);
-	motor_serial_->transmitCommand(d);
+	commands.push_back(d);
+
 	MotorMessage denominator;
 	denominator.setRegister(MotorMessage::REG_PARAM_C);
 	denominator.setType(MotorMessage::TYPE_WRITE);
 	denominator.setData(denominator_value);
-	motor_serial_->transmitCommand(denominator);
+	commands.push_back(denominator);
+
+	motor_serial_->transmitCommands(commands);
 }

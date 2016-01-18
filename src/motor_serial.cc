@@ -106,6 +106,7 @@ int MotorSerial::transmitCommands(std::vector<MotorMessage> commands) {
 
 MotorMessage MotorSerial::receiveCommand() {
     MotorMessage mc;
+    
     output_mtx_.lock();
     if (!this->output.empty()) {
         mc = this->output.front();
