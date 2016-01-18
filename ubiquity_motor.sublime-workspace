@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"de",
+				"denominator"
+			],
+			[
 				"have",
 				"have_output"
 			],
@@ -168,10 +172,18 @@
 	"buffers":
 	[
 		{
-			"file": "include/ubiquity_motor/motor_serial.h",
+			"file": "src/motor_hardware.cc",
 			"settings":
 			{
-				"buffer_size": 2830,
+				"buffer_size": 8322,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/motor_node.cc",
+			"settings":
+			{
+				"buffer_size": 2292,
 				"line_ending": "Unix"
 			}
 		},
@@ -179,7 +191,7 @@
 			"file": "src/motor_serial.cc",
 			"settings":
 			{
-				"buffer_size": 7682,
+				"buffer_size": 7687,
 				"line_ending": "Unix"
 			}
 		}
@@ -305,17 +317,17 @@
 	],
 	"file_history":
 	[
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_serial.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_node.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_hardware.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/.travis.yml",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_message.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
 		"/home/rohan/PCBs/Odin/RevB/QTC.xml",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_serial.h",
 		"/home/rohan/build/kicad/kicad-source-mirror/eeschema/plugins/bom2csv.xsl",
 		"/home/rohan/build/kicad/kicad-source-mirror/eeschema/plugins/CMakeLists.txt",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
 		"/home/rohan/PCBs/Odin/RevB/QTC.kicad_pcb",
 		"/home/rohan/build/kicad/kicad.bzr/pcbnew/eagle_plugin.cpp",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_message_test.cc",
@@ -366,6 +378,8 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"left",
+			"	\n",
 			"    \n",
 			"model",
 			"\n    ",
@@ -415,19 +429,19 @@
 			[
 				{
 					"buffer": 0,
-					"file": "include/ubiquity_motor/motor_serial.h",
+					"file": "src/motor_hardware.cc",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2830,
+						"buffer_size": 8322,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2498,
-								2498
+								5337,
+								5337
 							]
 						],
 						"settings":
@@ -436,7 +450,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 587.0,
+						"translation.y": 4029.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -444,19 +458,48 @@
 				},
 				{
 					"buffer": 1,
-					"file": "src/motor_serial.cc",
+					"file": "src/motor_node.cc",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 7682,
+						"buffer_size": 2292,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4749,
-								4749
+								899,
+								899
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/motor_serial.cc",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7687,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6856,
+								6856
 							]
 						],
 						"settings":
@@ -466,10 +509,10 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 2346.0,
+						"translation.y": 2550.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
