@@ -116,22 +116,39 @@ MotorMessage MotorSerial::receiveCommand() {
 }
 
 int MotorSerial::commandAvailable() {
+    // If have_output is false return false
+    // if it is true, then verify there is output and return true
+    // if verification fails make sure have_output is false
+    if(!this->have_output) {
+        return false;
+    }
+
     output_mtx_.lock();
     int out = !(this->output.empty());
+    if(!out) {
+        this->have_output = false;
+    }
     output_mtx_.unlock();
+
     return out;
 }
 
 int MotorSerial::inputAvailable() {
+    // If have_input is false return false
+    // if it is true, then verify there is input and return true
+    // if verification fails make sure have_input is false
+
     if (!this->have_input) {
         return false;
     }
+
     input_mtx_.lock();
     int out = !(this->input.empty());
     if (!out) {
         this->have_input = false;
     }
     input_mtx_.unlock();
+
     return out;
 }
 
@@ -149,6 +166,7 @@ MotorMessage MotorSerial::getInputCommand() {
 void MotorSerial::appendOutput(MotorMessage command) {
     output_mtx_.lock();
     this->output.push(command);
+    this->have_output = true;
     output_mtx_.unlock();
 }
 
