@@ -18,6 +18,8 @@ void controlLoop(ros::Rate r,
 	struct timespec current_time;
 	clock_gettime(CLOCK_MONOTONIC, &last_time);
 
+	robot.requestVersion();
+
 	while (ros::ok()) {
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
 		ros::Duration elapsed = ros::Duration(current_time.tv_sec - last_time.tv_sec + (current_time.tv_nsec - last_time.tv_nsec) / BILLION);
