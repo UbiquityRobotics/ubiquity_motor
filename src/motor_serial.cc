@@ -242,7 +242,7 @@ void MotorSerial::SerialThread() {
 
     }
     catch (const boost::thread_interrupted &e) {
-        ROS_ERROR("boost::thread_interrupted");
+        // ROS_INFO("boost::thread_interrupted");
         motors->close();
     }
     catch (const serial::IOException &e) {
