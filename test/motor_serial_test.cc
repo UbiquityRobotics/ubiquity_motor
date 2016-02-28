@@ -39,7 +39,7 @@ protected:
   char name[100];
 };
 
-TEST_F(MotorSerialTests, readWorks){
+TEST_F(MotorSerialTests, goodreadWorks){
   uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
   write(master_fd, test, 9);
@@ -52,6 +52,29 @@ TEST_F(MotorSerialTests, readWorks){
   ASSERT_EQ(300, mm.getData());
   ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
   ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
+}
+
+TEST_F(MotorSerialTests, badreadFails){
+  uint8_t test[]= {0xdd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  //uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  write(master_fd, test, 9);
+
+  ros::Rate loop(10);
+  int times = 0;
+  while(!motors->commandAvailable()) {
+    loop.sleep();
+    times++;
+    if(times >= 20) {
+      break;
+    }
+  }
+
+  if(times > 10) {
+      SUCCEED();
+  }
+  else {
+    FAIL();
+  }
 }
 
 TEST_F(MotorSerialTests, writeWorks) {
