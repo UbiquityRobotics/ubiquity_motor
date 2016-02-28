@@ -69,7 +69,7 @@ protected:
   char name[100];
 };
 
-TEST_F(MotorSerialTests, goodreadWorks){
+TEST_F(MotorSerialTests, goodReadWorks){
   uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
   write(master_fd, test, 9);
@@ -84,7 +84,37 @@ TEST_F(MotorSerialTests, goodreadWorks){
   ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
 }
 
-TEST_F(MotorSerialTests, badreadFails){
+TEST_F(MotorSerialTests, misalignedOneGoodReadWorks){
+  uint8_t test[]= {0x00, 0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+  write(master_fd, test, 10);
+
+  while(!motors->commandAvailable()) {
+  }
+
+  MotorMessage mm;
+  mm = motors-> receiveCommand();
+  ASSERT_EQ(300, mm.getData());
+  ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
+  ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
+}
+
+TEST_F(MotorSerialTests, misalignedManyGoodReadWorks){
+  uint8_t test[]= {0x01, 0x2C, 0x0E, 0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+  write(master_fd, test, 12);
+
+  while(!motors->commandAvailable()) {
+  }
+
+  MotorMessage mm;
+  mm = motors-> receiveCommand();
+  ASSERT_EQ(300, mm.getData());
+  ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
+  ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
+}
+
+TEST_F(MotorSerialTests, badReadFails){
   uint8_t test[]= {0xdd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   //uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
   write(master_fd, test, 9);
