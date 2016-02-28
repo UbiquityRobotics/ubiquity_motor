@@ -92,6 +92,52 @@ TEST_F(MotorSerialTests, writeWorks) {
   ASSERT_EQ(input, version.serialize());
 }
 
+TEST_F(MotorSerialTests, writeMultipleWorks) {
+  std::vector<MotorMessage> commands;
+
+  MotorMessage left_odom;
+  left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
+  left_odom.setType(MotorMessage::TYPE_READ);
+  left_odom.setData(0);
+  commands.push_back(left_odom);
+
+  MotorMessage right_odom;
+  right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
+  right_odom.setType(MotorMessage::TYPE_READ);
+  right_odom.setData(0);
+  commands.push_back(right_odom);
+
+  MotorMessage left_vel;
+  left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
+  left_vel.setType(MotorMessage::TYPE_READ);
+  left_vel.setData(0);
+  commands.push_back(left_vel);
+
+  MotorMessage right_vel;
+  right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
+  right_vel.setType(MotorMessage::TYPE_READ);
+  right_vel.setData(0);
+  commands.push_back(right_vel);
+
+  motors->transmitCommands(commands);
+
+
+
+  uint8_t arr[36];
+  read(master_fd, arr, 36);
+  std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+
+  std::vector<uint8_t> expected(0);
+  for (std::vector<MotorMessage>::iterator i = commands.begin(); i != commands.end(); ++i){
+   std::vector<uint8_t> serialized = i->serialize();
+   expected.insert(expected.end(), serialized.begin(), serialized.end());   
+  }
+
+  ASSERT_EQ(expected, input);
+}
+
+
+
 int main(int argc, char **argv){
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
