@@ -236,6 +236,7 @@ void MotorSerial::SerialThread() {
 
             // boost::posix_time::milliseconds loopDelay(10);
             // boost::this_thread::sleep(loopDelay);
+            boost::this_thread::interruption_point();
             serial_loop_rate.sleep();
         }
 
