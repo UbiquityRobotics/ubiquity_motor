@@ -172,7 +172,6 @@ void MotorSerial::appendOutput(MotorMessage command) {
 }
 
 void MotorSerial::SerialThread() {
-    ros::Rate serial_loop_rate(1000);
     try {
         std::vector<uint8_t> in(0);
         bool failed_update = false;
@@ -237,7 +236,7 @@ void MotorSerial::SerialThread() {
             // boost::posix_time::milliseconds loopDelay(10);
             // boost::this_thread::sleep(loopDelay);
             boost::this_thread::interruption_point();
-            serial_loop_rate.sleep();
+            serial_loop_rate->sleep();
         }
 
     }
