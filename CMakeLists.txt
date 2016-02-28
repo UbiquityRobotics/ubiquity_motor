@@ -142,9 +142,9 @@ if(CATKIN_ENABLE_TESTING)
 		test/unit/motor_message_test.cc)
 	target_link_libraries(ubiquity_motor_unit_tests  ubiquity_motor ${catkin_LIBRARIES})
 
-	catkin_add_gtest(ubiquity_motor_serial_tests 
-		test/motor_serial_test.cc)
-	target_link_libraries(ubiquity_motor_serial_tests  ubiquity_motor util ${catkin_LIBRARIES})
+#	catkin_add_gtest(ubiquity_motor_serial_tests 
+#		test/motor_serial_test.cc)
+#	target_link_libraries(ubiquity_motor_serial_tests  ubiquity_motor util ${catkin_LIBRARIES})
 
 endif()
 
