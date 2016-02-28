@@ -26,7 +26,7 @@ protected:
     ASSERT_TRUE(std::string(name).length() > 0);
 
     ros::Time::init();
-    motors = new MotorSerial(std::string(name), 9600, 10);
+    motors = new MotorSerial(std::string(name), 9600, 1000);
   }
 
   virtual void TearDown() {
