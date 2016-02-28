@@ -69,7 +69,7 @@ TEST_F(MotorSerialTests, badreadFails){
     }
   }
 
-  if(times > 10) {
+  if(times >= 20) {
       SUCCEED();
   }
   else {
