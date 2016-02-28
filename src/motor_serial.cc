@@ -177,7 +177,7 @@ void MotorSerial::SerialThread() {
         std::vector<uint8_t> in(0);
         bool failed_update = false;
 
-        while (motors->isOpen() && ros::ok()) {
+        while (motors->isOpen()) {
 
             while (motors->available() >= (failed_update ? 1 : 9)) {
                 std::vector<uint8_t> innew(0);
