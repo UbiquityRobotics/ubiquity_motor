@@ -64,22 +64,22 @@ MotorHardware::MotorHardware(ros::NodeHandle nh){
 
 	double sLoopRate;
 
-	if (!n.getParam("ubiquity_motor/serial_port", sPort))
+	if (!nh.getParam("ubiquity_motor/serial_port", sPort))
 	{
 		sPort.assign("/dev/ttyS0");
-		n.setParam("ubiquity_motor/serial_port", sPort);
+		nh.setParam("ubiquity_motor/serial_port", sPort);
 	}
 
-	if (!n.getParam("ubiquity_motor/serial_baud", sBaud))
+	if (!nh.getParam("ubiquity_motor/serial_baud", sBaud))
 	{
 		sBaud = 9600;
-		n.setParam("ubiquity_motor/serial_baud", sBaud);
+		nh.setParam("ubiquity_motor/serial_baud", sBaud);
 	}
 
-	if (!n.getParam("ubiquity_motor/serial_loop_rate", sLoopRate))
+	if (!nh.getParam("ubiquity_motor/serial_loop_rate", sLoopRate))
 	{
 		sLoopRate = 100;
-		n.setParam("ubiquity_motor/serial_loop_rate", sLoopRate);
+		nh.setParam("ubiquity_motor/serial_loop_rate", sLoopRate);
 	}
 
 	motor_serial_ = new MotorSerial(sPort,sBaud,sLoopRate);
