@@ -119,7 +119,30 @@ TEST_F(MotorSerialTests, badReadFails){
   //uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
   write(master_fd, test, 9);
 
-  ros::Rate loop(10);
+  ros::Rate loop(100);
+  int times = 0;
+  while(!motors->commandAvailable()) {
+    loop.sleep();
+    times++;
+    if(times >= 20) {
+      break;
+    }
+  }
+
+  if(times >= 20) {
+      SUCCEED();
+  }
+  else {
+    FAIL();
+  }
+}
+
+TEST_F(MotorSerialTests, misalignedOneBadReadFails){
+  uint8_t test[]= {0x00, 0x7d, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+  write(master_fd, test, 10);
+
+  ros::Rate loop(100);
   int times = 0;
   while(!motors->commandAvailable()) {
     loop.sleep();
