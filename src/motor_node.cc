@@ -78,6 +78,7 @@ main(int argc, char* argv[]) {
 	}
 
 	ros::Rate r(controller_loop_rate);
+    robot.requestVersion();
 
 	//boost::thread controlLoopThread(controlLoop, r , boost::ref(robot), boost::ref(cm));
 
