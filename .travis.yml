@@ -36,3 +36,4 @@ before_script:
 script:
 - catkin_make
 - catkin_make run_tests
+- catkin_test_results
