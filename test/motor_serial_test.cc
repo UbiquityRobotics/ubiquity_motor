@@ -160,6 +160,52 @@ TEST_F(MotorSerialTests, misalignedOneBadReadFails){
   }
 }
 
+TEST_F(MotorSerialTests, incompleteReadFails){
+  uint8_t test[]= {0x7E, 0x02, 0xBB, 0x00};
+  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+  write(master_fd, test, 4);
+
+  ros::Rate loop(100);
+  int times = 0;
+  while(!motors->commandAvailable()) {
+    loop.sleep();
+    times++;
+    if(times >= 20) {
+      break;
+    }
+  }
+
+  if(times >= 20) {
+      SUCCEED();
+  }
+  else {
+    FAIL();
+  }
+}
+
+TEST_F(MotorSerialTests, incompleteMisalignedReadFails){
+  uint8_t test[]= {0x0f,0x7E, 0x02, 0xBB, 0x00};
+  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+  write(master_fd, test, 5);
+
+  ros::Rate loop(100);
+  int times = 0;
+  while(!motors->commandAvailable()) {
+    loop.sleep();
+    times++;
+    if(times >= 20) {
+      break;
+    }
+  }
+
+  if(times >= 20) {
+      SUCCEED();
+  }
+  else {
+    FAIL();
+  }
+}
+
 TEST_F(MotorSerialTests, writeWorks) {
 	MotorMessage version;
 	version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
