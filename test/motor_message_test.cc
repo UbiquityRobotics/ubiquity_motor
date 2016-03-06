@@ -258,3 +258,8 @@ TEST(ubiquity_motor_message, motor_message_deserialize_bad_register) {
 
 	ASSERT_EQ(5, mc.deserialize(input));
 }
+
+int main(int argc, char **argv){
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

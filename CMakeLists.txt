@@ -137,14 +137,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)
 
-	catkin_add_gtest(ubiquity_motor_unit_tests 
-		test/unit/motor_unit_tests.cc 
-		test/unit/motor_message_test.cc)
-	target_link_libraries(ubiquity_motor_unit_tests  ubiquity_motor ${catkin_LIBRARIES})
+	catkin_add_gtest(ubiquity_motor_message_test
+		test/motor_message_test.cc)
+	target_link_libraries(ubiquity_motor_message_test  ubiquity_motor ${catkin_LIBRARIES})
 
-	catkin_add_gtest(ubiquity_motor_serial_tests 
+	catkin_add_gtest(ubiquity_motor_serial_test
 		test/motor_serial_test.cc)
-	target_link_libraries(ubiquity_motor_serial_tests  ubiquity_motor util ${catkin_LIBRARIES})
+	target_link_libraries(ubiquity_motor_serial_test  ubiquity_motor util ${catkin_LIBRARIES})
 
 endif()
 
