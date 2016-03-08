@@ -56,16 +56,16 @@ class MotorSerial
 		uint32_t _baud_rate;
 
 		// bool to check for input to avoid unnecessary locking                
-		mutable bool have_input;
+		bool have_input;
 		//locking mutex for the input queue
-		mutable boost::mutex input_mtx_;
+		boost::mutex input_mtx_;
 		// queue for messages that are to be transmitted
 		std::queue<MotorMessage> input; 
 		
 		// bool to check for output to avoid unnecessary locking                
-		mutable bool have_output;
+		bool have_output;
 		//locking mutex for the output queue
-		mutable boost::mutex output_mtx_;
+		boost::mutex output_mtx_;
 		//queue for messages that have been received
 		std::queue<MotorMessage> output; 
 
