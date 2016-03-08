@@ -107,15 +107,15 @@ class MotorMessage{
 		};
 
 		void setType(MotorMessage::MessageTypes type);
-		MotorMessage::MessageTypes getType();
+		MotorMessage::MessageTypes getType() const;
 
 		void setRegister(MotorMessage::Registers reg);
-		MotorMessage::Registers getRegister();
+		MotorMessage::Registers getRegister() const;
 
 		void setData(int32_t data);
-		int32_t getData();
+		int32_t getData() const;
 
-		std::vector<uint8_t> serialize();
+		std::vector<uint8_t> serialize() const;
 		int deserialize(const std::vector<uint8_t> &serialized);
 
 
@@ -130,10 +130,10 @@ class MotorMessage{
 		const static uint8_t valid_types[]; 
 		const static uint8_t valid_registers[];
 
-		int verifyType(uint8_t t);
-		int verifyRegister(uint8_t r);
+		int verifyType(uint8_t t) const;
+		int verifyRegister(uint8_t r) const;
 
-		uint8_t generateChecksum(const std::vector<uint8_t> &data);
+		uint8_t generateChecksum(const std::vector<uint8_t> &data) const;
 };
 
 #endif
