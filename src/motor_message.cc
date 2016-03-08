@@ -137,7 +137,7 @@ std::vector<uint8_t> MotorMessage::serialize(){
   return out;
 }
 
-int MotorMessage::deserialize(std::vector<uint8_t> &serialized){
+int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
   if(serialized[0] == delimeter) {
     if (serialized[1] == protocol_version) {
       if (generateChecksum(serialized) == serialized[8]) {
@@ -196,7 +196,7 @@ int MotorMessage::verifyRegister(uint8_t r){
   return 0;
 }
 
-uint8_t MotorMessage::generateChecksum(std::vector<uint8_t> data) {
+uint8_t MotorMessage::generateChecksum(const std::vector<uint8_t> &data) {
   int sum = data [1] + data[2] + data[3] + data[4] + data[5] + data[6] + data[7];
 
   if (sum > 0xFF) {

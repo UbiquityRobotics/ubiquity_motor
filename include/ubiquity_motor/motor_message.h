@@ -116,7 +116,7 @@ class MotorMessage{
 		int32_t getData();
 
 		std::vector<uint8_t> serialize();
-		int deserialize(std::vector<uint8_t> &serialized);
+		int deserialize(const std::vector<uint8_t> &serialized);
 
 
 	private:
@@ -133,7 +133,7 @@ class MotorMessage{
 		int verifyType(uint8_t t);
 		int verifyRegister(uint8_t r);
 
-		uint8_t generateChecksum(std::vector<uint8_t> data);
+		uint8_t generateChecksum(const std::vector<uint8_t> &data);
 };
 
 #endif
