@@ -51,7 +51,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh){
 		joint_state_interface_.registerHandle(joint_state_handle);
 
 		hardware_interface::JointHandle joint_handle(
-		    joint_state_handle, &joints_[i].velocity_command);
+		joint_state_handle, &joints_[i].velocity_command);
 		velocity_joint_interface_.registerHandle(joint_handle);
 	}
 	registerInterface(&joint_state_interface_);
@@ -95,27 +95,26 @@ void MotorHardware::readInputs(){
 		mm = motor_serial_-> receiveCommand();
 		if(mm.getType() == MotorMessage::TYPE_RESPONSE){
 			switch(mm.getRegister()){
-			        case MotorMessage::REG_FIRMWARE_VERSION:
-						if (mm.getData() != CURRENT_FIRMWARE_VERSION) { 
-							ROS_FATAL("Firmware version %d, expect %d",
-								mm.getData(), CURRENT_FIRMWARE_VERSION);
-						}
-						else {
-							ROS_WARN("Firmware version %d", mm.getData());
-						}
+				case MotorMessage::REG_FIRMWARE_VERSION:
+					if (mm.getData() != CURRENT_FIRMWARE_VERSION) { 
+						ROS_FATAL("Firmware version %d, expect %d",
+							mm.getData(), CURRENT_FIRMWARE_VERSION);
+					}
+					else {
+						ROS_INFO("Firmware version %d", mm.getData());
+					}
 					break;
 				case MotorMessage::REG_LEFT_ODOM:
-				  //ROS_ERROR("TICK: %d", mm.getData());
-				        joints_[0].position += mm.getData()/TICS_PER_RADIAN;
+					joints_[0].position += mm.getData()/TICS_PER_RADIAN;
 					break;
 				case MotorMessage::REG_RIGHT_ODOM:
 					joints_[1].position += mm.getData()/TICS_PER_RADIAN;
 					break;
-			        case MotorMessage::REG_LEFT_SPEED_MEASURED:
-   				        joints_[0].velocity = mm.getData()*SECONDS_PER_VELOCITY_READ/TICS_PER_RADIAN;
+				case MotorMessage::REG_LEFT_SPEED_MEASURED:
+					joints_[0].velocity = mm.getData()*SECONDS_PER_VELOCITY_READ/TICS_PER_RADIAN;
 					break;
-			        case MotorMessage::REG_RIGHT_SPEED_MEASURED:
-				        joints_[1].velocity = mm.getData()*SECONDS_PER_VELOCITY_READ/TICS_PER_RADIAN;
+				case MotorMessage::REG_RIGHT_SPEED_MEASURED:
+					joints_[1].velocity = mm.getData()*SECONDS_PER_VELOCITY_READ/TICS_PER_RADIAN;
 					break;
 			}
 		}
@@ -226,10 +225,10 @@ void MotorHardware::requestVelocity(){
 
 
 void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set, int32_t denominator_set){
-        p_value = p_set;
-        i_value = i_set;
-        d_value = d_set;
-        denominator_value = denominator_set;
+	p_value = p_set;
+	i_value = i_set;
+	d_value = d_set;
+	denominator_value = denominator_set;
 }
 
 void MotorHardware::sendPid() {
