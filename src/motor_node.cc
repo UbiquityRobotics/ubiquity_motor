@@ -31,11 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_hardware.h>
 #include <ubiquity_motor/motor_message.h>
 #include <string>
-#include <boost/asio/io_service.hpp>
 #include <boost/thread.hpp>
 #include <time.h>
 #include "controller_manager/controller_manager.h"
-#include <boost/asio/io_service.hpp>
 #include <ros/ros.h>
 
 static const double BILLION = 1000000000.0;

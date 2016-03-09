@@ -6,15 +6,13 @@ project(ubiquity_motor)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
 	roscpp 
-	geometry_msgs 
-	tf 
+	geometry_msgs  
 	nav_msgs 
 	serial 
 	hardware_interface 
 	controller_manager)
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS 
-	system 
+find_package(Boost REQUIRED COMPONENTS  
 	thread)
 
 
@@ -80,8 +78,9 @@ target_link_libraries(ubiquity_motor
 )
 
 ## Declare a cpp executable
-add_executable(motor_node src/motor_node.cc src/motor_message.cc src/motor_serial.cc src/motor_hardware.cc)
+add_executable(motor_node src/motor_node.cc)
 target_link_libraries(motor_node
+ ubiquity_motor
  ${catkin_LIBRARIES}
  ${Boost_LIBRARIES}
 )
