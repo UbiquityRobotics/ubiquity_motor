@@ -133,7 +133,8 @@ class MotorMessage{
 		int verifyType(uint8_t t) const;
 		int verifyRegister(uint8_t r) const;
 
-		uint8_t generateChecksum(const std::vector<uint8_t> &data) const;
+		static uint8_t generateChecksum(const std::vector<uint8_t> &data);
+
 };
 
 #endif
