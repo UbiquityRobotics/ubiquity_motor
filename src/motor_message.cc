@@ -174,7 +174,7 @@ int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
   // 4 bad type
   // 5 bad register
 }
-int MotorMessage::verifyType(uint8_t t) const {
+int MotorMessage::verifyType(uint8_t t) {
   //Return 1 good
   //Return 0 for bad
   for (int i = 0; i < sizeof(valid_types) / sizeof(valid_types[0]); ++i)
@@ -185,7 +185,7 @@ int MotorMessage::verifyType(uint8_t t) const {
   return 0;
 }
 
-int MotorMessage::verifyRegister(uint8_t r) const {
+int MotorMessage::verifyRegister(uint8_t r) {
   //Return 1 good
   //Return 0 for bad
   for (int i = 0; i < sizeof(valid_registers) / sizeof(valid_registers[0]); ++i)

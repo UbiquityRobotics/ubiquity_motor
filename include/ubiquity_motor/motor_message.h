@@ -130,8 +130,8 @@ class MotorMessage{
 		const static uint8_t valid_types[]; 
 		const static uint8_t valid_registers[];
 
-		int verifyType(uint8_t t) const;
-		int verifyRegister(uint8_t r) const;
+		static int verifyType(uint8_t t);
+		static int verifyRegister(uint8_t r);
 
 		static uint8_t generateChecksum(const std::vector<uint8_t> &data);
 
