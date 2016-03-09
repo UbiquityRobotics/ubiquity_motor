@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2016-03-08)
+------------------
 * Cleanup deps, have motor_node be linked to shared lib
 * Update Copyright Dates
 * Removed old motor_unit_test
