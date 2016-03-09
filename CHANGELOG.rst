@@ -2,6 +2,25 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Cleanup deps, have motor_node be linked to shared lib
+* Update Copyright Dates
+* Removed old motor_unit_test
+* Moved motor_message_test
+* Make the serial thread loop at the passed in value instead of always 1000
+* Add interruption point to Serial Thread
+* Comment out serial tests
+* Added motor_serial_tests
+* Always print firmware version
+* fix up code that checks a firmware version response
+* Using Async Spinner instead of roscontrol thread
+* more command grouping
+* reduced unnecessary output locking
+  using bool method like tony did with input
+* reduce locking by grouping commands to send together
+* Contributors: Rohan Agrawal
+
 0.3.2 (2015-11-28)
 ------------------
 * Many fixes for bad odometery, more robust serial protocol
