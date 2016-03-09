@@ -108,9 +108,8 @@ main(int argc, char* argv[]) {
 	}
 
 	ros::Rate r(controller_loop_rate);
-    robot.requestVersion();
+	robot.requestVersion();
 
-	//boost::thread controlLoopThread(controlLoop, r , boost::ref(robot), boost::ref(cm));
 
 	struct timespec last_time;
 	struct timespec current_time;
@@ -126,10 +125,4 @@ main(int argc, char* argv[]) {
 		robot.writeSpeeds();
 		r.sleep();
 	}
-
-	// ros::Duration desired_update_freq_ = ros::Duration(1 / controller_loop_rate);
-	// ros::Timer non_realtime_loop_ = nh.createTimer(desired_update_freq_, controlLoop, &robot, &cm, &last_time, &current_time);
-
-	//ros::spin();
-	//ros::waitForShutdown();
 }
