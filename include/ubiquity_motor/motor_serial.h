@@ -44,7 +44,7 @@ class MotorSerial
 		~MotorSerial();
 
 		int transmitCommand(MotorMessage command);
-		int transmitCommands(std::vector<MotorMessage> commands);
+		int transmitCommands(const std::vector<MotorMessage> &commands);
 		
 		MotorMessage receiveCommand();
 		int commandAvailable();
