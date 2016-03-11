@@ -194,11 +194,11 @@ void MotorSerial::SerialThread() {
 					failed_update = false;
 				} else if (error_code == 1) {
 					failed_update = true;
-					char str[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+					char rejected[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 					for (int i = 0; i < in.size() && i < 9; i++) {
-						str[i] = in.at(i);
+						rejected[i] = in.at(i);
 					}
-					ROS_ERROR("REJECT: %s", str);
+					ROS_ERROR("REJECT: %s", rejected);
 				} else {
 					failed_update = true;
 					ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
