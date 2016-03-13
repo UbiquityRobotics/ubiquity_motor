@@ -36,10 +36,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "controller_manager/controller_manager.h"
 #include <ros/ros.h>
 
+#include <ubiquity_motor/Leds.h>
+
 static const double BILLION = 1000000000.0;
 struct timespec last_time;
 struct timespec current_time;
 
+static ubiquity_motor::Leds leds_settings;
 
 // void controlLoop(
 // 	MotorHardware &robot,
@@ -57,6 +60,10 @@ struct timespec current_time;
 
 // }
 
+void leds_callback(const ubiquity_motor::Leds& leds) {
+	leds_settings = leds;
+}
+
 main(int argc, char* argv[]) {
 	ros::init(argc, argv, "motor_node");
 	ros::NodeHandle nh;
@@ -65,6 +72,8 @@ main(int argc, char* argv[]) {
 
 	ros::AsyncSpinner spinner(1);
 	spinner.start();
+
+	ros::Subscriber sub = nh.subscribe("leds", 1, leds_callback);
 
 	int32_t pid_proportional;
 	int32_t pid_integral;
@@ -121,6 +130,8 @@ main(int argc, char* argv[]) {
 		robot.readInputs();
 		cm.update(ros::Time::now(), elapsed);
 		robot.writeSpeeds();
+
+		robot.setDebugLeds(leds_settings.led1, leds_settings.led2);
 		r.sleep();
 	}
 }
