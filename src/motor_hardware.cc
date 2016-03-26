@@ -96,12 +96,12 @@ void MotorHardware::readInputs(){
 		if(mm.getType() == MotorMessage::TYPE_RESPONSE){
 			switch(mm.getRegister()){
 				case MotorMessage::REG_FIRMWARE_VERSION:
-					if (mm.getData() != CURRENT_FIRMWARE_VERSION) { 
-						ROS_FATAL("Firmware version %d, expect %d",
+					if (!mm.getData() > CURRENT_FIRMWARE_VERSION) { 
+						ROS_FATAL("Firmware version %d, expect %d or above",
 							mm.getData(), CURRENT_FIRMWARE_VERSION);
 					}
 					else {
-						ROS_INFO("Firmware version %d", mm.getData());
+						ROS_INF0("Firmware version %d", mm.getData());
 					}
 					break;
 				case MotorMessage::REG_LEFT_ODOM:
