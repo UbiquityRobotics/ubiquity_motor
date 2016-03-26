@@ -101,7 +101,7 @@ void MotorHardware::readInputs(){
 							mm.getData(), CURRENT_FIRMWARE_VERSION);
 					}
 					else {
-						ROS_INF0("Firmware version %d", mm.getData());
+						ROS_INFO("Firmware version %d", mm.getData());
 					}
 					break;
 				case MotorMessage::REG_LEFT_ODOM:
