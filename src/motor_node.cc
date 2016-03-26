@@ -122,8 +122,7 @@ main(int argc, char* argv[]) {
 		robot.readInputs();
 		cm.update(ros::Time::now(), elapsed);
 		robot.writeSpeeds();
-
-		robot.setDebugLeds(leds_settings.led1, leds_settings.led2);
+		
 		r.sleep();
 	}
 }
