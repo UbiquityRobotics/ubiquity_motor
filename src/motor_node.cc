@@ -42,8 +42,6 @@ static const double BILLION = 1000000000.0;
 struct timespec last_time;
 struct timespec current_time;
 
-static ubiquity_motor::Leds leds_settings;
-
 // void controlLoop(
 // 	MotorHardware &robot,
 // 	controller_manager::ControllerManager &cm,
@@ -60,10 +58,6 @@ static ubiquity_motor::Leds leds_settings;
 
 // }
 
-void leds_callback(const ubiquity_motor::Leds& leds) {
-	leds_settings = leds;
-}
-
 main(int argc, char* argv[]) {
 	ros::init(argc, argv, "motor_node");
 	ros::NodeHandle nh;
@@ -72,8 +66,6 @@ main(int argc, char* argv[]) {
 
 	ros::AsyncSpinner spinner(1);
 	spinner.start();
-
-	ros::Subscriber sub = nh.subscribe("leds", 1, leds_callback);
 
 	int32_t pid_proportional;
 	int32_t pid_integral;
