@@ -26,10 +26,10 @@ find_package(Boost REQUIRED COMPONENTS
 #######################################
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Leds.msg
-)
+# add_message_files(
+#   FILES
+#   Leds.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(

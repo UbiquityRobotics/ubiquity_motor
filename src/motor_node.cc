@@ -36,8 +36,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "controller_manager/controller_manager.h"
 #include <ros/ros.h>
 
-#include <ubiquity_motor/Leds.h>
-
 static const double BILLION = 1000000000.0;
 struct timespec last_time;
 struct timespec current_time;
