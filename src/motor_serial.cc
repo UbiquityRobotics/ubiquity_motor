@@ -190,6 +190,9 @@ void MotorSerial::SerialThread() {
 				int error_code = mc.deserialize(in);
 
 				if (error_code == 0) {
+					if (mc.getType() == MotorMessage::TYPE_ERROR){
+						ROS_ERROR("GOT ERROR RESPONSE FROM PSOC FOR REGISTER - %x", mc.getRegister());
+					}
 					appendOutput(mc);
 					failed_update = false;
 				} else if (error_code == 1) {
