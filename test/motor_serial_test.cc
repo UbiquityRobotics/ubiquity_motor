@@ -114,6 +114,30 @@ TEST_F(MotorSerialTests, misalignedManyGoodReadWorks){
   ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
 }
 
+TEST_F(MotorSerialTests, errorReadFails){
+  uint8_t test[]= {0x7E, 0x02, 0xDD, 0x07, 0x00, 0x00, 0x00, 0x00, 0x0B};
+  //uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  write(master_fd, test, 9);
+
+  ros::Rate loop(100);
+  int times = 0;
+  while(!motors->commandAvailable()) {
+    loop.sleep();
+    times++;
+    if(times >= 20) {
+      break;
+    }
+  }
+
+  if(times >= 20) {
+      SUCCEED();
+  }
+  else {
+    FAIL();
+  }
+}
+
+
 TEST_F(MotorSerialTests, badReadFails){
   uint8_t test[]= {0xdd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   //uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
