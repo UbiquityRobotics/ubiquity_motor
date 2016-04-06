@@ -42,6 +42,9 @@ TEST(ubiquity_motor_message, motor_message_commandtype) {
 
 	mc.setType(MotorMessage::TYPE_RESPONSE);
 	ASSERT_EQ(MotorMessage::TYPE_RESPONSE, mc.getType());
+
+	mc.setType(MotorMessage::TYPE_ERROR);
+	ASSERT_EQ(MotorMessage::TYPE_ERROR, mc.getType());
 }
 
 TEST(ubiquity_motor_message, motor_message_commandtype_values) {
@@ -55,6 +58,9 @@ TEST(ubiquity_motor_message, motor_message_commandtype_values) {
 
 	mc.setType(static_cast<MotorMessage::MessageTypes>(0xCC));
 	ASSERT_EQ(MotorMessage::TYPE_RESPONSE, mc.getType());
+
+	mc.setType(static_cast<MotorMessage::MessageTypes>(0xDD));
+	ASSERT_EQ(MotorMessage::TYPE_ERROR, mc.getType());
 }
 
 TEST(ubiquity_motor_message, motor_message_commandtype_invalid) {
