@@ -184,26 +184,18 @@
 	"buffers":
 	[
 		{
-			"file": "src/motor_message.cc",
-			"settings":
-			{
-				"buffer_size": 5773,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/motor_serial.cc",
-			"settings":
-			{
-				"buffer_size": 6419,
-				"line_ending": "Unix"
-			}
-		},
-		{
 			"file": "src/motor_node.cc",
 			"settings":
 			{
-				"buffer_size": 4170,
+				"buffer_size": 3585,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/motor_hardware.cc",
+			"settings":
+			{
+				"buffer_size": 8826,
 				"line_ending": "Unix"
 			}
 		}
@@ -327,16 +319,16 @@
 	],
 	"file_history":
 	[
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_message_test.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_hardware.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_message.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/msg/Leds.msg",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_node.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_message.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_serial.h",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/.travis.yml",
 		"/home/rohan/PCBs/Odin/RevB/QTC.xml",
 		"/home/rohan/build/kicad/kicad-source-mirror/eeschema/plugins/bom2csv.xsl",
@@ -389,6 +381,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"nh",
 			"left",
 			"	\n",
 			"    \n",
@@ -435,54 +428,24 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "src/motor_message.cc",
-					"semi_transient": true,
-					"settings":
-					{
-						"buffer_size": 5773,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								4153,
-								4153
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": -0.0,
-						"translation.y": 2244.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "src/motor_serial.cc",
+					"file": "src/motor_node.cc",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6419,
+						"buffer_size": 3585,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1863,
-								1863
+								2856,
+								2856
 							]
 						],
 						"settings":
@@ -490,28 +453,28 @@
 							"syntax": "Packages/C++/C++.sublime-syntax",
 							"translate_tabs_to_spaces": false
 						},
-						"translation.x": -0.0,
-						"translation.y": 306.0,
+						"translation.x": 0.0,
+						"translation.y": 1173.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
-					"file": "src/motor_node.cc",
+					"buffer": 1,
+					"file": "src/motor_hardware.cc",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4170,
+						"buffer_size": 8826,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4060,
-								4060
+								3142,
+								3142
 							]
 						],
 						"settings":
@@ -519,11 +482,11 @@
 							"syntax": "Packages/C++/C++.sublime-syntax",
 							"translate_tabs_to_spaces": false
 						},
-						"translation.x": 24.0,
-						"translation.y": 604.0,
+						"translation.x": 0.0,
+						"translation.y": 914.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
