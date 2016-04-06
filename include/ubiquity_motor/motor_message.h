@@ -45,7 +45,8 @@ class MotorMessage{
 		enum MessageTypes {
 			TYPE_READ = 0xAA,
 			TYPE_WRITE = 0xBB,
-			TYPE_RESPONSE = 0xCC
+			TYPE_RESPONSE = 0xCC,
+			TYPE_ERROR = 0xDD
 		};
 
 		// Registers enum in class to avoid global namespace pollution

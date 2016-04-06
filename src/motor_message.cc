@@ -35,7 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 uint8_t const MotorMessage::valid_types[] = {
   TYPE_READ,
   TYPE_WRITE,
-  TYPE_RESPONSE
+  TYPE_RESPONSE,
+  TYPE_ERROR
 };
 
 uint8_t const MotorMessage::valid_registers[] = {
