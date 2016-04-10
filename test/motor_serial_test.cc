@@ -313,6 +313,31 @@ TEST_F(MotorSerialTests, writeQueues) {
   motors->input_mtx_.unlock();
 }
 
+TEST_F(MotorSerialTests, writeQueuesDequeues) {
+  // Stop serial thread
+  motors->serial_thread->interrupt();
+  motors->serial_thread->join();
+
+  MotorMessage version;
+  version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
+  version.setType(MotorMessage::TYPE_READ);
+  version.setData(0);
+  motors->transmitCommand(version);
+
+  ASSERT_EQ(true, motors->have_input);
+  ASSERT_EQ(false, motors->input.empty());
+  ASSERT_EQ(1, motors->input.size());
+  ASSERT_EQ(true, motors->inputAvailable());
+
+  motors->getInputCommand();
+
+  ASSERT_EQ(false, motors->have_input);
+  ASSERT_EQ(true, motors->input.empty());
+  ASSERT_EQ(0, motors->input.size());
+  ASSERT_EQ(false, motors->inputAvailable());
+
+}
+
 TEST_F(MotorSerialTests, writeOutputs) {
 	MotorMessage version;
 	version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
