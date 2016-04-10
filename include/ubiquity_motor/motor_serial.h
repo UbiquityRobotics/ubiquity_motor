@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <queue>
 
+#include <gtest/gtest_prod.h>
+
 class MotorSerial
 {
 	public:
@@ -50,6 +52,7 @@ class MotorSerial
 		int commandAvailable();
 
 	private:
+
 		serial::Serial* motors;
 		
 		std::string _port;
@@ -78,6 +81,8 @@ class MotorSerial
 
 		// Thread that has manages the serial port 
 		void SerialThread();
+
+		FRIEND_TEST(MotorSerialTests, invalidBaudDefaults);
 };
 
 #endif

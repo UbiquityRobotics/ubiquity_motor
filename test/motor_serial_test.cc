@@ -82,6 +82,18 @@ TEST(MotorSerialNoFixtureTests, badPortnameException) {
   }
 }
 
+TEST_F(MotorSerialTests, invalidBaudDefaults) {
+  try {
+    delete motors;
+    motors = new MotorSerial(std::string(name), 88980, 1000); 
+  }
+  catch (...) {
+    FAIL();
+  }
+  ASSERT_NE(88980, motors->_baud_rate);
+  ASSERT_EQ(9600, motors->_baud_rate);
+}
+
 TEST_F(MotorSerialTests, goodReadWorks){
   uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
