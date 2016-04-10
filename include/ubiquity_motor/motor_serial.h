@@ -84,6 +84,7 @@ class MotorSerial
 
 		FRIEND_TEST(MotorSerialTests, invalidBaudDefaults);
 		FRIEND_TEST(MotorSerialTests, serialClosedOnInterupt);
+		FRIEND_TEST(MotorSerialTests, readQueuesDequeues);
 		FRIEND_TEST(MotorSerialTests, writeQueues);
 		FRIEND_TEST(MotorSerialTests, writeQueuesDequeues);
 		FRIEND_TEST(MotorSerialTests, writeMultipleQueues);

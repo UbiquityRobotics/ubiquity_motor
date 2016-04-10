@@ -114,6 +114,12 @@ MotorMessage MotorSerial::receiveCommand() {
 		mc = this->output.front();
 		this->output.pop();
 	}
+
+	// If we just popped the last message
+	if (this->output.empty()) {
+		this->have_output = false;
+	}
+
 	output_mtx_.unlock();
 	return mc;
 }

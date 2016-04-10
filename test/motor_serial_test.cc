@@ -101,6 +101,36 @@ TEST_F(MotorSerialTests, invalidBaudDefaults) {
   ASSERT_EQ(9600, motors->_baud_rate);
 }
 
+TEST_F(MotorSerialTests, readQueuesDequeues){
+  // Stop serial thread
+  motors->serial_thread->interrupt();
+  motors->serial_thread->join();
+
+  MotorMessage version;
+  version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
+  version.setType(MotorMessage::TYPE_RESPONSE);
+  version.setData(18);
+
+  ASSERT_EQ(false, motors->have_output);
+  ASSERT_EQ(0, motors->output.size());
+  ASSERT_EQ(true, motors->output.empty());
+  ASSERT_EQ(false, motors->commandAvailable());
+
+  motors->appendOutput(version);
+
+  ASSERT_EQ(true, motors->have_output);
+  ASSERT_EQ(1, motors->output.size());
+  ASSERT_EQ(false, motors->output.empty());
+  ASSERT_EQ(true, motors->commandAvailable());
+
+  motors->receiveCommand();
+
+  ASSERT_EQ(false, motors->have_output);
+  ASSERT_EQ(0, motors->output.size());
+  ASSERT_EQ(true, motors->output.empty());
+  ASSERT_EQ(false, motors->commandAvailable());
+}
+
 TEST_F(MotorSerialTests, goodReadWorks){
   uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
@@ -335,7 +365,6 @@ TEST_F(MotorSerialTests, writeQueuesDequeues) {
   ASSERT_EQ(true, motors->input.empty());
   ASSERT_EQ(0, motors->input.size());
   ASSERT_EQ(false, motors->inputAvailable());
-
 }
 
 TEST_F(MotorSerialTests, writeOutputs) {
