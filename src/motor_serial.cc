@@ -72,6 +72,9 @@ MotorSerial::MotorSerial(const std::string &port, uint32_t baud_rate, double loo
 	serial_loop_rate = new ros::Rate(loopRate);
 
 	serial_thread = new boost::thread(&MotorSerial::SerialThread, this);
+
+	have_input = false;
+	have_output = false;
 }
 
 MotorSerial::~MotorSerial() {
@@ -164,7 +167,7 @@ MotorMessage MotorSerial::getInputCommand() {
 	if (this->input.empty()) {
 		this->have_input = false;
 	}
-	
+
 	input_mtx_.unlock();
 	return mc;
 }
