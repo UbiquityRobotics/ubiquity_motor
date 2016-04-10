@@ -82,6 +82,13 @@ TEST(MotorSerialNoFixtureTests, badPortnameException) {
   }
 }
 
+TEST_F(MotorSerialTests, serialClosedOnInterupt) {
+  ASSERT_EQ(true, motors->motors->isOpen());
+  motors->serial_thread->interrupt();
+  sleep(1);
+  ASSERT_EQ(false, motors->motors->isOpen());
+}
+
 TEST_F(MotorSerialTests, invalidBaudDefaults) {
   try {
     delete motors;
