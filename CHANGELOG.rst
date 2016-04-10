@@ -2,6 +2,14 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* add support for firmware version 19
+* add support for 0xDD (checksum) error response
+* Make variable name for rejected bytes 'rejected'
+* Reduce memcopy-ing
+* Contributors: Rohan Agrawal
+
 0.4.0 (2016-03-08)
 ------------------
 * Cleanup deps, have motor_node be linked to shared lib
