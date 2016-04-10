@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.1 (2016-04-09)
+------------------
 * add support for firmware version 19
 * add support for 0xDD (checksum) error response
 * Make variable name for rejected bytes 'rejected'
