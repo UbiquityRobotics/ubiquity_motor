@@ -69,6 +69,19 @@ protected:
   char name[100];
 };
 
+TEST(MotorSerialNoFixtureTests, badPortnameException) {
+  try { 
+    //delete motors; 
+    MotorSerial motors(std::string("foo"), 9600, 1000);
+  }
+  catch(serial::IOException) {
+    SUCCEED();
+  }
+  catch(...){
+    FAIL();
+  }
+}
+
 TEST_F(MotorSerialTests, goodReadWorks){
   uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
