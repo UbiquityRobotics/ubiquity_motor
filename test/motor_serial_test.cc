@@ -70,16 +70,24 @@ protected:
 };
 
 TEST(MotorSerialNoFixtureTests, badPortnameException) {
+  bool exception = false;
   try { 
     //delete motors; 
     MotorSerial motors(std::string("foo"), 9600, 1000);
   }
   catch(serial::IOException) {
+    exception = true;
     SUCCEED();
   }
   catch(...){
+    exception = true;
     FAIL();
   }
+
+  if (exception == false) {
+    FAIL() << "No exception thrown for bad port name";
+  }
+  
 }
 
 TEST_F(MotorSerialTests, serialClosedOnInterupt) {
