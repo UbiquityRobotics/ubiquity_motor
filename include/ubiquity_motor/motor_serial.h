@@ -83,6 +83,8 @@ class MotorSerial
 		void SerialThread();
 
 		FRIEND_TEST(MotorSerialTests, invalidBaudDefaults);
+		FRIEND_TEST(MotorSerialTests, writeQueues);
+		FRIEND_TEST(MotorSerialTests, writeMultipleQueues);
 };
 
 #endif

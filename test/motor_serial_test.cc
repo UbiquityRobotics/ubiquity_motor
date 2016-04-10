@@ -292,7 +292,21 @@ TEST_F(MotorSerialTests, badTypeReadFails){
   }
 }
 
-TEST_F(MotorSerialTests, writeWorks) {
+TEST_F(MotorSerialTests, writeQueues) {
+  MotorMessage version;
+  version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
+  version.setType(MotorMessage::TYPE_READ);
+  version.setData(0);
+  motors->transmitCommand(version);
+
+  // Lock so serial thread doesn't interfere
+  motors->input_mtx_.lock();
+  ASSERT_EQ(true, motors->have_input);
+  ASSERT_EQ(1, motors->input.size());
+  motors->input_mtx_.unlock();
+}
+
+TEST_F(MotorSerialTests, writeOutputs) {
 	MotorMessage version;
 	version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
 	version.setType(MotorMessage::TYPE_READ);
@@ -307,7 +321,43 @@ TEST_F(MotorSerialTests, writeWorks) {
   ASSERT_EQ(input, version.serialize());
 }
 
-TEST_F(MotorSerialTests, writeMultipleWorks) {
+TEST_F(MotorSerialTests, writeMultipleQueues) {
+  std::vector<MotorMessage> commands;
+
+  MotorMessage left_odom;
+  left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
+  left_odom.setType(MotorMessage::TYPE_READ);
+  left_odom.setData(0);
+  commands.push_back(left_odom);
+
+  MotorMessage right_odom;
+  right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
+  right_odom.setType(MotorMessage::TYPE_READ);
+  right_odom.setData(0);
+  commands.push_back(right_odom);
+
+  MotorMessage left_vel;
+  left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
+  left_vel.setType(MotorMessage::TYPE_READ);
+  left_vel.setData(0);
+  commands.push_back(left_vel);
+
+  MotorMessage right_vel;
+  right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
+  right_vel.setType(MotorMessage::TYPE_READ);
+  right_vel.setData(0);
+  commands.push_back(right_vel);
+
+  motors->transmitCommands(commands);
+
+  // Lock so serial thread doesn't interfere
+  motors->input_mtx_.lock();
+  ASSERT_EQ(true, motors->have_input);
+  ASSERT_EQ(4, motors->input.size());
+  motors->input_mtx_.unlock();
+}
+
+TEST_F(MotorSerialTests, writeMultipleOutputs) {
   std::vector<MotorMessage> commands;
 
   MotorMessage left_odom;
