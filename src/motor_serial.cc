@@ -159,6 +159,12 @@ MotorMessage MotorSerial::getInputCommand() {
 		mc = this->input.front();
 		this->input.pop();
 	}
+
+	// If we just popped the last message
+	if (this->input.empty()) {
+		this->have_input = false;
+	}
+	
 	input_mtx_.unlock();
 	return mc;
 }
