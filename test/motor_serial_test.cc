@@ -426,6 +426,56 @@ TEST_F(MotorSerialTests, writeMultipleQueues) {
   motors->input_mtx_.unlock();
 }
 
+TEST_F(MotorSerialTests, writeMultipleQueuesDequeues) {
+  // Stop serial thread
+  motors->serial_thread->interrupt();
+  motors->serial_thread->join();
+
+  std::vector<MotorMessage> commands;
+
+  MotorMessage left_odom;
+  left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
+  left_odom.setType(MotorMessage::TYPE_READ);
+  left_odom.setData(0);
+  commands.push_back(left_odom);
+
+  MotorMessage right_odom;
+  right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
+  right_odom.setType(MotorMessage::TYPE_READ);
+  right_odom.setData(0);
+  commands.push_back(right_odom);
+
+  MotorMessage left_vel;
+  left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
+  left_vel.setType(MotorMessage::TYPE_READ);
+  left_vel.setData(0);
+  commands.push_back(left_vel);
+
+  MotorMessage right_vel;
+  right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
+  right_vel.setType(MotorMessage::TYPE_READ);
+  right_vel.setData(0);
+  commands.push_back(right_vel);
+
+  motors->transmitCommands(commands);
+
+  ASSERT_EQ(true, motors->have_input);
+  ASSERT_EQ(false, motors->input.empty());
+  ASSERT_EQ(4, motors->input.size());
+  ASSERT_EQ(true, motors->inputAvailable());
+
+  motors->getInputCommand();
+  motors->getInputCommand();
+  motors->getInputCommand();
+  motors->getInputCommand();
+
+  ASSERT_EQ(false, motors->have_input);
+  ASSERT_EQ(true, motors->input.empty());
+  ASSERT_EQ(0, motors->input.size());
+  ASSERT_EQ(false, motors->inputAvailable());
+
+}
+
 TEST_F(MotorSerialTests, writeMultipleOutputs) {
   std::vector<MotorMessage> commands;
 

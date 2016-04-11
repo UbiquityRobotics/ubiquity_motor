@@ -88,6 +88,7 @@ class MotorSerial
 		FRIEND_TEST(MotorSerialTests, writeQueues);
 		FRIEND_TEST(MotorSerialTests, writeQueuesDequeues);
 		FRIEND_TEST(MotorSerialTests, writeMultipleQueues);
+		FRIEND_TEST(MotorSerialTests, writeMultipleQueuesDequeues);
 };
 
 #endif
