@@ -81,7 +81,7 @@ TEST(MotorSerialNoFixtureTests, badPortnameException) {
   }
   catch(...){
     exception = true;
-    FAIL();
+    FAIL() << "Wrong exception thrown";
   }
 
   if (exception == false) {
@@ -103,7 +103,7 @@ TEST_F(MotorSerialTests, invalidBaudDefaults) {
     motors = new MotorSerial(std::string(name), 88980, 1000); 
   }
   catch (...) {
-    FAIL();
+    FAIL() << "Exception thrown when creating MotorSerial";
   }
   ASSERT_NE(88980, motors->_baud_rate);
   ASSERT_EQ(9600, motors->_baud_rate);
