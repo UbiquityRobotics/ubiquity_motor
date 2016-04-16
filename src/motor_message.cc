@@ -125,31 +125,30 @@ int32_t MotorMessage::getData() const{
 }
 
 std::vector<uint8_t> MotorMessage::serialize() const{
-  std::vector<uint8_t> out(9);
+  std::vector<uint8_t> out(8);
   out[0] = delimeter;
-  out[1] = protocol_version;
-  out[2] = type;
-  out[3] = register_addr;
-  out[4] = data[0];
-  out[5] = data[1];
-  out[6] = data[2];
-  out[7] = data[3];
-  out[8] = generateChecksum(out);
+  out[1] = protocol_version << 4 | type;
+  out[2] = register_addr;
+  out[3] = data[0];
+  out[4] = data[1];
+  out[5] = data[2];
+  out[6] = data[3];
+  out[7] = generateChecksum(out);
   return out;
 }
 
 int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
   if(serialized[0] == delimeter) {
-    if (serialized[1] == protocol_version) {
-      if (generateChecksum(serialized) == serialized[8]) {
-        if (verifyType(serialized[2])) {
-          if (verifyRegister(serialized[3])) {
-            this->type = serialized[2];
-            this->register_addr = serialized[3];
-            this->data[0] = serialized[4];
-            this->data[1] = serialized[5];
-            this->data[2] = serialized[6];
-            this->data[3] = serialized[7];
+    if (serialized[1] & 0xF0 == protocol_version << 4) {
+      if (generateChecksum(serialized) == serialized[7]) {
+        if (verifyType(serialized[1] & 0x0F)) {
+          if (verifyRegister(serialized[2])) {
+            this->type = serialized[1] & 0x0F;
+            this->register_addr = serialized[2];
+            this->data[0] = serialized[3];
+            this->data[1] = serialized[4];
+            this->data[2] = serialized[5];
+            this->data[3] = serialized[6];
             return 0;
           }
           else 
@@ -198,7 +197,7 @@ int MotorMessage::verifyRegister(uint8_t r) {
 }
 
 uint8_t MotorMessage::generateChecksum(const std::vector<uint8_t> &data) {
-  int sum = data [1] + data[2] + data[3] + data[4] + data[5] + data[6] + data[7];
+  int sum = data [1] + data[2] + data[3] + data[4] + data[5] + data[6];
 
   if (sum > 0xFF) {
     int tmp;

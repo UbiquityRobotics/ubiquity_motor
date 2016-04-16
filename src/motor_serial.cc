@@ -192,9 +192,9 @@ void MotorSerial::SerialThread() {
 
 		while (motors->isOpen()) {
 
-			while (motors->available() >= (failed_update ? 1 : 9)) {
+			while (motors->available() >= (failed_update ? 1 : 8)) {
 				std::vector<uint8_t> innew(0);
-				motors->read(innew, failed_update ? 1 : 9);
+				motors->read(innew, failed_update ? 1 : 8);
 				in.insert(in.end(), innew.begin(), innew.end());
 
 				while (in.size() > 9) {
@@ -212,8 +212,8 @@ void MotorSerial::SerialThread() {
 					failed_update = false;
 				} else if (error_code == 1) {
 					failed_update = true;
-					char rejected[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-					for (int i = 0; i < in.size() && i < 9; i++) {
+					char rejected[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+					for (int i = 0; i < in.size() && i < 8; i++) {
 						rejected[i] = in.at(i);
 					}
 					ROS_ERROR("REJECT: %s", rejected);
@@ -227,7 +227,7 @@ void MotorSerial::SerialThread() {
 			while (inputAvailable()) {
 				did_update = true;
 
-				std::vector<uint8_t> out(9);
+				std::vector<uint8_t> out(8);
 
 				out = getInputCommand().serialize();
 				// ROS_ERROR("out %x %x %x %x %x %x %x %x %x",
