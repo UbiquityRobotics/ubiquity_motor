@@ -93,7 +93,7 @@ main(int argc, char* argv[]) {
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
 		ros::Duration elapsed = ros::Duration(current_time.tv_sec - last_time.tv_sec + (current_time.tv_nsec - last_time.tv_nsec) / BILLION);
 		last_time = current_time;
-		robot.sendPid();
+		// robot.sendPid();
 		robot.readInputs();
 		cm.update(ros::Time::now(), elapsed);
 		robot.writeSpeeds();
