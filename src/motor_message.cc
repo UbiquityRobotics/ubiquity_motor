@@ -139,7 +139,7 @@ std::vector<uint8_t> MotorMessage::serialize() const{
 
 int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
   if(serialized[0] == delimeter) {
-    if (serialized[1] & 0xF0 == protocol_version << 4) {
+    if ((serialized[1] & 0xF0) == (protocol_version << 4)) {
       if (generateChecksum(serialized) == serialized[7]) {
         if (verifyType(serialized[1] & 0x0F)) {
           if (verifyRegister(serialized[2])) {
