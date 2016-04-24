@@ -230,16 +230,15 @@ void MotorSerial::SerialThread() {
 				std::vector<uint8_t> out(8);
 
 				out = getInputCommand().serialize();
-				// ROS_ERROR("out %x %x %x %x %x %x %x %x %x",
-				// 	out[0],
-				// 	out[1],
-				// 	out[2],
-				// 	out[3],
-				// 	out[4],
-				// 	out[5],
-				// 	out[6],
-				// 	out[7],
-				// 	out[8]);
+				ROS_ERROR("out %x %x %x %x %x %x %x %x",
+				 	out[0],
+				 	out[1],
+				 	out[2],
+				 	out[3],
+				 	out[4],
+				 	out[5],
+				 	out[6],
+				 	out[7]);
 				motors->write(out);
 			}
 

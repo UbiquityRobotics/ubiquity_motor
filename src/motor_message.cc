@@ -127,7 +127,7 @@ int32_t MotorMessage::getData() const{
 std::vector<uint8_t> MotorMessage::serialize() const{
   std::vector<uint8_t> out(8);
   out[0] = delimeter;
-  out[1] = protocol_version << 4 | type;
+  out[1] = (protocol_version << 4) | type;
   out[2] = register_addr;
   out[3] = data[0];
   out[4] = data[1];
