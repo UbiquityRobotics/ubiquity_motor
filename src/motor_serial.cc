@@ -197,7 +197,7 @@ void MotorSerial::SerialThread() {
 				motors->read(innew, failed_update ? 1 : 8);
 				in.insert(in.end(), innew.begin(), innew.end());
 
-				while (in.size() > 9) {
+				while (in.size() > 8) {
 					in.erase(in.begin());
 				}
 
