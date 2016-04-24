@@ -126,7 +126,7 @@ class MotorMessage{
 		uint8_t data[4]; // 4 bytes of data, numbers should be in big endian format
 
 		const static uint8_t delimeter = 0x7E; // Hard coded for now, should be parameterized
-		const static uint8_t protocol_version = 0x02; // Hard coded for now, should be parameterized
+		const static uint8_t protocol_version = 0x03; // Hard coded for now, should be parameterized
 
 		const static uint8_t valid_types[]; 
 		const static uint8_t valid_registers[];
