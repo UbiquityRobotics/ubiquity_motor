@@ -104,7 +104,8 @@ class MotorMessage{
 			REG_12V_AUX_CURRENT = 0x27,
 
 			REG_LEFT_SPEED_MEASURED = 0x28,
-			REG_RIGHT_SPEED_MEASURED = 0x29
+			REG_RIGHT_SPEED_MEASURED = 0x29,
+			REG_BOTH_SPEED_SET = 0x2A
 		};
 
 		void setType(MotorMessage::MessageTypes type);

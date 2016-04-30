@@ -79,7 +79,8 @@ uint8_t const MotorMessage::valid_registers[] = {
   REG_5V_AUX_CURRENT,
   REG_12V_AUX_CURRENT,
   REG_LEFT_SPEED_MEASURED,
-  REG_RIGHT_SPEED_MEASURED
+  REG_RIGHT_SPEED_MEASURED,
+  REG_BOTH_SPEED_SET
 };
 
 void MotorMessage::setType(MotorMessage::MessageTypes type){
