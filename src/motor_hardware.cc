@@ -171,7 +171,7 @@ void MotorHardware::writeSpeeds(){
 	// commands.push_back(right);
 
 	MotorMessage both;
-	both.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
+	both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
 	both.setType(MotorMessage::TYPE_WRITE);
 	int16_t left_tics = boost::math::lround(joints_[0].velocity_command*QTICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ);
 	int16_t right_tics = boost::math::lround(joints_[1].velocity_command*QTICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ);
