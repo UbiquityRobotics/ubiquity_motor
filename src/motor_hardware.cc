@@ -175,7 +175,8 @@ void MotorHardware::writeSpeeds(){
 	both.setType(MotorMessage::TYPE_WRITE);
 	int16_t left_tics = boost::math::lround(joints_[0].velocity_command*QTICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ);
 	int16_t right_tics = boost::math::lround(joints_[1].velocity_command*QTICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ);
-	int32_t data = ((left_tics << 16) | (right_tics));
+        // The masking with 0x0000ffff is necessary for handling -ve numbers
+        int32_t data = (left_tics << 16) | (right_tics & 0x0000ffff);
 	both.setData(data);
 	commands.push_back(both);
 
