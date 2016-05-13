@@ -118,9 +118,9 @@ void MotorHardware::readInputs(){
 					joints_[1].velocity = mm.getData()*SECONDS_PER_VELOCITY_READ/TICS_PER_RADIAN;
 					break;
 				default:
-					uint8_t data = mm.getRegister();
-					int32_t reg = mm.getData();
-					ROS_ERROR("register %x value %d", reg, data);
+					uint8_t reg = mm.getRegister();
+					int32_t data = mm.getData();
+					ROS_ERROR("register %x signed %d unsigned %u", reg, data, data);
 					break;
 			}
 		}
