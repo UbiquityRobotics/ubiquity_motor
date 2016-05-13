@@ -143,7 +143,8 @@ int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
     if ((serialized[1] & 0xF0) == (protocol_version << 4)) {
       if (generateChecksum(serialized) == serialized[7]) {
         if (verifyType(serialized[1] & 0x0F)) {
-          if (verifyRegister(serialized[2])) {
+	  // For debugging
+          //if (verifyRegister(serialized[2])) {
             this->type = serialized[1] & 0x0F;
             this->register_addr = serialized[2];
             this->data[0] = serialized[3];
@@ -151,9 +152,9 @@ int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
             this->data[2] = serialized[5];
             this->data[3] = serialized[6];
             return 0;
-          }
-          else 
-            return 5;
+          //}
+          //else 
+          //  return 5;
         }
         else 
           return 4;

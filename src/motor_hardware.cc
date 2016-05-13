@@ -117,6 +117,11 @@ void MotorHardware::readInputs(){
 				case MotorMessage::REG_RIGHT_SPEED_MEASURED:
 					joints_[1].velocity = mm.getData()*SECONDS_PER_VELOCITY_READ/TICS_PER_RADIAN;
 					break;
+				default:
+					uint8_t data = mm.getRegister();
+					int32_t reg = mm.getData();
+					ROS_ERROR("register %x value %d", reg, data);
+					break;
 			}
 		}
 	}
