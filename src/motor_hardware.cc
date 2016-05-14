@@ -140,7 +140,7 @@ void MotorHardware::readInputs(){
 				default:
 					uint8_t reg = mm.getRegister();
 					int32_t data = mm.getData();
-					ROS_ERROR("register %x signed %d unsigned %u", reg, data, data);
+					//ROS_ERROR("register %x signed %d unsigned %u", reg, data, data);
                                         std_msgs::UInt32 umsg;
                                         std_msgs::Int32 smsg;
                                         umsg.data = data;
