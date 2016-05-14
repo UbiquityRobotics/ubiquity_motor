@@ -286,6 +286,17 @@ void MotorHardware::requestOdometry(){
 	motor_serial_->transmitCommands(commands);
 }
 
+void MotorHardware::setDeadmanTimer(int32_t deadman_timer){
+	std::vector<MotorMessage> commands;
+
+        ROS_ERROR("setting deadman to %d", (int)deadman_timer);
+	MotorMessage mm;
+	mm.setRegister(MotorMessage::REG_DEADMAN);
+	mm.setType(MotorMessage::TYPE_WRITE);
+	mm.setData(deadman_timer);
+	commands.push_back(mm);
+}
+
 void MotorHardware::requestVelocity(){
 	std::vector<MotorMessage> commands;
 

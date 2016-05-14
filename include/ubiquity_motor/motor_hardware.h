@@ -53,6 +53,7 @@ class MotorHardware : public hardware_interface::RobotHW {
 		void requestVelocity();
 		void setPid(int32_t p, int32_t i, int32_t d, int32_t denominator);
 		void sendPid();
+                void setDeadmanTimer(int32_t deadman);
 		void setDebugLeds(bool led1, bool led2);
 	private:
 		hardware_interface::JointStateInterface joint_state_interface_;
@@ -62,6 +63,8 @@ class MotorHardware : public hardware_interface::RobotHW {
 		int32_t i_value;
 		int32_t d_value;
 		int32_t denominator_value;
+
+                int32_t deadman_timer;
 
 		struct Joint {
 			double position;

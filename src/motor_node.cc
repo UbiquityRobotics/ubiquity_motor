@@ -52,6 +52,8 @@ main(int argc, char* argv[]) {
 	int32_t pid_derivative;
 	int32_t pid_denominator;
 
+        int32_t deadman_timer;
+
 	if (!nh.getParam("ubiquity_motor/pid_proportional", pid_proportional)) {
 		pid_proportional = 450;
 		nh.setParam("ubiquity_motor/pid_proportional", pid_proportional);
@@ -81,6 +83,10 @@ main(int argc, char* argv[]) {
 		nh.setParam("ubiquity_motor/controller_loop_rate", controller_loop_rate);
 	}
 
+	if (!nh.getParam("ubiquity_motor/deadman_timer", deadman_timer)) {
+		deadman_timer = 2400000;
+		nh.setParam("ubiquity_motor/deadman_timer", deadman_timer);
+	}
 	ros::Rate r(controller_loop_rate);
 	robot.requestVersion();
 
@@ -88,6 +94,8 @@ main(int argc, char* argv[]) {
 	struct timespec last_time;
 	struct timespec current_time;
 	clock_gettime(CLOCK_MONOTONIC, &last_time);
+
+        robot.setDeadmanTimer(deadman_timer);
 
 	while (ros::ok()) {
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
