@@ -84,6 +84,26 @@ MotorHardware::MotorHardware(ros::NodeHandle nh){
 	}
 
 	motor_serial_ = new MotorSerial(sPort,sBaud,sLoopRate);
+        pubU50 = nh.advertise<std_msgs::UInt32>("u50", 1); 
+        pubS50 = nh.advertise<std_msgs::Int32>("s50", 1); 
+        pubU51 = nh.advertise<std_msgs::UInt32>("u51", 1); 
+        pubS51 = nh.advertise<std_msgs::Int32>("s51", 1); 
+        pubU52 = nh.advertise<std_msgs::UInt32>("u52", 1); 
+        pubS52 = nh.advertise<std_msgs::Int32>("s52", 1); 
+        pubU53 = nh.advertise<std_msgs::UInt32>("u53", 1); 
+        pubS53 = nh.advertise<std_msgs::Int32>("s53", 1); 
+        pubU54 = nh.advertise<std_msgs::UInt32>("u54", 1); 
+        pubS54 = nh.advertise<std_msgs::Int32>("s54", 1); 
+        pubU55 = nh.advertise<std_msgs::UInt32>("u55", 1); 
+        pubS55 = nh.advertise<std_msgs::Int32>("s55", 1); 
+        pubU56 = nh.advertise<std_msgs::UInt32>("u56", 1); 
+        pubS56 = nh.advertise<std_msgs::Int32>("s56", 1); 
+        pubU57 = nh.advertise<std_msgs::UInt32>("u57", 1); 
+        pubS57 = nh.advertise<std_msgs::Int32>("s57", 1); 
+        pubU58 = nh.advertise<std_msgs::UInt32>("u58", 1); 
+        pubS58 = nh.advertise<std_msgs::Int32>("s58", 1); 
+        pubU59 = nh.advertise<std_msgs::UInt32>("u59", 1); 
+        pubS59 = nh.advertise<std_msgs::Int32>("s59", 1); 
 }
 
 MotorHardware::~MotorHardware(){
@@ -121,7 +141,52 @@ void MotorHardware::readInputs(){
 					uint8_t reg = mm.getRegister();
 					int32_t data = mm.getData();
 					ROS_ERROR("register %x signed %d unsigned %u", reg, data, data);
-					break;
+                                        std_msgs::UInt32 umsg;
+                                        std_msgs::Int32 smsg;
+                                        umsg.data = data;
+                                        smsg.data = data;
+                                        switch(reg) {
+                                        	case 0x50:
+				                	pubU50.publish(umsg);	
+				                	pubS50.publish(smsg);	
+							break;
+                                        	case 0x51:
+				                	pubU51.publish(umsg);	
+				                	pubS51.publish(smsg);	
+							break;
+                                        	case 0x52:
+				                	pubU52.publish(umsg);	
+				                	pubS52.publish(smsg);	
+							break;
+                                        	case 0x53:
+				                	pubU53.publish(umsg);	
+				                	pubS53.publish(smsg);	
+							break;
+                                        	case 0x54:
+				                	pubU54.publish(umsg);	
+				                	pubS54.publish(smsg);	
+							break;
+                                        	case 0x55:
+				                	pubU55.publish(umsg);	
+				                	pubS55.publish(smsg);	
+							break;
+                                        	case 0x56:
+				                	pubU56.publish(umsg);	
+				                	pubS56.publish(smsg);	
+							break;
+                                        	case 0x57:
+				                	pubU57.publish(umsg);	
+				                	pubS57.publish(smsg);	
+							break;
+                                        	case 0x58:
+				                	pubU58.publish(umsg);	
+				                	pubS58.publish(smsg);	
+							break;
+                                        	case 0x59:
+				                	pubU59.publish(umsg);	
+				                	pubS59.publish(smsg);	
+							break;
+					}
 			}
 		}
 	}
