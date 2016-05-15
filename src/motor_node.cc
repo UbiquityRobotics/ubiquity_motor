@@ -52,7 +52,7 @@ main(int argc, char* argv[]) {
 	int32_t pid_derivative;
 	int32_t pid_denominator;
 
-        int32_t deadman_timer;
+	int32_t deadman_timer;
 
 	if (!nh.getParam("ubiquity_motor/pid_proportional", pid_proportional)) {
 		pid_proportional = 450;
@@ -95,7 +95,7 @@ main(int argc, char* argv[]) {
 	struct timespec current_time;
 	clock_gettime(CLOCK_MONOTONIC, &last_time);
 
-        robot.setDeadmanTimer(deadman_timer);
+	robot.setDeadmanTimer(deadman_timer);
 
 	while (ros::ok()) {
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
