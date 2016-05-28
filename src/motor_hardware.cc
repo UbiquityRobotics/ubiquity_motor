@@ -116,6 +116,8 @@ void MotorHardware::readInputs(){
 				case MotorMessage::REG_RIGHT_SPEED_MEASURED:
 					joints_[1].velocity = mm.getData()*SECONDS_PER_VELOCITY_READ/TICS_PER_RADIAN;
 					break;
+				default:
+					ROS_ERROR("Got type: 0x%02x, handling not implemented", mm.getRegister());
 			}
 		}
 	}
