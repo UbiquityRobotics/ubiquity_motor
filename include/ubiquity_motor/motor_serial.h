@@ -50,6 +50,9 @@ class MotorSerial
 		
 		MotorMessage receiveCommand();
 		int commandAvailable();
+		
+		MotorSerial( const MotorSerial& other ); // non construction-copyable
+		MotorSerial& operator=( const MotorSerial& ); // non copyable
 
 	private:
 
