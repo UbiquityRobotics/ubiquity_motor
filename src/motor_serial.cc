@@ -213,7 +213,7 @@ void MotorSerial::SerialThread() {
 				} else if (error_code == 1) {
 					failed_update = true;
 					char rejected[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-					for (int i = 0; i < in.size() && i < 9; ++i) {
+					for (size_t i = 0; i < in.size() && i < 9; ++i) {
 						rejected[i] = in.at(i);
 					}
 					ROS_ERROR("REJECT: %s", rejected);
