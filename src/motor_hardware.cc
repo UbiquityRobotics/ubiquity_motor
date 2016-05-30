@@ -182,10 +182,6 @@ void MotorHardware::readInputs(){
 				                	pubU58.publish(umsg);	
 				                	pubS58.publish(smsg);	
 							break;
-                                        	case 0x59:
-				                	pubU59.publish(umsg);	
-				                	pubS59.publish(smsg);	
-							break;
 					}
 			}
 		}
@@ -250,6 +246,9 @@ void MotorHardware::writeSpeeds(){
 	both.setData(data);
 	commands.push_back(both);
 
+        std_msgs::Int32 smsg;
+        smsg.data = left_tics;
+        pubS59.publish(smsg);	
 
 	//Send all commands to serial thread in one go to reduce locking
 	motor_serial_->transmitCommands(commands);
