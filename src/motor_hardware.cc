@@ -124,7 +124,7 @@ void MotorHardware::readInputs(){
 }
 
 void MotorHardware::writeSpeeds(){
-	std::vector<MotorMessage> commands;
+	std::vector<MotorMessage> commands(6);
 	//requestOdometry();
 	//requestVelocity();
 	//requestVersion();
@@ -190,7 +190,7 @@ void MotorHardware::requestVersion(){
 
 void MotorHardware::requestOdometry(){
 	//ROS_ERROR("TICKR");
-	std::vector<MotorMessage> commands;
+	std::vector<MotorMessage> commands(2);
 
 	MotorMessage left_odom;
 	left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
@@ -208,7 +208,7 @@ void MotorHardware::requestOdometry(){
 }
 
 void MotorHardware::requestVelocity(){
-	std::vector<MotorMessage> commands;
+	std::vector<MotorMessage> commands(2);
 
 	MotorMessage left_vel;
 	left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
@@ -234,7 +234,7 @@ void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set, int32_t 
 }
 
 void MotorHardware::sendPid() {
-	std::vector<MotorMessage> commands;
+	std::vector<MotorMessage> commands(4);
 
 	MotorMessage p;
 	p.setRegister(MotorMessage::REG_PARAM_P);
@@ -264,7 +264,7 @@ void MotorHardware::sendPid() {
 }
 
 void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
-	std::vector<MotorMessage> commands;
+	std::vector<MotorMessage> commands(2);
 	
 	MotorMessage led1;
 	led1.setRegister(MotorMessage::REG_LED_1);
