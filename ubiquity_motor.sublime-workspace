@@ -4,26 +4,6 @@
 		"selected_items":
 		[
 			[
-				"Ubiq",
-				"ubiquity_motor"
-			],
-			[
-				"se",
-				"setData"
-			],
-			[
-				"vali",
-				"validity"
-			],
-			[
-				"val",
-				"validity"
-			],
-			[
-				"valid",
-				"validType"
-			],
-			[
 				"de",
 				"denominator"
 			],
@@ -136,12 +116,20 @@
 				"uint8_t"
 			],
 			[
+				"vali",
+				"valid_types"
+			],
+			[
 				"reg",
 				"register_addr"
 			],
 			[
 				"pro",
 				"protocol_version"
+			],
+			[
+				"se",
+				"setRegister"
 			],
 			[
 				"re",
@@ -184,18 +172,10 @@
 	"buffers":
 	[
 		{
-			"file": "src/motor_node.cc",
+			"file": "src/motor_message.cc",
 			"settings":
 			{
-				"buffer_size": 3585,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/motor_hardware.cc",
-			"settings":
-			{
-				"buffer_size": 8826,
+				"buffer_size": 5793,
 				"line_ending": "Unix"
 			}
 		}
@@ -208,7 +188,7 @@
 	"command_palette":
 	{
 		"height": 392.0,
-		"last_filter": ":w",
+		"last_filter": "",
 		"selected_items":
 		[
 			[
@@ -314,6 +294,8 @@
 	"expanded_folders":
 	[
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test"
 	],
@@ -321,23 +303,22 @@
 	[
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_serial.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CMakeLists.txt",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_message_test.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_hardware.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_message.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/msg/Leds.msg",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_node.cc",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_message.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_serial.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_serial_test.cc",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_message.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_hardware.h",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_node.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/.travis.yml",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_message.cc",
 		"/home/rohan/PCBs/Odin/RevB/QTC.xml",
 		"/home/rohan/build/kicad/kicad-source-mirror/eeschema/plugins/bom2csv.xsl",
 		"/home/rohan/build/kicad/kicad-source-mirror/eeschema/plugins/CMakeLists.txt",
 		"/home/rohan/PCBs/Odin/RevB/QTC.kicad_pcb",
 		"/home/rohan/build/kicad/kicad.bzr/pcbnew/eagle_plugin.cpp",
+		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_message_test.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command_registers.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/CHANGELOG.rst",
-		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/test/motor_serial_test.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/include/ubiquity_motor/motor_command.h",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src/motor_command.cc",
 		"/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/package.xml",
@@ -381,7 +362,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
-			"nh",
+			"++",
 			"left",
 			"	\n",
 			"    \n",
@@ -433,60 +414,49 @@
 			[
 				{
 					"buffer": 0,
-					"file": "src/motor_node.cc",
+					"file": "src/motor_message.cc",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3585,
+						"buffer_size": 5793,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2856,
-								2856
+								2839,
+								2839
 							]
 						],
 						"settings":
 						{
 							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true,
+							"vintage":
+							{
+								"_vintageous_glue_until_normal_mode": false,
+								"_vintageous_non_interactive": false,
+								"_vintageous_processing_notation": false,
+								"action": null,
+								"action_count": "",
+								"mode": "mode_normal",
+								"motion": null,
+								"motion_count": "",
+								"must_capture_register_name": false,
+								"normal_insert_count": "1",
+								"partial_sequence": "",
+								"register": "\"",
+								"sequence": "",
+								"xpos": 2
+							}
 						},
 						"translation.x": 0.0,
-						"translation.y": 1173.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "src/motor_hardware.cc",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 8826,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								3142,
-								3142
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 914.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
 					"type": "text"
 				}
 			]
@@ -587,7 +557,7 @@
 		[
 			[
 				"",
-				"~/ubiquity/website/website.sublime-project"
+				"~/cplus/kicad_bom/kicad_bom.sublime-project"
 			]
 		],
 		"width": 380.0
@@ -604,6 +574,11 @@
 	"selected_group": 0,
 	"settings":
 	{
+		"_vintageous_reset_during_init": true,
+		"vintage":
+		{
+			"_cmdline_cd": "/home/rohan/indigo_catkin/src/ubiquity/ubiquity_motor/src"
+		}
 	},
 	"show_minimap": true,
 	"show_open_files": false,
