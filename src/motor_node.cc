@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static const double BILLION = 1000000000.0;
 
-main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 	ros::init(argc, argv, "motor_node");
 	ros::NodeHandle nh;
 	MotorHardware robot(nh);
