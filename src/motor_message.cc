@@ -89,12 +89,7 @@ void MotorMessage::setType(MotorMessage::MessageTypes type){
 }
 
 MotorMessage::MessageTypes MotorMessage::getType() const{
-  if (verifyType(this->type)){
-    return static_cast<MotorMessage::MessageTypes>(this->type);
-  }
-  else {
-    throw std::runtime_error("Stored type is invalid");
-  }
+  return static_cast<MotorMessage::MessageTypes>(this->type);
 }
 
 void MotorMessage::setRegister(MotorMessage::Registers reg){
