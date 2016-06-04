@@ -35,8 +35,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include "controller_manager/controller_manager.h"
 #include <ros/ros.h>
+#include <dynamic_reconfigure/server.h>
+#include <ubiquity_motor/PIDConfig.h>
 
 static const double BILLION = 1000000000.0;
+
+void PID_update_callback(const ubiquity_motor::PIDConfig &config, uint32_t level) {
+	ROS_ERROR("%d", config.PID_P);
+}
 
 main(int argc, char* argv[]) {
 	ros::init(argc, argv, "motor_node");
@@ -46,6 +52,12 @@ main(int argc, char* argv[]) {
 
 	ros::AsyncSpinner spinner(1);
 	spinner.start();
+
+	dynamic_reconfigure::Server<ubiquity_motor::PIDConfig> server;
+	dynamic_reconfigure::Server<ubiquity_motor::PIDConfig>::CallbackType f;
+
+	f = boost::bind(&PID_update_callback, _1, _2);
+	server.setCallback(f);	
 
 	int32_t pid_proportional;
 	int32_t pid_integral;
