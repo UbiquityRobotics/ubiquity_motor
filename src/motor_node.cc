@@ -40,8 +40,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static const double BILLION = 1000000000.0;
 
+static int32_t pid_proportional = 5000;
+static int32_t pid_integral = 1;
+static int32_t pid_derivative = 1 ;
+static int32_t pid_denominator = 1000;
+
 void PID_update_callback(const ubiquity_motor::PIDConfig &config, uint32_t level) {
-	ROS_ERROR("%d", config.PID_P);
+	if(level = 1){
+		pid_proportional = config.PID_P;
+	}
+	if(level = 2){
+		pid_integral = config.PID_I;
+	}
+	if(level = 3){
+		pid_derivative = config.PID_D;
+	}
 }
 
 main(int argc, char* argv[]) {
@@ -59,10 +72,6 @@ main(int argc, char* argv[]) {
 	f = boost::bind(&PID_update_callback, _1, _2);
 	server.setCallback(f);	
 
-	int32_t pid_proportional;
-	int32_t pid_integral;
-	int32_t pid_derivative;
-	int32_t pid_denominator;
 
 	int32_t deadman_timer;
 
@@ -116,7 +125,8 @@ main(int argc, char* argv[]) {
 		robot.readInputs();
 		cm.update(ros::Time::now(), elapsed);
 		robot.writeSpeeds();
-		//robot.sendPid();
+		robot.setPid(pid_proportional,pid_integral,pid_derivative,pid_denominator);
+		robot.sendPid();
 		
 		r.sleep();
 	}
