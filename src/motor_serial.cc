@@ -240,6 +240,7 @@ void MotorSerial::SerialThread() {
 				 	out[6],
 				 	out[7]);
 				motors->write(out);
+				usleep(2000);
 			}
 
 			if (did_update) {

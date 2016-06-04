@@ -329,25 +329,22 @@ void MotorHardware::sendPid() {
    
         ROS_ERROR("sending PID %d %d %d %d", 
                  (int) p_value, (int)i_value, (int)d_value, (int)denominator_value); 
+#if 0
 	MotorMessage p;
-	p.setRegister(MotorMessage::REG_PARAM_I);
+	p.setRegister(MotorMessage::REG_PARAM_P);
 	p.setType(MotorMessage::TYPE_WRITE);
-	p.setData(i_value);
+	p.setData(p_value);
 	commands.push_back(p);
 
-	motor_serial_->transmitCommands(commands);
-        commands.clear();
-	sleep(1);
+#endif
 
 	MotorMessage i;
-	i.setRegister(MotorMessage::REG_PARAM_P);
+	i.setRegister(MotorMessage::REG_PARAM_I);
 	i.setType(MotorMessage::TYPE_WRITE);
-	i.setData(p_value);
+	i.setData(i_value);
 	commands.push_back(i);
 
 
-        commands.clear();
-	sleep(1);
 
 	MotorMessage d;
 	d.setRegister(MotorMessage::REG_PARAM_D);
@@ -355,9 +352,6 @@ void MotorHardware::sendPid() {
 	d.setData(d_value);
 	commands.push_back(d);
 
-	motor_serial_->transmitCommands(commands);
-        commands.clear();
-	sleep(1);
 
 	MotorMessage denominator;
 	denominator.setRegister(MotorMessage::REG_PARAM_C);

@@ -104,7 +104,7 @@ main(int argc, char* argv[]) {
 		robot.readInputs();
 		cm.update(ros::Time::now(), elapsed);
 		robot.writeSpeeds();
-		robot.sendPid();
+		//robot.sendPid();
 		
 		r.sleep();
 	}
