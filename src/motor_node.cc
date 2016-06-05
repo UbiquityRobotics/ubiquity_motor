@@ -49,11 +49,14 @@ void PID_update_callback(const ubiquity_motor::PIDConfig &config, uint32_t level
 	if(level = 1){
 		pid_proportional = config.PID_P;
 	}
-	if(level = 2){
+	else if(level = 2){
 		pid_integral = config.PID_I;
 	}
-	if(level = 3){
+	else if(level = 4){
 		pid_derivative = config.PID_D;
+	}
+	else {
+		ROS_ERROR("%s", "Unsupported dynamic_reconfigure level");
 	}
 }
 
