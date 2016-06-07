@@ -241,16 +241,16 @@ void MotorHardware::writeSpeeds(){
 	MotorMessage both;
 	both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
 	both.setType(MotorMessage::TYPE_WRITE);
-	int16_t left_tics = boost::math::lround(joints_[0].velocity_command*QTICS_PER_RADIAN/VELOCITY_READ_PER_SECOND);
-	int16_t right_tics = boost::math::lround(joints_[1].velocity_command*QTICS_PER_RADIAN/VELOCITY_READ_PER_SECOND);
+	int16_t left_tics = calculateTicsFromRadians(joints_[0].velocity_command);
+	int16_t right_tics = calculateTicsFromRadians(joints_[1].velocity_command);
 	// The masking with 0x0000ffff is necessary for handling -ve numbers
 	int32_t data = (left_tics << 16) | (right_tics & 0x0000ffff);
 	both.setData(data);
 	commands.push_back(both);
 
-        std_msgs::Int32 smsg;
-        smsg.data = left_tics;
-        pubS59.publish(smsg);	
+	std_msgs::Int32 smsg;
+	smsg.data = left_tics;
+	pubS59.publish(smsg);	
 
 	//Send all commands to serial thread in one go to reduce locking
 	motor_serial_->transmitCommands(commands);
@@ -388,4 +388,13 @@ void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
 	commands.push_back(led2);
 
 	motor_serial_->transmitCommands(commands);
+}
+
+
+int16_t MotorHardware::calculateTicsFromRadians(double radians) const {
+	return boost::math::iround(radians*QTICS_PER_RADIAN/VELOCITY_READ_PER_SECOND);
+}
+
+double MotorHardware::calculateRadiansFromTics(int16_t tics) const {
+	return (tics*VELOCITY_READ_PER_SECOND/QTICS_PER_RADIAN);
 }
