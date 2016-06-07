@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // gear ratio of 4.29411764706:1
 #define TICS_PER_RADIAN (41.0058030317/2)
 #define QTICS_PER_RADIAN (TICS_PER_RADIAN*4)
-#define SECONDS_PER_VELOCITY_READ 10.0 //read = ticks / (100 ms), so we have scale of 10 for ticks/second
+#define VELOCITY_READ_PER_SECOND 10.0 //read = ticks / (100 ms), so we have scale of 10 for ticks/second
 #define CURRENT_FIRMWARE_VERSION 18
 
 MotorHardware::MotorHardware(ros::NodeHandle nh){
@@ -132,10 +132,10 @@ void MotorHardware::readInputs(){
 					joints_[1].position = mm.getData()/TICS_PER_RADIAN;
 					break;
 				case MotorMessage::REG_LEFT_SPEED_MEASURED:
-					joints_[0].velocity = mm.getData()*SECONDS_PER_VELOCITY_READ/TICS_PER_RADIAN;
+					joints_[0].velocity = mm.getData()*VELOCITY_READ_PER_SECOND/TICS_PER_RADIAN;
 					break;
 				case MotorMessage::REG_RIGHT_SPEED_MEASURED:
-					joints_[1].velocity = mm.getData()*SECONDS_PER_VELOCITY_READ/TICS_PER_RADIAN;
+					joints_[1].velocity = mm.getData()*VELOCITY_READ_PER_SECOND/TICS_PER_RADIAN;
 					break;
 				default:
 					uint8_t reg = mm.getRegister();
@@ -229,20 +229,20 @@ void MotorHardware::writeSpeeds(){
 	// MotorMessage left;
 	// left.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
 	// left.setType(MotorMessage::TYPE_WRITE);
-	// left.setData(boost::math::lround(joints_[0].velocity_command*TICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ));
+	// left.setData(boost::math::lround(joints_[0].velocity_command*TICS_PER_RADIAN/VELOCITY_READ_PER_SECOND));
 	// commands.push_back(left);
 
 	// MotorMessage right;
 	// right.setRegister(MotorMessage::REG_RIGHT_SPEED_SET);
 	// right.setType(MotorMessage::TYPE_WRITE);
-	// right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ));	
+	// right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN/VELOCITY_READ_PER_SECOND));	
 	// commands.push_back(right);
 
 	MotorMessage both;
 	both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
 	both.setType(MotorMessage::TYPE_WRITE);
-	int16_t left_tics = boost::math::lround(joints_[0].velocity_command*QTICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ);
-	int16_t right_tics = boost::math::lround(joints_[1].velocity_command*QTICS_PER_RADIAN/SECONDS_PER_VELOCITY_READ);
+	int16_t left_tics = boost::math::lround(joints_[0].velocity_command*QTICS_PER_RADIAN/VELOCITY_READ_PER_SECOND);
+	int16_t right_tics = boost::math::lround(joints_[1].velocity_command*QTICS_PER_RADIAN/VELOCITY_READ_PER_SECOND);
 	// The masking with 0x0000ffff is necessary for handling -ve numbers
 	int32_t data = (left_tics << 16) | (right_tics & 0x0000ffff);
 	both.setData(data);
