@@ -189,39 +189,15 @@ void MotorHardware::requestVersion(){
 }
 
 void MotorHardware::requestOdometry(){
-	//ROS_ERROR("TICKR");
-	std::vector<MotorMessage> commands(2);
-
-	MotorMessage left_odom;
-	left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
-	left_odom.setType(MotorMessage::TYPE_READ);
-	left_odom.setData(0);
-	commands.push_back(left_odom);
-
-	MotorMessage right_odom;
-	right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
-	right_odom.setType(MotorMessage::TYPE_READ);
-	right_odom.setData(0);
-	commands.push_back(right_odom);
-
+	std::vector<MotorMessage> commands;
+	_addOdometryRequest(commands);
 	motor_serial_->transmitCommands(commands);
 }
 
+
 void MotorHardware::requestVelocity(){
-	std::vector<MotorMessage> commands(2);
-
-	MotorMessage left_vel;
-	left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
-	left_vel.setType(MotorMessage::TYPE_READ);
-	left_vel.setData(0);
-	commands.push_back(left_vel);
-
-	MotorMessage right_vel;
-	right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
-	right_vel.setType(MotorMessage::TYPE_READ);
-	right_vel.setData(0);
-	commands.push_back(right_vel);
-
+	std::vector<MotorMessage> commands;
+	_addVelocityRequest(commands);
 	motor_serial_->transmitCommands(commands);
 }
 
@@ -289,4 +265,32 @@ void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
 	commands.push_back(led2);
 
 	motor_serial_->transmitCommands(commands);
+}
+
+void MotorHardware::_addOdometryRequest(std::vector<MotorMessage>& commands) const{
+	MotorMessage left_odom;
+	left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
+	left_odom.setType(MotorMessage::TYPE_READ);
+	left_odom.setData(0);
+	commands.push_back(left_odom);
+
+	MotorMessage right_odom;
+	right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
+	right_odom.setType(MotorMessage::TYPE_READ);
+	right_odom.setData(0);
+	commands.push_back(right_odom);
+}
+
+void MotorHardware::_addVelocityRequest(std::vector<MotorMessage>& commands) const{
+	MotorMessage left_vel;
+	left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
+	left_vel.setType(MotorMessage::TYPE_READ);
+	left_vel.setData(0);
+	commands.push_back(left_vel);
+
+	MotorMessage right_vel;
+	right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
+	right_vel.setType(MotorMessage::TYPE_READ);
+	right_vel.setData(0);
+	commands.push_back(right_vel);
 }

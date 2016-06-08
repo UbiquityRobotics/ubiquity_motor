@@ -52,6 +52,9 @@ class MotorHardware : public hardware_interface::RobotHW {
 		void sendPid();
 		void setDebugLeds(bool led1, bool led2);
 	private:
+		void _addOdometryRequest(std::vector<MotorMessage>& commands) const;
+		void _addVelocityRequest(std::vector<MotorMessage>& commands) const;
+		
 		hardware_interface::JointStateInterface joint_state_interface_;
 		hardware_interface::VelocityJointInterface velocity_joint_interface_;
 
