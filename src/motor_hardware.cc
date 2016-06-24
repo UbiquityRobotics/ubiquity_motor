@@ -148,8 +148,8 @@ void MotorHardware::readInputs(){
 					int16_t odomRight = odom & 0xffff;
 					//ROS_ERROR("left %d right %d", odomLeft, odomRight);
 
-					joints_[0].position += (odomLeft / QTICS_PER_RADIAN);
-       					joints_[1].position += (odomRight / QTICS_PER_RADIAN);
+					joints_[0].position += (odomLeft / TICS_PER_RADIAN);
+       					joints_[1].position += (odomRight / TICS_PER_RADIAN);
 					break;
 				}
 				default:
