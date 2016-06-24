@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VELOCITY_READ_PER_SECOND 10.0 //read = ticks / (100 ms), so we have scale of 10 for ticks/second
 #define CURRENT_FIRMWARE_VERSION 18
 
+
 MotorHardware::MotorHardware(ros::NodeHandle nh){
 	ros::V_string joint_names = boost::assign::list_of("left_wheel_joint")("right_wheel_joint");
 
@@ -125,24 +126,35 @@ void MotorHardware::readInputs(){
 						ROS_INFO("Firmware version %d", mm.getData());
 					}
 					break;
+/*
 				case MotorMessage::REG_LEFT_ODOM:
 					joints_[0].position = mm.getData()/TICS_PER_RADIAN;
 					break;
 				case MotorMessage::REG_RIGHT_ODOM:
 					joints_[1].position = mm.getData()/TICS_PER_RADIAN;
 					break;
+*/
 				case MotorMessage::REG_LEFT_SPEED_MEASURED:
 					joints_[0].velocity = mm.getData()*VELOCITY_READ_PER_SECOND/TICS_PER_RADIAN;
 					break;
 				case MotorMessage::REG_RIGHT_SPEED_MEASURED:
 					joints_[1].velocity = mm.getData()*VELOCITY_READ_PER_SECOND/TICS_PER_RADIAN;
 					break;
+				case MotorMessage::REG_BOTH_ODOM:
+				{
+					int32_t odom = mm.getData();
+					//ROS_ERROR("odom signed %d", odom);
+					int16_t odomLeft = (odom >> 16) & 0xffff;
+					int16_t odomRight = odom & 0xffff;
+					//ROS_ERROR("left %d right %d", odomLeft, odomRight);
+
+					joints_[0].position += (odomLeft / QTICS_PER_RADIAN);
+       					joints_[1].position += (odomRight / QTICS_PER_RADIAN);
+					break;
+				}
 				default:
 					uint8_t reg = mm.getRegister();
 					int32_t data = mm.getData();
-                                        if (reg == 0x1c) {
-					ROS_ERROR("register %x signed %d unsigned %u", reg, data, data);
-                                        }
 					std_msgs::UInt32 umsg;
 					std_msgs::Int32 smsg;
 					umsg.data = data;
@@ -327,16 +339,15 @@ void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set, int32_t 
 void MotorHardware::sendPid() {
 	std::vector<MotorMessage> commands;
    
-        ROS_ERROR("sending PID %d %d %d %d", 
-                 (int) p_value, (int)i_value, (int)d_value, (int)denominator_value); 
-#if 0
+        //ROS_ERROR("sending PID %d %d %d %d", 
+        //         (int)p_value, (int)i_value, (int)d_value, (int)denominator_value); 
+
 	MotorMessage p;
 	p.setRegister(MotorMessage::REG_PARAM_P);
 	p.setType(MotorMessage::TYPE_WRITE);
 	p.setData(p_value);
 	commands.push_back(p);
 
-#endif
 
 	MotorMessage i;
 	i.setRegister(MotorMessage::REG_PARAM_I);

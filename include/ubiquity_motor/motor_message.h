@@ -105,7 +105,9 @@ class MotorMessage{
 
 			REG_LEFT_SPEED_MEASURED = 0x28,
 			REG_RIGHT_SPEED_MEASURED = 0x29,
-			REG_BOTH_SPEED_SET = 0x2A
+
+			REG_BOTH_SPEED_SET = 0x2A,
+			REG_BOTH_ODOM = 0x30
 		};
 
 		void setType(MotorMessage::MessageTypes type);
