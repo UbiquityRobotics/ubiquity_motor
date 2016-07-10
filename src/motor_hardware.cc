@@ -134,12 +134,14 @@ void MotorHardware::readInputs(){
 					joints_[1].position = mm.getData()/TICS_PER_RADIAN;
 					break;
 */
+/*
 				case MotorMessage::REG_LEFT_SPEED_MEASURED:
 					joints_[0].velocity = mm.getData()*VELOCITY_READ_PER_SECOND/TICS_PER_RADIAN;
 					break;
 				case MotorMessage::REG_RIGHT_SPEED_MEASURED:
 					joints_[1].velocity = mm.getData()*VELOCITY_READ_PER_SECOND/TICS_PER_RADIAN;
 					break;
+*/
 				case MotorMessage::REG_BOTH_ODOM:
 				{
 					int32_t odom = mm.getData();
@@ -339,8 +341,8 @@ void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set, int32_t 
 void MotorHardware::sendPid() {
 	std::vector<MotorMessage> commands;
    
-        //ROS_ERROR("sending PID %d %d %d %d", 
-        //         (int)p_value, (int)i_value, (int)d_value, (int)denominator_value); 
+        ROS_ERROR("sending PID %d %d %d %d", 
+                 (int)p_value, (int)i_value, (int)d_value, (int)denominator_value); 
 
 	MotorMessage p;
 	p.setRegister(MotorMessage::REG_PARAM_P);
@@ -348,14 +350,11 @@ void MotorHardware::sendPid() {
 	p.setData(p_value);
 	commands.push_back(p);
 
-
 	MotorMessage i;
 	i.setRegister(MotorMessage::REG_PARAM_I);
 	i.setType(MotorMessage::TYPE_WRITE);
 	i.setData(i_value);
 	commands.push_back(i);
-
-
 
 	MotorMessage d;
 	d.setRegister(MotorMessage::REG_PARAM_D);
