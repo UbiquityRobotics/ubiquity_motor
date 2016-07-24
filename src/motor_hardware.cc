@@ -399,7 +399,9 @@ void MotorHardware::sendPid() {
 		commands.push_back(winsize);
 	}
 
-	motor_serial_->transmitCommands(commands);
+        if (commands.size() != 0) {
+		motor_serial_->transmitCommands(commands);
+	}
 }
 
 void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
