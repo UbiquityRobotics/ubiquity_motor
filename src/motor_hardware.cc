@@ -84,6 +84,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh){
 		nh.setParam("ubiquity_motor/serial_loop_rate", sLoopRate);
 	}
 
+
 	motor_serial_ = new MotorSerial(sPort,sBaud,sLoopRate);
 	pubU50 = nh.advertise<std_msgs::UInt32>("u50", 1); 
 	pubS50 = nh.advertise<std_msgs::Int32>("s50", 1); 
@@ -338,36 +339,65 @@ void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set, int32_t 
 	denominator_value = denominator_set;
 }
 
+void MotorHardware::setWindowSize(int32_t size) {
+	moving_buffer_size = size;
+}
+
 void MotorHardware::sendPid() {
 	std::vector<MotorMessage> commands;
    
-        ROS_ERROR("sending PID %d %d %d %d", 
-                 (int)p_value, (int)i_value, (int)d_value, (int)denominator_value); 
+        //ROS_ERROR("sending PID %d %d %d %d", 
+                 //(int)p_value, (int)i_value, (int)d_value, (int)denominator_value); 
 
-	MotorMessage p;
-	p.setRegister(MotorMessage::REG_PARAM_P);
-	p.setType(MotorMessage::TYPE_WRITE);
-	p.setData(p_value);
-	commands.push_back(p);
+        if (p_value != prev_p_value) {
+                ROS_WARN("Setting P to %d", p_value);
+                prev_p_value = p_value;
+		MotorMessage p;
+		p.setRegister(MotorMessage::REG_PARAM_P);
+		p.setType(MotorMessage::TYPE_WRITE);
+		p.setData(p_value);
+		commands.push_back(p);
+	}
 
-	MotorMessage i;
-	i.setRegister(MotorMessage::REG_PARAM_I);
-	i.setType(MotorMessage::TYPE_WRITE);
-	i.setData(i_value);
-	commands.push_back(i);
+        if (i_value != prev_i_value) {
+                ROS_WARN("Setting I to %d", i_value);
+                prev_i_value = i_value;
+		MotorMessage i;
+		i.setRegister(MotorMessage::REG_PARAM_I);
+		i.setType(MotorMessage::TYPE_WRITE);
+		i.setData(i_value);
+		commands.push_back(i);
+	}
 
-	MotorMessage d;
-	d.setRegister(MotorMessage::REG_PARAM_D);
-	d.setType(MotorMessage::TYPE_WRITE);
-	d.setData(d_value);
-	commands.push_back(d);
+        if (d_value != prev_d_value) {
+                ROS_WARN("Setting D to %d", d_value);
+                prev_d_value = d_value;
+		MotorMessage d;
+		d.setRegister(MotorMessage::REG_PARAM_D);
+		d.setType(MotorMessage::TYPE_WRITE);
+		d.setData(d_value);
+		commands.push_back(d);
+	}
 
+        if (denominator_value != prev_denominator_value) {
+                ROS_WARN("Setting Denominator to %d", denominator_value);
+                prev_denominator_value = denominator_value;
+		MotorMessage denominator;
+		denominator.setRegister(MotorMessage::REG_PARAM_D);
+		denominator.setType(MotorMessage::TYPE_WRITE);
+		denominator.setData(denominator_value);
+		commands.push_back(denominator);
+	}
 
-	MotorMessage denominator;
-	denominator.setRegister(MotorMessage::REG_PARAM_C);
-	denominator.setType(MotorMessage::TYPE_WRITE);
-	denominator.setData(denominator_value);
-	commands.push_back(denominator);
+        if (moving_buffer_size != prev_moving_buffer_size) {
+                ROS_WARN("Setting D window to %d", moving_buffer_size);
+                prev_moving_buffer_size = moving_buffer_size;
+		MotorMessage winsize;
+		winsize.setRegister(MotorMessage::REG_MOVING_BUF_SIZE);
+		winsize.setType(MotorMessage::TYPE_WRITE);
+		winsize.setData(moving_buffer_size);
+		commands.push_back(winsize);
+	}
 
 	motor_serial_->transmitCommands(commands);
 }

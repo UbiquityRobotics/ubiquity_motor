@@ -44,6 +44,7 @@ static int32_t pid_proportional = 5000;
 static int32_t pid_integral = 1;
 static int32_t pid_derivative = 1 ;
 static int32_t pid_denominator = 1000;
+static int32_t moving_buffer_size = 10;
 
 void PID_update_callback(const ubiquity_motor::PIDConfig &config, uint32_t level) {
 	if(level == 1){
@@ -55,8 +56,14 @@ void PID_update_callback(const ubiquity_motor::PIDConfig &config, uint32_t level
 	else if(level == 4){
 		pid_derivative = config.PID_D;
 	}
+	else if(level == 8){
+		pid_denominator = config.PID_C;
+	}
+	else if(level == 16){
+		moving_buffer_size = config.PID_W;
+	}
 	else {
-		ROS_ERROR("%s", "Unsupported dynamic_reconfigure level");
+		ROS_ERROR("Unsupported dynamic_reconfigure level %u", level);
 	}
 }
 
@@ -97,7 +104,12 @@ main(int argc, char* argv[]) {
 		pid_derivative = 1000;
 		nh.setParam("ubiquity_motor/pid_denominator", pid_denominator);
 	}
+	if (!nh.getParam("ubiquity_motor/window_size", moving_buffer_size)) {
+		moving_buffer_size = 10;
+		nh.setParam("ubiquity_motor/window_size", moving_buffer_size);
+	}
 
+	robot.setWindowSize(moving_buffer_size);
 	robot.setPid(pid_proportional,pid_integral,pid_derivative,pid_denominator);
 	robot.sendPid();
 	
@@ -129,6 +141,7 @@ main(int argc, char* argv[]) {
 		cm.update(ros::Time::now(), elapsed);
 		robot.writeSpeeds();
 		robot.setPid(pid_proportional,pid_integral,pid_derivative,pid_denominator);
+		robot.setWindowSize(moving_buffer_size);
 		robot.sendPid();
 		
 		r.sleep();

@@ -107,6 +107,7 @@ class MotorMessage{
 			REG_RIGHT_SPEED_MEASURED = 0x29,
 
 			REG_BOTH_SPEED_SET = 0x2A,
+			REG_MOVING_BUF_SIZE = 0x2B,
 			REG_BOTH_ODOM = 0x30,
 
 			DEBUG_50 = 0x50,

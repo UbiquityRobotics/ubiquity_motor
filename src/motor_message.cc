@@ -81,6 +81,7 @@ uint8_t const MotorMessage::valid_registers[] = {
   REG_LEFT_SPEED_MEASURED,
   REG_RIGHT_SPEED_MEASURED,
   REG_BOTH_SPEED_SET,
+  REG_MOVING_BUF_SIZE,
   REG_BOTH_ODOM,
   DEBUG_50,
   DEBUG_51,
