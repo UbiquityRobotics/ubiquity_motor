@@ -107,7 +107,18 @@ class MotorMessage{
 			REG_RIGHT_SPEED_MEASURED = 0x29,
 
 			REG_BOTH_SPEED_SET = 0x2A,
-			REG_BOTH_ODOM = 0x30
+			REG_BOTH_ODOM = 0x30,
+
+			DEBUG_50 = 0x50,
+			DEBUG_51 = 0x51,
+			DEBUG_52 = 0x52,
+			DEBUG_53 = 0x53,
+			DEBUG_54 = 0x54,
+			DEBUG_55 = 0x55,
+			DEBUG_56 = 0x56,
+			DEBUG_57 = 0x57,
+			DEBUG_58 = 0x58,
+			DEBUG_59 = 0x59
 		};
 
 		void setType(MotorMessage::MessageTypes type);
