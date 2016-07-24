@@ -46,13 +46,13 @@ static int32_t pid_derivative = 1 ;
 static int32_t pid_denominator = 1000;
 
 void PID_update_callback(const ubiquity_motor::PIDConfig &config, uint32_t level) {
-	if(level = 1){
+	if(level == 1){
 		pid_proportional = config.PID_P;
 	}
-	else if(level = 2){
+	else if(level == 2){
 		pid_integral = config.PID_I;
 	}
-	else if(level = 4){
+	else if(level == 4){
 		pid_derivative = config.PID_D;
 	}
 	else {
