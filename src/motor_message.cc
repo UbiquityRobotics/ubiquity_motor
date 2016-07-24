@@ -80,7 +80,18 @@ uint8_t const MotorMessage::valid_registers[] = {
   REG_12V_AUX_CURRENT,
   REG_LEFT_SPEED_MEASURED,
   REG_RIGHT_SPEED_MEASURED,
-  REG_BOTH_SPEED_SET
+  REG_BOTH_SPEED_SET,
+  REG_BOTH_ODOM,
+  DEBUG_50,
+  DEBUG_51,
+  DEBUG_52,
+  DEBUG_53,
+  DEBUG_54,
+  DEBUG_55,
+  DEBUG_56,
+  DEBUG_57,
+  DEBUG_58,
+  DEBUG_59
 };
 
 void MotorMessage::setType(MotorMessage::MessageTypes type){
@@ -143,8 +154,7 @@ int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
     if ((serialized[1] & 0xF0) == (protocol_version << 4)) {
       if (generateChecksum(serialized) == serialized[7]) {
         if (verifyType(serialized[1] & 0x0F)) {
-	  // For debugging
-          //if (verifyRegister(serialized[2])) {
+          if (verifyRegister(serialized[2])) {
             this->type = serialized[1] & 0x0F;
             this->register_addr = serialized[2];
             this->data[0] = serialized[3];
@@ -152,9 +162,9 @@ int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
             this->data[2] = serialized[5];
             this->data[3] = serialized[6];
             return 0;
-          //}
-          //else 
-          //  return 5;
+          }
+          else 
+            return 5;
         }
         else 
           return 4;
