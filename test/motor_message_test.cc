@@ -316,7 +316,7 @@ TEST(MotorMessageTest, motor_message_deserialize_bad_register) {
 	MotorMessage mc;
 
 	//Test bad register with good checksum
-	uint8_t arr[] = {0x7E, 0x3B, 0x30, 0x00, 0x00, 0x00, 0x2C, 0x68};
+	uint8_t arr[] = {0x7E, 0x3B, 0x60, 0x00, 0x00, 0x00, 0x2C, 0x68};
 
 	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
 
