@@ -109,9 +109,10 @@ main(int argc, char* argv[]) {
 		nh.setParam("ubiquity_motor/window_size", moving_buffer_size);
 	}
 
+	//robot.setDeadmanTimer(deadman_timer);
+
 	robot.setWindowSize(moving_buffer_size);
 	robot.setPid(pid_proportional,pid_integral,pid_derivative,pid_denominator);
-	robot.sendPid();
 	
 	double controller_loop_rate;
 	if (!nh.getParam("ubiquity_motor/controller_loop_rate", controller_loop_rate)) {
@@ -131,7 +132,11 @@ main(int argc, char* argv[]) {
 	struct timespec current_time;
 	clock_gettime(CLOCK_MONOTONIC, &last_time);
 
-	robot.setDeadmanTimer(deadman_timer);
+
+        for (int i=0; i<5; i++) {
+                r.sleep();
+		robot.sendPid();
+	}
 
 	while (ros::ok()) {
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
@@ -139,10 +144,10 @@ main(int argc, char* argv[]) {
 		last_time = current_time;
 		robot.readInputs();
 		cm.update(ros::Time::now(), elapsed);
-		robot.writeSpeeds();
 		robot.setPid(pid_proportional,pid_integral,pid_derivative,pid_denominator);
 		robot.setWindowSize(moving_buffer_size);
 		robot.sendPid();
+		robot.writeSpeeds();
 		
 		r.sleep();
 	}

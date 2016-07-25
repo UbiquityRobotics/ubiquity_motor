@@ -109,6 +109,12 @@ MotorHardware::MotorHardware(ros::NodeHandle nh){
 	pubS59 = nh.advertise<std_msgs::Int32>("s59", 1); 
 
 	sendPid_count = 0;
+
+        prev_p_value = -1;
+        prev_i_value = -1;
+        prev_d_value = -1;
+        prev_denominator_value = -1;
+        prev_moving_buffer_size = -1;
 }
 
 MotorHardware::~MotorHardware(){
@@ -358,7 +364,7 @@ void MotorHardware::sendPid() {
 
 	if (cycle == 0 && p_value != prev_p_value) {
 		ROS_WARN("Setting P to %d", p_value);
-		p_value = p_value;
+		prev_p_value = p_value;
 		MotorMessage p;
 		p.setRegister(MotorMessage::REG_PARAM_P);
 		p.setType(MotorMessage::TYPE_WRITE);
@@ -390,7 +396,7 @@ void MotorHardware::sendPid() {
 		ROS_WARN("Setting Denominator to %d", denominator_value);
 		prev_denominator_value = denominator_value;
 		MotorMessage denominator;
-		denominator.setRegister(MotorMessage::REG_PARAM_D);
+		denominator.setRegister(MotorMessage::REG_PARAM_C);
 		denominator.setType(MotorMessage::TYPE_WRITE);
 		denominator.setData(denominator_value);
 		commands.push_back(denominator);
@@ -407,7 +413,6 @@ void MotorHardware::sendPid() {
 	}
 
 	if (commands.size() != 0) {
-		ROS_INFO("sendPid: cycle %d commands %lu", cycle, commands.size());
 		motor_serial_->transmitCommands(commands);
 	}
 }
