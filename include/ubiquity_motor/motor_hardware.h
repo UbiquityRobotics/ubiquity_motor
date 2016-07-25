@@ -52,7 +52,7 @@ class MotorHardware : public hardware_interface::RobotHW {
 		void requestOdometry();
 		void requestVelocity();
 		void setPid(int32_t p, int32_t i, int32_t d, int32_t denominator);
-                void setWindowSize(int32_t size);
+		void setWindowSize(int32_t size);
 		void sendPid();
 		void setDeadmanTimer(int32_t deadman);
 		void setDebugLeds(bool led1, bool led2);
@@ -67,15 +67,17 @@ class MotorHardware : public hardware_interface::RobotHW {
 		int32_t i_value;
 		int32_t d_value;
 		int32_t denominator_value;
-                int32_t moving_buffer_size;
+		int32_t moving_buffer_size;
 
 		int32_t prev_p_value;
 		int32_t prev_i_value;
 		int32_t prev_d_value;
 		int32_t prev_denominator_value;
-                int32_t prev_moving_buffer_size;
+		int32_t prev_moving_buffer_size;
 
 		int32_t deadman_timer;
+
+		int32_t sendPid_count;
 
 		struct Joint {
 			double position;
