@@ -172,9 +172,11 @@ void MotorHardware::readInputs(){
 					std_msgs::Int32 left;
 					std_msgs::Int32 right;
 					int32_t speed = mm.getData();
+					int16_t leftSpeed = (speed >> 16) & 0xffff;
+ 					int16_t rightSpeed = speed & 0xffff;				
 
-					left.data = (speed >> 16) & 0xffff;
-					right.data = speed & 0xffff;
+					left.data = leftSpeed;
+					right.data = rightSpeed;
 					leftError.publish(left);
 					rightError.publish(left);
 					break;
@@ -184,16 +186,16 @@ void MotorHardware::readInputs(){
 					int32_t data = mm.getData();
 
                                         if (data & MotorMessage::LIM_M1_PWM) {
-						ROS_ERROR("M1 PWM limit reached");
+						ROS_ERROR("left PWM limit reached");
 					}
                                         if (data & MotorMessage::LIM_M2_PWM) {
-						ROS_ERROR("M2 PWM limit reached");
+						ROS_ERROR("right PWM limit reached");
 					}
                                         if (data & MotorMessage::LIM_M1_INTEGRAL) {
-						ROS_ERROR("M1 Integral limit reached");
+						ROS_ERROR("left Integral limit reached");
 					}
                                         if (data & MotorMessage::LIM_M2_INTEGRAL) {
-						ROS_ERROR("M2 Integral limit reached");
+						ROS_ERROR("right Integral limit reached");
 					}
 					break;
 				}
