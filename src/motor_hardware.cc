@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TICS_PER_RADIAN (41.0058030317/2)
 #define QTICS_PER_RADIAN (TICS_PER_RADIAN*4)
 #define VELOCITY_READ_PER_SECOND 10.0 //read = ticks / (100 ms), so we have scale of 10 for ticks/second
-#define CURRENT_FIRMWARE_VERSION 18
+#define CURRENT_FIRMWARE_VERSION 24
 
 
 MotorHardware::MotorHardware(ros::NodeHandle nh){
@@ -86,6 +86,9 @@ MotorHardware::MotorHardware(ros::NodeHandle nh){
 
 
 	motor_serial_ = new MotorSerial(sPort,sBaud,sLoopRate);
+
+	leftError = nh.advertise<std_msgs::Int32>("right_error", 1); 
+	rightError = nh.advertise<std_msgs::Int32>("left_error", 1); 
 
 	pubU50 = nh.advertise<std_msgs::UInt32>("u50", 1); 
 	pubS50 = nh.advertise<std_msgs::Int32>("s50", 1); 
@@ -162,6 +165,36 @@ void MotorHardware::readInputs(){
 
 					joints_[0].position += (odomLeft / TICS_PER_RADIAN);
 					joints_[1].position += (odomRight / TICS_PER_RADIAN);
+					break;
+				}
+				case MotorMessage::REG_BOTH_ERROR:
+				{
+					std_msgs::Int32 left;
+					std_msgs::Int32 right;
+					int32_t speed = mm.getData();
+
+					left.data = (speed >> 16) & 0xffff;
+					right.data = speed & 0xffff;
+					leftError.publish(left);
+					rightError.publish(left);
+					break;
+				}
+				case MotorMessage::REG_LIMIT_REACHED:
+				{
+					int32_t data = mm.getData();
+
+                                        if (data & MotorMessage::LIM_M1_PWM) {
+						ROS_ERROR("M1 PWM limit reached");
+					}
+                                        if (data & MotorMessage::LIM_M2_PWM) {
+						ROS_ERROR("M2 PWM limit reached");
+					}
+                                        if (data & MotorMessage::LIM_M1_INTEGRAL) {
+						ROS_ERROR("M1 Integral limit reached");
+					}
+                                        if (data & MotorMessage::LIM_M2_INTEGRAL) {
+						ROS_ERROR("M2 Integral limit reached");
+					}
 					break;
 				}
 				default:

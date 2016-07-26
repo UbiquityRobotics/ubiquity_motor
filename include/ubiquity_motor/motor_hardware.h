@@ -90,6 +90,9 @@ class MotorHardware : public hardware_interface::RobotHW {
 		}
 		joints_[2];
 
+		ros::Publisher leftError;
+		ros::Publisher rightError;
+
 		ros::Publisher pubU50;
 		ros::Publisher pubS50;
 		ros::Publisher pubU51;
