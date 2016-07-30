@@ -178,7 +178,7 @@ void MotorHardware::readInputs(){
 					left.data = leftSpeed;
 					right.data = rightSpeed;
 					leftError.publish(left);
-					rightError.publish(left);
+					rightError.publish(right);
 					break;
 				}
 				case MotorMessage::REG_LIMIT_REACHED:
@@ -192,10 +192,10 @@ void MotorHardware::readInputs(){
 						ROS_ERROR("right PWM limit reached");
 					}
                                         if (data & MotorMessage::LIM_M1_INTEGRAL) {
-						ROS_ERROR("left Integral limit reached");
+						ROS_WARN("left Integral limit reached");
 					}
                                         if (data & MotorMessage::LIM_M2_INTEGRAL) {
-						ROS_ERROR("right Integral limit reached");
+						ROS_WARN("right Integral limit reached");
 					}
 					break;
 				}
