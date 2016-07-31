@@ -103,9 +103,7 @@ void MotorMessage::setType(MotorMessage::MessageTypes type){
 }
 
 MotorMessage::MessageTypes MotorMessage::getType() const{
-  if (verifyType(this->type)){
-    return static_cast<MotorMessage::MessageTypes>(this->type);
-  }
+  return static_cast<MotorMessage::MessageTypes>(this->type);
 }
 
 void MotorMessage::setRegister(MotorMessage::Registers reg){
@@ -191,7 +189,7 @@ int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
 int MotorMessage::verifyType(uint8_t t) {
   //Return 1 good
   //Return 0 for bad
-  for (int i = 0; i < sizeof(valid_types) / sizeof(valid_types[0]); ++i)
+  for (size_t i = 0; i < sizeof(valid_types) / sizeof(valid_types[0]); ++i)
   {
     if (t == valid_types[i])
       return 1;
@@ -202,7 +200,7 @@ int MotorMessage::verifyType(uint8_t t) {
 int MotorMessage::verifyRegister(uint8_t r) {
   //Return 1 good
   //Return 0 for bad
-  for (int i = 0; i < sizeof(valid_registers) / sizeof(valid_registers[0]); ++i)
+  for (size_t i = 0; i < sizeof(valid_registers) / sizeof(valid_registers[0]); ++i)
   {
     if (r == valid_registers[i])
       return 1;

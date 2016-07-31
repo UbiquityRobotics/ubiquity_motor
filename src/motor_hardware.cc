@@ -47,7 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 MotorHardware::MotorHardware(ros::NodeHandle nh){
 	ros::V_string joint_names = boost::assign::list_of("left_wheel_joint")("right_wheel_joint");
 
-	for (unsigned int i = 0; i < joint_names.size(); i++) {
+	for (size_t i = 0; i < joint_names.size(); i++) {
 		hardware_interface::JointStateHandle joint_state_handle(joint_names[i],
 		    &joints_[i].position, &joints_[i].velocity, &joints_[i].effort);
 		joint_state_interface_.registerHandle(joint_state_handle);
@@ -250,7 +250,7 @@ void MotorHardware::readInputs(){
 }
 
 void MotorHardware::writeSpeeds(){
-	std::vector<MotorMessage> commands;
+	std::vector<MotorMessage> commands(6);
 	//requestOdometry();
 	//requestVelocity();
 	//requestVersion();
@@ -328,21 +328,8 @@ void MotorHardware::requestVersion(){
 }
 
 void MotorHardware::requestOdometry(){
-	//ROS_ERROR("TICKR");
 	std::vector<MotorMessage> commands;
-
-	MotorMessage left_odom;
-	left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
-	left_odom.setType(MotorMessage::TYPE_READ);
-	left_odom.setData(0);
-	commands.push_back(left_odom);
-
-	MotorMessage right_odom;
-	right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
-	right_odom.setType(MotorMessage::TYPE_READ);
-	right_odom.setData(0);
-	commands.push_back(right_odom);
-
+	_addOdometryRequest(commands);
 	motor_serial_->transmitCommands(commands);
 }
 
@@ -360,22 +347,9 @@ void MotorHardware::setDeadmanTimer(int32_t deadman_timer){
 
 void MotorHardware::requestVelocity(){
 	std::vector<MotorMessage> commands;
-
-	MotorMessage left_vel;
-	left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
-	left_vel.setType(MotorMessage::TYPE_READ);
-	left_vel.setData(0);
-	commands.push_back(left_vel);
-
-	MotorMessage right_vel;
-	right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
-	right_vel.setType(MotorMessage::TYPE_READ);
-	right_vel.setData(0);
-	commands.push_back(right_vel);
-
+	_addVelocityRequest(commands);
 	motor_serial_->transmitCommands(commands);
 }
-
 
 void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set, int32_t denominator_set){
 	p_value = p_set;
@@ -453,7 +427,7 @@ void MotorHardware::sendPid() {
 }
 
 void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
-	std::vector<MotorMessage> commands;
+	std::vector<MotorMessage> commands(2);
 	
 	MotorMessage led1;
 	led1.setRegister(MotorMessage::REG_LED_1);

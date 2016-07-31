@@ -57,6 +57,9 @@ class MotorHardware : public hardware_interface::RobotHW {
 		void setDeadmanTimer(int32_t deadman);
 		void setDebugLeds(bool led1, bool led2);
 	private:
+		void _addOdometryRequest(std::vector<MotorMessage>& commands) const;
+		void _addVelocityRequest(std::vector<MotorMessage>& commands) const;
+		
 		int16_t calculateTicsFromRadians(double radians) const;
 		double calculateRadiansFromTics(int16_t tics) const;
 
