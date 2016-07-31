@@ -462,3 +462,31 @@ int16_t MotorHardware::calculateTicsFromRadians(double radians) const {
 double MotorHardware::calculateRadiansFromTics(int16_t tics) const {
 	return (tics*VELOCITY_READ_PER_SECOND/QTICS_PER_RADIAN);
 }
+
+void MotorHardware::_addOdometryRequest(std::vector<MotorMessage>& commands) const{
+	MotorMessage left_odom;
+	left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
+	left_odom.setType(MotorMessage::TYPE_READ);
+	left_odom.setData(0);
+	commands.push_back(left_odom);
+
+	MotorMessage right_odom;
+	right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
+	right_odom.setType(MotorMessage::TYPE_READ);
+	right_odom.setData(0);
+	commands.push_back(right_odom);
+}
+
+void MotorHardware::_addVelocityRequest(std::vector<MotorMessage>& commands) const{
+	MotorMessage left_vel;
+	left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
+	left_vel.setType(MotorMessage::TYPE_READ);
+	left_vel.setData(0);
+	commands.push_back(left_vel);
+
+	MotorMessage right_vel;
+	right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
+	right_vel.setType(MotorMessage::TYPE_READ);
+	right_vel.setData(0);
+	commands.push_back(right_vel);
+}
