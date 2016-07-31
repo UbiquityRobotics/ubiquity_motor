@@ -43,10 +43,10 @@ class MotorMessage{
 
 		// MessageTypes enum in class to avoid global namespace pollution
 		enum MessageTypes {
-			TYPE_READ = 0xAA,
-			TYPE_WRITE = 0xBB,
-			TYPE_RESPONSE = 0xCC,
-			TYPE_ERROR = 0xDD
+			TYPE_READ = 0xA,
+			TYPE_WRITE = 0xB,
+			TYPE_RESPONSE = 0xC,
+			TYPE_ERROR = 0xD
 		};
 
 		// Registers enum in class to avoid global namespace pollution
@@ -104,8 +104,34 @@ class MotorMessage{
 			REG_12V_AUX_CURRENT = 0x27,
 
 			REG_LEFT_SPEED_MEASURED = 0x28,
-			REG_RIGHT_SPEED_MEASURED = 0x29
+			REG_RIGHT_SPEED_MEASURED = 0x29,
+
+			REG_BOTH_SPEED_SET = 0x2A,
+			REG_MOVING_BUF_SIZE = 0x2B,
+
+			REG_LIMIT_REACHED = 0x2C,
+			REG_BOTH_ERROR = 0x2D,
+			REG_BOTH_ODOM = 0x30,
+
+			DEBUG_50 = 0x50,
+			DEBUG_51 = 0x51,
+			DEBUG_52 = 0x52,
+			DEBUG_53 = 0x53,
+			DEBUG_54 = 0x54,
+			DEBUG_55 = 0x55,
+			DEBUG_56 = 0x56,
+			DEBUG_57 = 0x57,
+			DEBUG_58 = 0x58
 		};
+
+		// Bitfield indicating which limits have been reached
+		enum Limits {
+			LIM_M1_PWM = 0x10,
+			LIM_M2_PWM = 0x01,
+			LIM_M1_INTEGRAL = 0x20,
+			LIM_M2_INTEGRAL = 0x02
+		};
+
 
 		void setType(MotorMessage::MessageTypes type);
 		MotorMessage::MessageTypes getType() const;
@@ -126,7 +152,7 @@ class MotorMessage{
 		uint8_t data[4]; // 4 bytes of data, numbers should be in big endian format
 
 		const static uint8_t delimeter = 0x7E; // Hard coded for now, should be parameterized
-		const static uint8_t protocol_version = 0x02; // Hard coded for now, should be parameterized
+		const static uint8_t protocol_version = 0x03; // Hard coded for now, should be parameterized
 
 		const static uint8_t valid_types[]; 
 		const static uint8_t valid_registers[];
