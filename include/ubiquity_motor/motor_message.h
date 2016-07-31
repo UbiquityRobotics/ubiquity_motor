@@ -105,8 +105,33 @@ class MotorMessage{
 
 			REG_LEFT_SPEED_MEASURED = 0x28,
 			REG_RIGHT_SPEED_MEASURED = 0x29,
-			REG_BOTH_SPEED_SET = 0x2A
+
+			REG_BOTH_SPEED_SET = 0x2A,
+			REG_MOVING_BUF_SIZE = 0x2B,
+
+			REG_LIMIT_REACHED = 0x2C,
+			REG_BOTH_ERROR = 0x2D,
+			REG_BOTH_ODOM = 0x30,
+
+			DEBUG_50 = 0x50,
+			DEBUG_51 = 0x51,
+			DEBUG_52 = 0x52,
+			DEBUG_53 = 0x53,
+			DEBUG_54 = 0x54,
+			DEBUG_55 = 0x55,
+			DEBUG_56 = 0x56,
+			DEBUG_57 = 0x57,
+			DEBUG_58 = 0x58
 		};
+
+		// Bitfield indicating which limits have been reached
+		enum Limits {
+			LIM_M1_PWM = 0x10,
+			LIM_M2_PWM = 0x01,
+			LIM_M1_INTEGRAL = 0x20,
+			LIM_M2_INTEGRAL = 0x02
+		};
+
 
 		void setType(MotorMessage::MessageTypes type);
 		MotorMessage::MessageTypes getType() const;
