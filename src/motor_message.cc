@@ -81,7 +81,10 @@ uint8_t const MotorMessage::valid_registers[] = {
   REG_LEFT_SPEED_MEASURED,
   REG_RIGHT_SPEED_MEASURED,
   REG_BOTH_SPEED_SET,
+  REG_MOVING_BUF_SIZE,
   REG_BOTH_ODOM,
+  REG_LIMIT_REACHED,
+  REG_BOTH_ERROR,
   DEBUG_50,
   DEBUG_51,
   DEBUG_52,
@@ -90,8 +93,7 @@ uint8_t const MotorMessage::valid_registers[] = {
   DEBUG_55,
   DEBUG_56,
   DEBUG_57,
-  DEBUG_58,
-  DEBUG_59
+  DEBUG_58
 };
 
 void MotorMessage::setType(MotorMessage::MessageTypes type){

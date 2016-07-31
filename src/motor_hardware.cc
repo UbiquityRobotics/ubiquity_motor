@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TICS_PER_RADIAN (41.0058030317/2)
 #define QTICS_PER_RADIAN (TICS_PER_RADIAN*4)
 #define VELOCITY_READ_PER_SECOND 10.0 //read = ticks / (100 ms), so we have scale of 10 for ticks/second
-#define CURRENT_FIRMWARE_VERSION 18
+#define CURRENT_FIRMWARE_VERSION 24
 
 
 MotorHardware::MotorHardware(ros::NodeHandle nh){
@@ -84,7 +84,12 @@ MotorHardware::MotorHardware(ros::NodeHandle nh){
 		nh.setParam("ubiquity_motor/serial_loop_rate", sLoopRate);
 	}
 
+
 	motor_serial_ = new MotorSerial(sPort,sBaud,sLoopRate);
+
+	leftError = nh.advertise<std_msgs::Int32>("right_error", 1); 
+	rightError = nh.advertise<std_msgs::Int32>("left_error", 1); 
+
 	pubU50 = nh.advertise<std_msgs::UInt32>("u50", 1); 
 	pubS50 = nh.advertise<std_msgs::Int32>("s50", 1); 
 	pubU51 = nh.advertise<std_msgs::UInt32>("u51", 1); 
@@ -105,6 +110,14 @@ MotorHardware::MotorHardware(ros::NodeHandle nh){
 	pubS58 = nh.advertise<std_msgs::Int32>("s58", 1); 
 	pubU59 = nh.advertise<std_msgs::UInt32>("u59", 1); 
 	pubS59 = nh.advertise<std_msgs::Int32>("s59", 1); 
+
+	sendPid_count = 0;
+
+        prev_p_value = -1;
+        prev_i_value = -1;
+        prev_d_value = -1;
+        prev_denominator_value = -1;
+        prev_moving_buffer_size = -1;
 }
 
 MotorHardware::~MotorHardware(){
@@ -151,7 +164,39 @@ void MotorHardware::readInputs(){
 					//ROS_ERROR("left %d right %d", odomLeft, odomRight);
 
 					joints_[0].position += (odomLeft / TICS_PER_RADIAN);
-       					joints_[1].position += (odomRight / TICS_PER_RADIAN);
+					joints_[1].position += (odomRight / TICS_PER_RADIAN);
+					break;
+				}
+				case MotorMessage::REG_BOTH_ERROR:
+				{
+					std_msgs::Int32 left;
+					std_msgs::Int32 right;
+					int32_t speed = mm.getData();
+					int16_t leftSpeed = (speed >> 16) & 0xffff;
+ 					int16_t rightSpeed = speed & 0xffff;				
+
+					left.data = leftSpeed;
+					right.data = rightSpeed;
+					leftError.publish(left);
+					rightError.publish(right);
+					break;
+				}
+				case MotorMessage::REG_LIMIT_REACHED:
+				{
+					int32_t data = mm.getData();
+
+                                        if (data & MotorMessage::LIM_M1_PWM) {
+						ROS_ERROR("left PWM limit reached");
+					}
+                                        if (data & MotorMessage::LIM_M2_PWM) {
+						ROS_ERROR("right PWM limit reached");
+					}
+                                        if (data & MotorMessage::LIM_M1_INTEGRAL) {
+						ROS_WARN("left Integral limit reached");
+					}
+                                        if (data & MotorMessage::LIM_M2_INTEGRAL) {
+						ROS_WARN("right Integral limit reached");
+					}
 					break;
 				}
 				default:
@@ -273,8 +318,8 @@ void MotorHardware::writeSpeeds(){
 	// ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
 }
 
-void MotorHardware::requestVersion(){                                                                                          
-    MotorMessage version;
+void MotorHardware::requestVersion(){
+	MotorMessage version;
 	version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
 	version.setType(MotorMessage::TYPE_READ);
 	version.setData(0);
@@ -310,6 +355,7 @@ void MotorHardware::setDeadmanTimer(int32_t deadman_timer){
 	mm.setType(MotorMessage::TYPE_WRITE);
 	mm.setData(deadman_timer);
 	commands.push_back(mm);
+	motor_serial_->transmitCommands(commands);
 }
 
 void MotorHardware::requestVelocity(){
@@ -338,38 +384,72 @@ void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set, int32_t 
 	denominator_value = denominator_set;
 }
 
+void MotorHardware::setWindowSize(int32_t size) {
+	moving_buffer_size = size;
+}
+
 void MotorHardware::sendPid() {
 	std::vector<MotorMessage> commands;
    
-        ROS_ERROR("sending PID %d %d %d %d", 
-                 (int)p_value, (int)i_value, (int)d_value, (int)denominator_value); 
+	//ROS_ERROR("sending PID %d %d %d %d", 
+		//(int)p_value, (int)i_value, (int)d_value, (int)denominator_value); 
 
-	MotorMessage p;
-	p.setRegister(MotorMessage::REG_PARAM_P);
-	p.setType(MotorMessage::TYPE_WRITE);
-	p.setData(p_value);
-	commands.push_back(p);
+	// Only send one register at a time to avoid overwhelming serial comms
+	int cycle = (sendPid_count++) % 5;
 
-	MotorMessage i;
-	i.setRegister(MotorMessage::REG_PARAM_I);
-	i.setType(MotorMessage::TYPE_WRITE);
-	i.setData(i_value);
-	commands.push_back(i);
+	if (cycle == 0 && p_value != prev_p_value) {
+		ROS_WARN("Setting P to %d", p_value);
+		prev_p_value = p_value;
+		MotorMessage p;
+		p.setRegister(MotorMessage::REG_PARAM_P);
+		p.setType(MotorMessage::TYPE_WRITE);
+		p.setData(p_value);
+		commands.push_back(p);
+	}
 
-	MotorMessage d;
-	d.setRegister(MotorMessage::REG_PARAM_D);
-	d.setType(MotorMessage::TYPE_WRITE);
-	d.setData(d_value);
-	commands.push_back(d);
+	if (cycle == 1 && i_value != prev_i_value) {
+		ROS_WARN("Setting I to %d", i_value);
+		prev_i_value = i_value;
+		MotorMessage i;
+		i.setRegister(MotorMessage::REG_PARAM_I);
+		i.setType(MotorMessage::TYPE_WRITE);
+		i.setData(i_value);
+		commands.push_back(i);
+	}
 
+	if (cycle == 2 && d_value != prev_d_value) {
+		ROS_WARN("Setting D to %d", d_value);
+		prev_d_value = d_value;
+		MotorMessage d;
+		d.setRegister(MotorMessage::REG_PARAM_D);
+		d.setType(MotorMessage::TYPE_WRITE);
+		d.setData(d_value);
+		commands.push_back(d);
+	}
 
-	MotorMessage denominator;
-	denominator.setRegister(MotorMessage::REG_PARAM_C);
-	denominator.setType(MotorMessage::TYPE_WRITE);
-	denominator.setData(denominator_value);
-	commands.push_back(denominator);
+	if (cycle == 3 && denominator_value != prev_denominator_value) {
+		ROS_WARN("Setting Denominator to %d", denominator_value);
+		prev_denominator_value = denominator_value;
+		MotorMessage denominator;
+		denominator.setRegister(MotorMessage::REG_PARAM_C);
+		denominator.setType(MotorMessage::TYPE_WRITE);
+		denominator.setData(denominator_value);
+		commands.push_back(denominator);
+	}
 
-	motor_serial_->transmitCommands(commands);
+	if (cycle == 4 && moving_buffer_size != prev_moving_buffer_size) {
+		ROS_WARN("Setting D window to %d", moving_buffer_size);
+		prev_moving_buffer_size = moving_buffer_size;
+		MotorMessage winsize;
+		winsize.setRegister(MotorMessage::REG_MOVING_BUF_SIZE);
+		winsize.setType(MotorMessage::TYPE_WRITE);
+		winsize.setData(moving_buffer_size);
+		commands.push_back(winsize);
+	}
+
+	if (commands.size() != 0) {
+		motor_serial_->transmitCommands(commands);
+	}
 }
 
 void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
