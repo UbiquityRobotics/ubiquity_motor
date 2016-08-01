@@ -87,8 +87,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh){
 
 	motor_serial_ = new MotorSerial(sPort,sBaud,sLoopRate);
 
-	leftError = nh.advertise<std_msgs::Int32>("right_error", 1); 
-	rightError = nh.advertise<std_msgs::Int32>("left_error", 1); 
+	leftError = nh.advertise<std_msgs::Int32>("left_error", 1); 
+	rightError = nh.advertise<std_msgs::Int32>("right_error", 1); 
 
 	pubU50 = nh.advertise<std_msgs::UInt32>("u50", 1); 
 	pubS50 = nh.advertise<std_msgs::Int32>("s50", 1); 
@@ -250,7 +250,7 @@ void MotorHardware::readInputs(){
 }
 
 void MotorHardware::writeSpeeds(){
-	std::vector<MotorMessage> commands(6);
+	std::vector<MotorMessage> commands;
 	//requestOdometry();
 	//requestVelocity();
 	//requestVersion();
@@ -427,7 +427,7 @@ void MotorHardware::sendPid() {
 }
 
 void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
-	std::vector<MotorMessage> commands(2);
+	std::vector<MotorMessage> commands;
 	
 	MotorMessage led1;
 	led1.setRegister(MotorMessage::REG_LED_1);
