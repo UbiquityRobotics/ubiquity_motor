@@ -140,9 +140,9 @@ TEST_F(MotorSerialTests, readQueuesDequeues){
 }
 
 TEST_F(MotorSerialTests, goodReadWorks){
-  uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  uint8_t test[]= {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 9);
+  write(master_fd, test, 8);
 
   while(!motors->commandAvailable()) {
   }
@@ -155,9 +155,9 @@ TEST_F(MotorSerialTests, goodReadWorks){
 }
 
 TEST_F(MotorSerialTests, misalignedOneGoodReadWorks){
-  uint8_t test[]= {0x00, 0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  uint8_t test[]= {0x00, 0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 10);
+  write(master_fd, test, 9);
 
   while(!motors->commandAvailable()) {
   }
@@ -170,9 +170,9 @@ TEST_F(MotorSerialTests, misalignedOneGoodReadWorks){
 }
 
 TEST_F(MotorSerialTests, misalignedManyGoodReadWorks){
-  uint8_t test[]= {0x01, 0x2C, 0x0E, 0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  uint8_t test[]= {0x01, 0x2C, 0x0E, 0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 12);
+  write(master_fd, test, 11);
 
   while(!motors->commandAvailable()) {
   }
@@ -185,9 +185,9 @@ TEST_F(MotorSerialTests, misalignedManyGoodReadWorks){
 }
 
 TEST_F(MotorSerialTests, errorReadWorks){
-  uint8_t test[]= {0x7E, 0x02, 0xDD, 0x07, 0x00, 0x00, 0x00, 0x00, 0x19};
+  uint8_t test[]= {0x7E, 0x3D, 0x07, 0x00, 0x00, 0x00, 0x00, 0xBB};
   //uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
-  write(master_fd, test, 9);
+  write(master_fd, test, 8);
 
   while(!motors->commandAvailable()) {
   }
@@ -222,9 +222,9 @@ TEST_F(MotorSerialTests, badReadFails){
 }
 
 TEST_F(MotorSerialTests, misalignedOneBadReadFails){
-  uint8_t test[]= {0x00, 0x7d, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  uint8_t test[]= {0x00, 0x7d, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 10);
+  write(master_fd, test, 9);
 
   ros::Rate loop(100);
   int times = 0;
@@ -245,7 +245,30 @@ TEST_F(MotorSerialTests, misalignedOneBadReadFails){
 }
 
 TEST_F(MotorSerialTests, incompleteReadFails){
-  uint8_t test[]= {0x7E, 0x02, 0xBB, 0x00};
+  uint8_t test[]= {0x7E, 0x3B, 0x00};
+  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+  write(master_fd, test, 3);
+
+  ros::Rate loop(100);
+  int times = 0;
+  while(!motors->commandAvailable()) {
+    loop.sleep();
+    times++;
+    if(times >= 20) {
+      break;
+    }
+  }
+
+  if(times >= 20) {
+      SUCCEED();
+  }
+  else {
+    FAIL();
+  }
+}
+
+TEST_F(MotorSerialTests, incompleteMisalignedReadFails){
+  uint8_t test[]= {0x0f,0x7E, 0x3B, 0x00};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
   write(master_fd, test, 4);
 
@@ -267,33 +290,10 @@ TEST_F(MotorSerialTests, incompleteReadFails){
   }
 }
 
-TEST_F(MotorSerialTests, incompleteMisalignedReadFails){
-  uint8_t test[]= {0x0f,0x7E, 0x02, 0xBB, 0x00};
-  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 5);
-
-  ros::Rate loop(100);
-  int times = 0;
-  while(!motors->commandAvailable()) {
-    loop.sleep();
-    times++;
-    if(times >= 20) {
-      break;
-    }
-  }
-
-  if(times >= 20) {
-      SUCCEED();
-  }
-  else {
-    FAIL();
-  }
-}
-
 TEST_F(MotorSerialTests, badProtocolReadFails){
-  uint8_t test[]= {0x7E, 0x0F, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  uint8_t test[]= {0x7E, 0xFB, 0x07, 0x00, 0x00, 0x00, 0x00, 0xFB};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 5);
+  write(master_fd, test, 8);
 
   ros::Rate loop(100);
   int times = 0;
@@ -315,9 +315,9 @@ TEST_F(MotorSerialTests, badProtocolReadFails){
 
 
 TEST_F(MotorSerialTests, badTypeReadFails){
-  uint8_t test[]= {0x7E, 0x02, 0xDE, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+  uint8_t test[]= {0x7E, 0x2E, 0x07, 0x00, 0x00, 0x00, 0x00, 0xCA};
   //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 5);
+  write(master_fd, test, 8);
 
   ros::Rate loop(100);
   int times = 0;
@@ -382,8 +382,8 @@ TEST_F(MotorSerialTests, writeOutputs) {
 	version.setData(0);
 	motors->transmitCommand(version);
 
-  uint8_t arr[9];
-  read(master_fd, arr, 9);
+  uint8_t arr[8];
+  read(master_fd, arr, 8);
 
   std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
 
@@ -507,8 +507,8 @@ TEST_F(MotorSerialTests, writeMultipleOutputs) {
 
   sleep(2);
 
-  uint8_t arr[36];
-  read(master_fd, arr, 36);
+  uint8_t arr[32];
+  read(master_fd, arr, 32);
   std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
 
   std::vector<uint8_t> expected(0);
