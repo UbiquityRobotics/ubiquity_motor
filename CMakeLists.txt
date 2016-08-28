@@ -18,7 +18,7 @@ find_package(Boost REQUIRED COMPONENTS
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 generate_dynamic_reconfigure_options(
-  cfg/PIDConfig.cfg
+  cfg/PID.cfg
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -59,7 +59,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES ubiquity_motor
+#  LIBRARIES ubiquity_motor
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
