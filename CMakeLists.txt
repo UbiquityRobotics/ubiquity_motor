@@ -14,7 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
 	dynamic_reconfigure)
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS  
-	thread)
+	thread
+	atomic)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 generate_dynamic_reconfigure_options(
@@ -148,6 +149,10 @@ if(CATKIN_ENABLE_TESTING)
 	catkin_add_gtest(ubiquity_motor_serial_test
 		test/motor_serial_test.cc)
 	target_link_libraries(ubiquity_motor_serial_test  ubiquity_motor util ${catkin_LIBRARIES})
+
+	catkin_add_gtest(ubiquity_motor_shared_queue_test
+		test/shared_queue_test.cc)
+	target_link_libraries(ubiquity_motor_shared_queue_test  ubiquity_motor ${catkin_LIBRARIES})
 
 endif()
 
