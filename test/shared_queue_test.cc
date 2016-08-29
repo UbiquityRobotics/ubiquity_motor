@@ -48,7 +48,7 @@ TEST(SharedQueueTest, pushPopSize) {
 
 	for (int i = 0; i < 5; ++i){
 		sq.push(i);
-		ASSERT_EQ(i, sq.size());
+		ASSERT_EQ(i+1, sq.size());
 	}
 
 	ASSERT_EQ(5, sq.size());
