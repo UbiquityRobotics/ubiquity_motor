@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <ubiquity_motor/shared_queue.h>
+#include <boost/thread.hpp>
 #include <vector>
 
 TEST(SharedQueueTest, emptyOnConstuct) {
@@ -57,6 +58,18 @@ TEST(SharedQueueTest, pushFrontPop) {
 		ASSERT_EQ(i, sq.front());
 		sq.pop();
 	}
+
+	for (int i = 0; i < 5; ++i){
+		sq.push(i);
+	}
+
+	for (int i = 0; i < 5; ++i){
+		ASSERT_EQ(i, sq.front_pop());
+	}
+
+	ASSERT_TRUE(sq.fast_empty());
+	ASSERT_TRUE(sq.empty());
+	ASSERT_EQ(0, sq.size());
 }
 
 TEST(SharedQueueTest, pushPopSize) {
@@ -85,6 +98,30 @@ TEST(SharedQueueTest, pushMultipleSize) {
 
 	sq.push(v);
 	ASSERT_EQ(5, sq.size());
+}
+
+void pop_thread(shared_queue<int> *sq) {
+	for (int i = 0; i < 100; ++i){
+		ASSERT_FALSE(sq->fast_empty());
+		ASSERT_FALSE(sq->empty());
+		ASSERT_EQ(i, sq->front());
+		sq->pop();
+	}
+}
+
+TEST(SharedQueueTest, pushFrontPopThreaded) {
+	shared_queue<int> sq;
+
+	for (int i = 0; i < 100; ++i){
+		sq.push(i);
+	}
+
+	boost::thread popThread = boost::thread(pop_thread, &sq);
+	popThread.join();
+
+	ASSERT_TRUE(sq.fast_empty());
+	ASSERT_TRUE(sq.empty());
+	ASSERT_EQ(0, sq.size());
 }
 
 int main(int argc, char **argv){
