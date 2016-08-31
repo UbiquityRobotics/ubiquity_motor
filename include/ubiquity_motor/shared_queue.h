@@ -20,6 +20,16 @@ public:
     queue_empty_ = internal_queue_.empty();
   };
 
+  void push(const std::vector<T> &values) {
+    boost::lock_guard<boost::mutex> lock(queue_mutex_); 
+    
+    for (typename std::vector<T>::const_iterator it = values.begin(); it != values.end(); ++it) {
+      internal_queue_.push(*it);
+      queue_empty_ = internal_queue_.empty();
+    }
+
+  };
+
   T& front() {
     boost::lock_guard<boost::mutex> lock(queue_mutex_); 
     return internal_queue_.front();
@@ -28,6 +38,16 @@ public:
   const T& front() const {
     boost::lock_guard<boost::mutex> lock(queue_mutex_); 
     return internal_queue_.front();
+  };
+
+  T front_pop() {
+    boost::lock_guard<boost::mutex> lock(queue_mutex_);
+
+    T value = internal_queue_.front();
+    internal_queue_.pop();
+    queue_empty_ = internal_queue_.empty();
+
+    return value;
   };
 
   void pop() {

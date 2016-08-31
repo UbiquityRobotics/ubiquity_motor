@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <ubiquity_motor/shared_queue.h>
+#include <vector>
 
 TEST(SharedQueueTest, emptyOnConstuct) {
 	shared_queue<int> sq;
@@ -12,6 +13,21 @@ TEST(SharedQueueTest, emptyOnConstuct) {
 TEST(SharedQueueTest, notEmptyAfterPush) {
 	shared_queue<int> sq;
 	sq.push(25);
+
+	ASSERT_FALSE(sq.fast_empty());
+	ASSERT_FALSE(sq.empty());
+}
+
+
+TEST(SharedQueueTest, notEmptyAfterPushMultiple) {
+	shared_queue<int> sq;
+	std::vector<int> v;
+
+	for (int i = 0; i < 5; ++i){
+		v.push_back(i);
+	}
+
+	sq.push(v);
 
 	ASSERT_FALSE(sq.fast_empty());
 	ASSERT_FALSE(sq.empty());
@@ -59,13 +75,15 @@ TEST(SharedQueueTest, pushPopSize) {
 	}
 }
 
-TEST(SharedQueueTest, pushSize) {
+TEST(SharedQueueTest, pushMultipleSize) {
 	shared_queue<int> sq;
+	std::vector<int> v;
 
 	for (int i = 0; i < 5; ++i){
-		sq.push(i);
+		v.push_back(i);
 	}
 
+	sq.push(v);
 	ASSERT_EQ(5, sq.size());
 }
 
