@@ -17,7 +17,7 @@ find_package(Boost REQUIRED COMPONENTS
 	thread
 	atomic)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 generate_dynamic_reconfigure_options(
   cfg/PID.cfg
 )
