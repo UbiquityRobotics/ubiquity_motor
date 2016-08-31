@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <serial/serial.h>
 
 MotorSerial::MotorSerial(const std::string &port, uint32_t baud_rate, double loopRate) {
-	have_input = false;
-
 	// Make sure baud rate is valid
 	switch (baud_rate) {
 		case 110 :
@@ -73,8 +71,6 @@ MotorSerial::MotorSerial(const std::string &port, uint32_t baud_rate, double loo
 
 	serial_thread = new boost::thread(&MotorSerial::SerialThread, this);
 
-	have_input = false;
-	have_output = false;
 }
 
 MotorSerial::~MotorSerial() {
@@ -87,102 +83,43 @@ MotorSerial::~MotorSerial() {
 }
 
 int MotorSerial::transmitCommand(MotorMessage command) {
-	// Make sure to lock mutex before accessing the input fifo
-	input_mtx_.lock();
-	this->input.push(command); // add latest command to end of fifo
-	this->have_input = true; //Used to avoid input locking
-	input_mtx_.unlock();
+	input.push(command); // add latest command to end of fifo
 	return 0;
 }
 
 int MotorSerial::transmitCommands(const std::vector<MotorMessage> &commands) {
-	// Make sure to lock mutex before accessing the input fifo
-	input_mtx_.lock();
-	for (std::vector<MotorMessage>::const_iterator it = commands.begin(); it != commands.end(); ++it) {
-		this->input.push(*it);
-		this->have_input = true; //Used to avoid input locking
-	}
-	input_mtx_.unlock();
+	input.push(commands);
 	return 0;
 }
 
 MotorMessage MotorSerial::receiveCommand() {
 	MotorMessage mc;
-
-	output_mtx_.lock();
 	if (!this->output.empty()) {
-		mc = this->output.front();
-		this->output.pop();
+		mc = output.front_pop();
 	}
 
-	// If we just popped the last message
-	if (this->output.empty()) {
-		this->have_output = false;
-	}
-
-	output_mtx_.unlock();
 	return mc;
 }
 
 int MotorSerial::commandAvailable() {
-	// If have_output is false return false
-	// if it is true, then verify there is output and return true
-	// if verification fails make sure have_output is false
-	if(!this->have_output) {
-		return false;
-	}
-
-	output_mtx_.lock();
-	int out = !(this->output.empty());
-	if(!out) {
-		this->have_output = false;
-	}
-	output_mtx_.unlock();
-
-	return out;
+	return !output.fast_empty();
 }
 
 int MotorSerial::inputAvailable() {
-	// If have_input is false return false
-	// if it is true, then verify there is input and return true
-	// if verification fails make sure have_input is false
-
-	if (!this->have_input) {
-		return false;
-	}
-
-	input_mtx_.lock();
-	int out = !(this->input.empty());
-	if (!out) {
-		this->have_input = false;
-	}
-	input_mtx_.unlock();
-
-	return out;
+	return !input.fast_empty();
 }
 
 MotorMessage MotorSerial::getInputCommand() {
 	MotorMessage mc;
-	input_mtx_.lock();
 	if (!this->input.empty()) {
-		mc = this->input.front();
-		this->input.pop();
+		mc = input.front_pop();
 	}
 
-	// If we just popped the last message
-	if (this->input.empty()) {
-		this->have_input = false;
-	}
-
-	input_mtx_.unlock();
 	return mc;
 }
 
 void MotorSerial::appendOutput(MotorMessage command) {
-	output_mtx_.lock();
-	this->output.push(command);
-	this->have_output = true;
-	output_mtx_.unlock();
+	output.push(command);
 }
 
 void MotorSerial::SerialThread() {

@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MOTORSERIAL_H
 
 #include <ubiquity_motor/motor_message.h>
+#include <ubiquity_motor/shared_queue.h>
 #include <serial/serial.h>
 #include <boost/thread.hpp>
 #include <ros/ros.h>
@@ -61,19 +62,10 @@ class MotorSerial
 		std::string _port;
 		uint32_t _baud_rate;
 
-		// bool to check for input to avoid unnecessary locking                
-		bool have_input;
-		//locking mutex for the input queue
-		boost::mutex input_mtx_;
 		// queue for messages that are to be transmitted
-		std::queue<MotorMessage> input; 
+		shared_queue<MotorMessage> input; 
 		
-		// bool to check for output to avoid unnecessary locking                
-		bool have_output;
-		//locking mutex for the output queue
-		boost::mutex output_mtx_;
-		//queue for messages that have been received
-		std::queue<MotorMessage> output; 
+		shared_queue<MotorMessage> output; 
 
 		boost::thread* serial_thread;
 		ros::Rate* serial_loop_rate;
