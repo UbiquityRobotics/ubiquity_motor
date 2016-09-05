@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.0 (2016-09-04)
+------------------
 * **NOTE:** This version drops support for firmware versions before 24
 * Use new 8-byte serial protocol
 * Add support for using dynamic_reconfigure to change PID parameters
