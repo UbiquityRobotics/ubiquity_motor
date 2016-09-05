@@ -37,6 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <queue>
 
+#include <gtest/gtest_prod.h>
+
 class MotorSerial
 {
 	public:
@@ -48,8 +50,12 @@ class MotorSerial
 		
 		MotorMessage receiveCommand();
 		int commandAvailable();
+		
+		MotorSerial( const MotorSerial& other ); // non construction-copyable
+		MotorSerial& operator=( const MotorSerial& ); // non copyable
 
 	private:
+
 		serial::Serial* motors;
 		
 		std::string _port;
@@ -78,6 +84,14 @@ class MotorSerial
 
 		// Thread that has manages the serial port 
 		void SerialThread();
+
+		FRIEND_TEST(MotorSerialTests, invalidBaudDefaults);
+		FRIEND_TEST(MotorSerialTests, serialClosedOnInterupt);
+		FRIEND_TEST(MotorSerialTests, readQueuesDequeues);
+		FRIEND_TEST(MotorSerialTests, writeQueues);
+		FRIEND_TEST(MotorSerialTests, writeQueuesDequeues);
+		FRIEND_TEST(MotorSerialTests, writeMultipleQueues);
+		FRIEND_TEST(MotorSerialTests, writeMultipleQueuesDequeues);
 };
 
 #endif

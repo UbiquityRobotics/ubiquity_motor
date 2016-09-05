@@ -10,11 +10,16 @@ find_package(catkin REQUIRED COMPONENTS
 	nav_msgs 
 	serial 
 	hardware_interface 
-	controller_manager)
+	controller_manager
+	dynamic_reconfigure)
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS  
 	thread)
 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+generate_dynamic_reconfigure_options(
+  cfg/PID.cfg
+)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -39,10 +44,10 @@ find_package(Boost REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs  # Or other packages containing msgs
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -54,7 +59,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES ubiquity_motor
+#  LIBRARIES ubiquity_motor
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -78,6 +83,7 @@ target_link_libraries(ubiquity_motor
 
 ## Declare a cpp executable
 add_executable(motor_node src/motor_node.cc)
+add_dependencies(motor_node ${PROJECT_NAME}_gencfg)
 target_link_libraries(motor_node
  ubiquity_motor
  ${catkin_LIBRARIES}

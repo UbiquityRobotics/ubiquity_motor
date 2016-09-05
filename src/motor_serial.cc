@@ -72,6 +72,9 @@ MotorSerial::MotorSerial(const std::string &port, uint32_t baud_rate, double loo
 	serial_loop_rate = new ros::Rate(loopRate);
 
 	serial_thread = new boost::thread(&MotorSerial::SerialThread, this);
+
+	have_input = false;
+	have_output = false;
 }
 
 MotorSerial::~MotorSerial() {
@@ -111,6 +114,12 @@ MotorMessage MotorSerial::receiveCommand() {
 		mc = this->output.front();
 		this->output.pop();
 	}
+
+	// If we just popped the last message
+	if (this->output.empty()) {
+		this->have_output = false;
+	}
+
 	output_mtx_.unlock();
 	return mc;
 }
@@ -159,6 +168,12 @@ MotorMessage MotorSerial::getInputCommand() {
 		mc = this->input.front();
 		this->input.pop();
 	}
+
+	// If we just popped the last message
+	if (this->input.empty()) {
+		this->have_input = false;
+	}
+
 	input_mtx_.unlock();
 	return mc;
 }
@@ -177,12 +192,12 @@ void MotorSerial::SerialThread() {
 
 		while (motors->isOpen()) {
 
-			while (motors->available() >= (failed_update ? 1 : 9)) {
+			while (motors->available() >= (failed_update ? 1 : 8)) {
 				std::vector<uint8_t> innew(0);
-				motors->read(innew, failed_update ? 1 : 9);
+				motors->read(innew, failed_update ? 1 : 8);
 				in.insert(in.end(), innew.begin(), innew.end());
 
-				while (in.size() > 9) {
+				while (in.size() > 8) {
 					in.erase(in.begin());
 				}
 
@@ -197,8 +212,8 @@ void MotorSerial::SerialThread() {
 					failed_update = false;
 				} else if (error_code == 1) {
 					failed_update = true;
-					char rejected[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-					for (int i = 0; i < in.size() && i < 9; i++) {
+					char rejected[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+					for (size_t i = 0; i < in.size() && i < 8; i++) {
 						rejected[i] = in.at(i);
 					}
 					ROS_ERROR("REJECT: %s", rejected);
@@ -212,20 +227,20 @@ void MotorSerial::SerialThread() {
 			while (inputAvailable()) {
 				did_update = true;
 
-				std::vector<uint8_t> out(9);
+				std::vector<uint8_t> out(8);
 
 				out = getInputCommand().serialize();
-				// ROS_ERROR("out %x %x %x %x %x %x %x %x %x",
-				// 	out[0],
-				// 	out[1],
-				// 	out[2],
-				// 	out[3],
-				// 	out[4],
-				// 	out[5],
-				// 	out[6],
-				// 	out[7],
-				// 	out[8]);
+				ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x",
+				 	out[0],
+				 	out[1],
+				 	out[2],
+				 	out[3],
+				 	out[4],
+				 	out[5],
+				 	out[6],
+				 	out[7]);
 				motors->write(out);
+				usleep(2000);
 			}
 
 			if (did_update) {

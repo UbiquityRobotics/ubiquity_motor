@@ -37,6 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ros/ros.h"
 #include "sensor_msgs/JointState.h"
 
+#include "std_msgs/UInt32.h"
+#include "std_msgs/Int32.h"
+
 #include <ubiquity_motor/motor_serial.h>
 
 class MotorHardware : public hardware_interface::RobotHW {
@@ -49,9 +52,17 @@ class MotorHardware : public hardware_interface::RobotHW {
 		void requestOdometry();
 		void requestVelocity();
 		void setPid(int32_t p, int32_t i, int32_t d, int32_t denominator);
+		void setWindowSize(int32_t size);
 		void sendPid();
+		void setDeadmanTimer(int32_t deadman);
 		void setDebugLeds(bool led1, bool led2);
 	private:
+		void _addOdometryRequest(std::vector<MotorMessage>& commands) const;
+		void _addVelocityRequest(std::vector<MotorMessage>& commands) const;
+		
+		int16_t calculateTicsFromRadians(double radians) const;
+		double calculateRadiansFromTics(int16_t tics) const;
+
 		hardware_interface::JointStateInterface joint_state_interface_;
 		hardware_interface::VelocityJointInterface velocity_joint_interface_;
 
@@ -59,6 +70,17 @@ class MotorHardware : public hardware_interface::RobotHW {
 		int32_t i_value;
 		int32_t d_value;
 		int32_t denominator_value;
+		int32_t moving_buffer_size;
+
+		int32_t prev_p_value;
+		int32_t prev_i_value;
+		int32_t prev_d_value;
+		int32_t prev_denominator_value;
+		int32_t prev_moving_buffer_size;
+
+		int32_t deadman_timer;
+
+		int32_t sendPid_count;
 
 		struct Joint {
 			double position;
@@ -70,6 +92,30 @@ class MotorHardware : public hardware_interface::RobotHW {
 			}
 		}
 		joints_[2];
+
+		ros::Publisher leftError;
+		ros::Publisher rightError;
+
+		ros::Publisher pubU50;
+		ros::Publisher pubS50;
+		ros::Publisher pubU51;
+		ros::Publisher pubS51;
+		ros::Publisher pubU52;
+		ros::Publisher pubS52;
+		ros::Publisher pubU53;
+		ros::Publisher pubS53;
+		ros::Publisher pubU54;
+		ros::Publisher pubS54;
+		ros::Publisher pubU55;
+		ros::Publisher pubS55;
+		ros::Publisher pubU56;
+		ros::Publisher pubS56;
+		ros::Publisher pubU57;
+		ros::Publisher pubS57;
+		ros::Publisher pubU58;
+		ros::Publisher pubS58;
+		ros::Publisher pubU59;
+		ros::Publisher pubS59;
 
 		MotorSerial* motor_serial_;
 };

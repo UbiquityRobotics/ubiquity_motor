@@ -79,7 +79,21 @@ uint8_t const MotorMessage::valid_registers[] = {
   REG_5V_AUX_CURRENT,
   REG_12V_AUX_CURRENT,
   REG_LEFT_SPEED_MEASURED,
-  REG_RIGHT_SPEED_MEASURED
+  REG_RIGHT_SPEED_MEASURED,
+  REG_BOTH_SPEED_SET,
+  REG_MOVING_BUF_SIZE,
+  REG_BOTH_ODOM,
+  REG_LIMIT_REACHED,
+  REG_BOTH_ERROR,
+  DEBUG_50,
+  DEBUG_51,
+  DEBUG_52,
+  DEBUG_53,
+  DEBUG_54,
+  DEBUG_55,
+  DEBUG_56,
+  DEBUG_57,
+  DEBUG_58
 };
 
 void MotorMessage::setType(MotorMessage::MessageTypes type){
@@ -89,9 +103,7 @@ void MotorMessage::setType(MotorMessage::MessageTypes type){
 }
 
 MotorMessage::MessageTypes MotorMessage::getType() const{
-  if (verifyType(this->type)){
-    return static_cast<MotorMessage::MessageTypes>(this->type);
-  }
+  return static_cast<MotorMessage::MessageTypes>(this->type);
 }
 
 void MotorMessage::setRegister(MotorMessage::Registers reg){
@@ -125,31 +137,30 @@ int32_t MotorMessage::getData() const{
 }
 
 std::vector<uint8_t> MotorMessage::serialize() const{
-  std::vector<uint8_t> out(9);
+  std::vector<uint8_t> out(8);
   out[0] = delimeter;
-  out[1] = protocol_version;
-  out[2] = type;
-  out[3] = register_addr;
-  out[4] = data[0];
-  out[5] = data[1];
-  out[6] = data[2];
-  out[7] = data[3];
-  out[8] = generateChecksum(out);
+  out[1] = (protocol_version << 4) | type;
+  out[2] = register_addr;
+  out[3] = data[0];
+  out[4] = data[1];
+  out[5] = data[2];
+  out[6] = data[3];
+  out[7] = generateChecksum(out);
   return out;
 }
 
 int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
   if(serialized[0] == delimeter) {
-    if (serialized[1] == protocol_version) {
-      if (generateChecksum(serialized) == serialized[8]) {
-        if (verifyType(serialized[2])) {
-          if (verifyRegister(serialized[3])) {
-            this->type = serialized[2];
-            this->register_addr = serialized[3];
-            this->data[0] = serialized[4];
-            this->data[1] = serialized[5];
-            this->data[2] = serialized[6];
-            this->data[3] = serialized[7];
+    if ((serialized[1] & 0xF0) == (protocol_version << 4)) {
+      if (generateChecksum(serialized) == serialized[7]) {
+        if (verifyType(serialized[1] & 0x0F)) {
+          if (verifyRegister(serialized[2])) {
+            this->type = serialized[1] & 0x0F;
+            this->register_addr = serialized[2];
+            this->data[0] = serialized[3];
+            this->data[1] = serialized[4];
+            this->data[2] = serialized[5];
+            this->data[3] = serialized[6];
             return 0;
           }
           else 
@@ -178,7 +189,7 @@ int MotorMessage::deserialize(const std::vector<uint8_t> &serialized){
 int MotorMessage::verifyType(uint8_t t) {
   //Return 1 good
   //Return 0 for bad
-  for (int i = 0; i < sizeof(valid_types) / sizeof(valid_types[0]); ++i)
+  for (size_t i = 0; i < sizeof(valid_types) / sizeof(valid_types[0]); ++i)
   {
     if (t == valid_types[i])
       return 1;
@@ -189,7 +200,7 @@ int MotorMessage::verifyType(uint8_t t) {
 int MotorMessage::verifyRegister(uint8_t r) {
   //Return 1 good
   //Return 0 for bad
-  for (int i = 0; i < sizeof(valid_registers) / sizeof(valid_registers[0]); ++i)
+  for (size_t i = 0; i < sizeof(valid_registers) / sizeof(valid_registers[0]); ++i)
   {
     if (r == valid_registers[i])
       return 1;
@@ -198,7 +209,7 @@ int MotorMessage::verifyRegister(uint8_t r) {
 }
 
 uint8_t MotorMessage::generateChecksum(const std::vector<uint8_t> &data) {
-  int sum = data [1] + data[2] + data[3] + data[4] + data[5] + data[6] + data[7];
+  int sum = data [1] + data[2] + data[3] + data[4] + data[5] + data[6];
 
   if (sum > 0xFF) {
     int tmp;
