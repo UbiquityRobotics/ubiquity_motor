@@ -67,7 +67,7 @@ void PID_update_callback(const ubiquity_motor::PIDConfig &config, uint32_t level
 	}
 }
 
-main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 	ros::init(argc, argv, "motor_node");
 	ros::NodeHandle nh;
 	MotorHardware robot(nh);
@@ -151,4 +151,6 @@ main(int argc, char* argv[]) {
 		
 		r.sleep();
 	}
+
+	return 0;
 }
