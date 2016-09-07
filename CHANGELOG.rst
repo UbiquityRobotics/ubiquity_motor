@@ -2,6 +2,20 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.0 (2016-09-04)
+------------------
+* **NOTE:** This version drops support for firmware versions before 24
+* Use new 8-byte serial protocol
+* Add support for using dynamic_reconfigure to change PID parameters
+* Add support for setting the deadman timer via a parameter
+* Add support for debug registers, do enable better firmware diagnostics
+* Add support for limit reached warnings from firmware
+* Improved testing, more coverage and cleaner tests
+* Have motor_node explicitly return an exit code
+* Reduce memory allocations caused by resizing vectors
+* Use size_t instead of int for iterating
+* Contributors: Rohan Agrawal, Jim Vaughan
+
 0.4.1 (2016-04-09)
 ------------------
 * add support for firmware version 19
