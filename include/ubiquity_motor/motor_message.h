@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdint.h>
 #include <vector>
+#include <boost/array.hpp>
 
 class MotorMessage {
 public:
@@ -144,10 +145,12 @@ public:
     int deserialize(const std::vector<uint8_t> &serialized);
 
 private:
-    uint8_t type;  // Type of message should be in MotorMessage::MessageTypes
-    uint8_t
-        register_addr;  // Register address should be in MotorMessage::Registers
-    uint8_t data[4];  // 4 bytes of data, numbers should be in big endian format
+    // Type of message should be in MotorMessage::MessageTypes
+    uint8_t type;
+    // Register address should be in MotorMessage::Registers
+    uint8_t register_addr;
+
+    boost::array<uint8_t, 4> data; // 4 bytes of data, numbers should be in big endian format
 
     const static uint8_t delimeter =
         0x7E;  // Hard coded for now, should be parameterized
