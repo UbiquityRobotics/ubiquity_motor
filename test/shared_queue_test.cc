@@ -72,6 +72,77 @@ TEST(SharedQueueTest, pushFrontPop) {
 	ASSERT_EQ(0, sq.size());
 }
 
+TEST(SharedQueueTest, copy) {
+	shared_queue<int> sq0;
+	shared_queue<int> sq1;
+
+	for (int i = 0; i < 5; ++i) {
+		sq0.push(i);
+	}
+
+	sq1 = sq0;
+	ASSERT_FALSE(sq1.fast_empty());
+	ASSERT_FALSE(sq1.empty());
+	ASSERT_EQ(5, sq1.size());
+
+	for (int i = 0; i < 5; ++i) {
+		ASSERT_EQ(i, sq1.front_pop());
+	}
+
+	ASSERT_TRUE(sq1.fast_empty());
+	ASSERT_TRUE(sq1.empty());
+	ASSERT_EQ(0, sq1.size());
+
+	// Make sure that the original queue is untouched
+	ASSERT_FALSE(sq0.fast_empty());
+	ASSERT_FALSE(sq0.empty());
+	ASSERT_EQ(5, sq0.size());
+}
+
+TEST(SharedQueueTest, copyConstruct) {
+	shared_queue<int> sq0;
+
+	for (int i = 0; i < 5; ++i) {
+		sq0.push(i);
+	}
+
+	shared_queue<int> sq1(sq0);
+	ASSERT_FALSE(sq1.fast_empty());
+	ASSERT_FALSE(sq1.empty());
+	ASSERT_EQ(5, sq1.size());
+
+	for (int i = 0; i < 5; ++i) {
+		ASSERT_EQ(i, sq1.front_pop());
+	}
+
+	ASSERT_TRUE(sq1.fast_empty());
+	ASSERT_TRUE(sq1.empty());
+	ASSERT_EQ(0, sq1.size());
+
+	// Make sure that the original queue is untouched
+	ASSERT_FALSE(sq0.fast_empty());
+	ASSERT_FALSE(sq0.empty());
+	ASSERT_EQ(5, sq0.size());
+}
+
+TEST(SharedQueueTest, pushConstCopyFront) {
+	shared_queue<int> sq;
+
+	for (int i = 0; i < 5; ++i){
+		sq.push(i);
+	}
+
+	const shared_queue<int> csq = sq;
+
+	ASSERT_FALSE(sq.fast_empty());
+	ASSERT_FALSE(sq.empty());
+	ASSERT_EQ(5, sq.size());
+
+	const int& front = csq.front();
+	ASSERT_EQ(0, front);
+}
+
+
 TEST(SharedQueueTest, pushPopSize) {
 	shared_queue<int> sq;
 

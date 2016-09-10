@@ -41,9 +41,34 @@ public:
     shared_queue() : queue_empty_(true){};
     ~shared_queue(){};
 
+    shared_queue(const shared_queue& other) {
+        boost::lock_guard<boost::mutex> other_lock(other.queue_mutex_);
+        boost::lock_guard<boost::mutex> this_lock(queue_mutex_);
+
+        // Copy is not atomic
+        bool qe = other.queue_empty_;
+        queue_empty_ = qe;
+
+        internal_queue_ = other.internal_queue_;
+    };
+
+    shared_queue& operator=(const shared_queue& other) {
+        boost::lock_guard<boost::mutex> other_lock(other.queue_mutex_);
+        boost::lock_guard<boost::mutex> this_lock(queue_mutex_);
+
+        // Copy is not atomic
+        bool qe = other.queue_empty_;
+        queue_empty_ = qe;
+
+        internal_queue_ = other.internal_queue_;
+
+        return *this;
+    };
+
     void push(const T& value) {
         boost::lock_guard<boost::mutex> lock(queue_mutex_);
         internal_queue_.push(value);
+
 
         queue_empty_ = internal_queue_.empty();
     };
@@ -98,10 +123,6 @@ public:
     }
 
 private:
-    // Disable copy constructors
-    shared_queue(const shared_queue& other);       // non construction-copyable
-    shared_queue& operator=(const shared_queue&);  // non copyable
-
     mutable boost::mutex queue_mutex_;
     boost::atomic<bool> queue_empty_;
     std::queue<T> internal_queue_;
