@@ -143,7 +143,7 @@ RawMotorMessage MotorMessage::serialize() const {
     return out;
 }
 
-int MotorMessage::deserialize(const std::vector<uint8_t> &serialized) {
+int MotorMessage::deserialize(const RawMotorMessage &serialized) {
     if (serialized[0] == delimeter) {
         if ((serialized[1] & 0xF0) == (protocol_version << 4)) {
             if (generateChecksum(serialized) == serialized[7]) {

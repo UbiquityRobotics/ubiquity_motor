@@ -81,17 +81,24 @@ void MotorSerial::appendOutput(MotorMessage command) { output.push(command); }
 
 void MotorSerial::SerialThread() {
     try {
-        std::vector<uint8_t> in(0);
+        RawMotorMessage in;
         bool failed_update = false;
 
         while (motors.isOpen()) {
             while (motors.available() >= (failed_update ? 1 : 8)) {
-                std::vector<uint8_t> innew(0);
-                motors.read(innew, failed_update ? 1 : 8);
-                in.insert(in.end(), innew.begin(), innew.end());
+                RawMotorMessage innew;
+                motors.read(innew.c_array(), failed_update ? 1 : 8);
 
-                while (in.size() > 8) {
-                    in.erase(in.begin());
+                if (!failed_update) {
+                    in.swap(innew);
+                } else {
+                    // Shift array contents up one
+                    for (size_t i = 0; i < in.size() - 1; ++i) {
+                        in[i] = in[i+1];
+                    }
+                    in[in.size()-2] = in[in.size()-1];
+
+                    in[in.size()-1] = innew[0];
                 }
 
                 MotorMessage mc;

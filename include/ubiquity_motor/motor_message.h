@@ -145,7 +145,7 @@ public:
 
     RawMotorMessage serialize() const;
 
-    int deserialize(const std::vector<uint8_t> &serialized);
+    int deserialize(const RawMotorMessage &serialized);
 
 private:
     // Type of message should be in MotorMessage::MessageTypes

@@ -227,9 +227,7 @@ TEST(MotorMessageTest, motor_message_deserialize_good) {
 	MotorMessage mc;
 
 	//Test good message
-	uint8_t arr[] = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
-
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+	RawMotorMessage input = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
 
 	ASSERT_EQ(0, mc.deserialize(input));
 	ASSERT_EQ(300, mc.getData());
@@ -240,10 +238,7 @@ TEST(MotorMessageTest, motor_message_deserialize_good) {
 TEST(MotorMessageTest, motor_message_deserialize_delimeter_in_data) {
 	MotorMessage mc;
 
-	//Test good message
-	uint8_t arr[] = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x7E, 0x3E};
-
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+	RawMotorMessage input = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x7E, 0x3E};
 
 	ASSERT_EQ(0, mc.deserialize(input));
 	ASSERT_EQ(382, mc.getData());
@@ -270,9 +265,7 @@ TEST(MotorMessageTest, motor_message_deserialize_bad_delimeter) {
 	MotorMessage mc;
 
 	//Test bad delimeter with good checksum
-	uint8_t arr[] = {0x67, 0x3B, 0x07, 0x00, 0x00, 0x00, 0x00, 0xBD};
-
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+	RawMotorMessage input = {0x67, 0x3B, 0x07, 0x00, 0x00, 0x00, 0x00, 0xBD};
 
 	ASSERT_EQ(1, mc.deserialize(input));
 }
@@ -281,9 +274,7 @@ TEST(MotorMessageTest, motor_message_deserialize_bad_protocol) {
 	MotorMessage mc;
 
 	//Test bad protocol_verstion with good checksum
-	uint8_t arr[] = {0x7E, 0x2B, 0x07, 0x00, 0x00, 0x00, 0x00, 0x3D};
-
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+	RawMotorMessage input = {0x7E, 0x2B, 0x07, 0x00, 0x00, 0x00, 0x00, 0x3D};
 
 	ASSERT_EQ(2, mc.deserialize(input));
 }
@@ -292,31 +283,25 @@ TEST(MotorMessageTest, motor_message_deserialize_bad_checksum) {
 	MotorMessage mc;
 
 	//Test bad checksum
-	uint8_t arr1[] = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0F};
+	RawMotorMessage input = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0F};
 
-	std::vector<uint8_t> input1(arr1, arr1 + sizeof(arr1)/ sizeof(uint8_t));
-
-	ASSERT_EQ(3, mc.deserialize(input1));
+	ASSERT_EQ(3, mc.deserialize(input));
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_bad_type) {
 	MotorMessage mc;
 
 	//Test type with good checksum
-	uint8_t arr1[] = {0x7E, 0x3F, 0x07, 0x00, 0x00, 0x00, 0x00, 0xB9};
+	RawMotorMessage input = {0x7E, 0x3F, 0x07, 0x00, 0x00, 0x00, 0x00, 0xB9};
 
-	std::vector<uint8_t> input1(arr1, arr1 + sizeof(arr1)/ sizeof(uint8_t));
-
-	ASSERT_EQ(4, mc.deserialize(input1));
+	ASSERT_EQ(4, mc.deserialize(input));
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_bad_register) {
 	MotorMessage mc;
 
 	//Test bad register with good checksum
-	uint8_t arr[] = {0x7E, 0x3B, 0x60, 0x00, 0x00, 0x00, 0x2C, 0x38};
-
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+	RawMotorMessage input = {0x7E, 0x3B, 0x60, 0x00, 0x00, 0x00, 0x2C, 0x38};
 
 	ASSERT_EQ(5, mc.deserialize(input));
 }
