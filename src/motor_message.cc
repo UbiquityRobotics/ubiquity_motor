@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_message.h>
 // #include <ubiquity_motor/motor_message_registers.h>
 #include <ros/console.h>
+#include <numeric>
 
 uint8_t const MotorMessage::valid_types[] = {TYPE_READ, TYPE_WRITE,
                                              TYPE_RESPONSE, TYPE_ERROR};
@@ -196,7 +197,7 @@ int MotorMessage::verifyRegister(uint8_t r) {
 }
 
 uint8_t MotorMessage::generateChecksum(const std::vector<uint8_t> &data) {
-    int sum = data[1] + data[2] + data[3] + data[4] + data[5] + data[6];
+    int sum = std::accumulate(data.begin() + 1, data.end() - 1, 0);
 
     if (sum > 0xFF) {
         int tmp;
@@ -209,7 +210,7 @@ uint8_t MotorMessage::generateChecksum(const std::vector<uint8_t> &data) {
 }
 
 uint8_t MotorMessage::generateChecksum(const RawMotorMessage &data) {
-    int sum = data[1] + data[2] + data[3] + data[4] + data[5] + data[6];
+    int sum = std::accumulate(data.begin() + 1, data.end() - 1, 0);
 
     if (sum > 0xFF) {
         int tmp;
