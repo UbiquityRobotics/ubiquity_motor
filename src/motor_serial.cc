@@ -122,13 +122,13 @@ void MotorSerial::SerialThread() {
             while (inputAvailable()) {
                 did_update = true;
 
-                std::vector<uint8_t> out(8);
+                RawMotorMessage out;
 
                 out = getInputCommand().serialize();
                 ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
                           out[1], out[2], out[3], out[4], out[5], out[6],
                           out[7]);
-                motors.write(out);
+                motors.write(out.c_array(), out.size());
                 usleep(2000);
             }
 

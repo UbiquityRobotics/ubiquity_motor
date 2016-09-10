@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <boost/array.hpp>
 
+typedef boost::array<uint8_t, 8> RawMotorMessage;
+
 class MotorMessage {
 public:
     // Using default constructor and destructor
@@ -141,7 +143,8 @@ public:
     void setData(int32_t data);
     int32_t getData() const;
 
-    std::vector<uint8_t> serialize() const;
+    RawMotorMessage serialize() const;
+
     int deserialize(const std::vector<uint8_t> &serialized);
 
 private:
@@ -164,6 +167,7 @@ private:
     static int verifyRegister(uint8_t r);
 
     static uint8_t generateChecksum(const std::vector<uint8_t> &data);
+    static uint8_t generateChecksum(const RawMotorMessage &data);
 };
 
 #endif

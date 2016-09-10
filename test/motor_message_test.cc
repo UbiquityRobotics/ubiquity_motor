@@ -218,9 +218,7 @@ TEST(MotorMessageTest, motor_message_serialize) {
 	mc.setType(MotorMessage::TYPE_WRITE);
 	mc.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
 
-	uint8_t arr[] = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
-
-	std::vector<uint8_t> expect(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+	RawMotorMessage expect = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
 
 	ASSERT_EQ(expect, mc.serialize());
 }

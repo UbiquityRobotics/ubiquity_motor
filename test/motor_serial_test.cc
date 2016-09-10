@@ -285,10 +285,8 @@ TEST_F(MotorSerialTests, writeOutputs) {
 	version.setData(0);
 	motors->transmitCommand(version);
 
-  uint8_t arr[8];
-  read(master_fd, arr, 8);
-
-  std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+  RawMotorMessage input;
+  read(master_fd, input.c_array(), input.size());
 
   ASSERT_EQ(input, version.serialize());
 }
@@ -330,8 +328,8 @@ TEST_F(MotorSerialTests, writeMultipleOutputs) {
 
   std::vector<uint8_t> expected(0);
   for (std::vector<MotorMessage>::iterator i = commands.begin(); i != commands.end(); ++i){
-   std::vector<uint8_t> serialized = i->serialize();
-   expected.insert(expected.end(), serialized.begin(), serialized.end());   
+    RawMotorMessage serialized = i->serialize();
+    expected.insert(expected.end(), serialized.begin(), serialized.end());
   }
 
   ASSERT_EQ(expected, input);

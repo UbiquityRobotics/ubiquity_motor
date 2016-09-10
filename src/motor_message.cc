@@ -129,8 +129,8 @@ int32_t MotorMessage::getData() const {
            (this->data[2] << 8) | (this->data[3] << 0);
 }
 
-std::vector<uint8_t> MotorMessage::serialize() const {
-    std::vector<uint8_t> out(8);
+RawMotorMessage MotorMessage::serialize() const {
+    RawMotorMessage out;
     out[0] = delimeter;
     out[1] = (protocol_version << 4) | type;
     out[2] = register_addr;
@@ -175,6 +175,7 @@ int MotorMessage::deserialize(const std::vector<uint8_t> &serialized) {
     // 4 bad type
     // 5 bad register
 }
+
 int MotorMessage::verifyType(uint8_t t) {
     // Return 1 good
     // Return 0 for bad
@@ -195,6 +196,19 @@ int MotorMessage::verifyRegister(uint8_t r) {
 }
 
 uint8_t MotorMessage::generateChecksum(const std::vector<uint8_t> &data) {
+    int sum = data[1] + data[2] + data[3] + data[4] + data[5] + data[6];
+
+    if (sum > 0xFF) {
+        int tmp;
+        tmp = sum >> 8;
+        tmp = tmp << 8;
+        return 0xFF - (sum - tmp);
+    } else {
+        return 0xFF - sum;
+    }
+}
+
+uint8_t MotorMessage::generateChecksum(const RawMotorMessage &data) {
     int sum = data[1] + data[2] + data[3] + data[4] + data[5] + data[6];
 
     if (sum > 0xFF) {
