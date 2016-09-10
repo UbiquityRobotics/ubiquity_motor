@@ -31,50 +31,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MOTORSERIAL_H
 #define MOTORSERIAL_H
 
+#include <ros/ros.h>
+#include <serial/serial.h>
 #include <ubiquity_motor/motor_message.h>
 #include <ubiquity_motor/shared_queue.h>
-#include <serial/serial.h>
 #include <boost/thread.hpp>
-#include <ros/ros.h>
 #include <queue>
 
 #include <gtest/gtest_prod.h>
 
-class MotorSerial
-{
-	public:
-		MotorSerial(const std::string& port = "/dev/ttyUSB0" , uint32_t baud_rate = 9600, double loopRate = 100);
-		~MotorSerial();
+class MotorSerial {
+public:
+    MotorSerial(const std::string& port = "/dev/ttyUSB0",
+                uint32_t baud_rate = 9600, double loopRate = 100);
+    ~MotorSerial();
 
-		int transmitCommand(MotorMessage command);
-		int transmitCommands(const std::vector<MotorMessage> &commands);
-		
-		MotorMessage receiveCommand();
-		int commandAvailable();
-		
-		MotorSerial( const MotorSerial& other ); // non construction-copyable
-		MotorSerial& operator=( const MotorSerial& ); // non copyable
+    int transmitCommand(MotorMessage command);
+    int transmitCommands(const std::vector<MotorMessage>& commands);
 
-	private:
+    MotorMessage receiveCommand();
+    int commandAvailable();
 
-		serial::Serial motors;
+    MotorSerial(const MotorSerial& other);       // non construction-copyable
+    MotorSerial& operator=(const MotorSerial&);  // non copyable
 
-		// queue for messages that are to be transmitted
-		shared_queue<MotorMessage> input; 
-		
-		shared_queue<MotorMessage> output; 
+private:
+    serial::Serial motors;
 
-		boost::thread serial_thread;
-		ros::Rate serial_loop_rate;
+    // queue for messages that are to be transmitted
+    shared_queue<MotorMessage> input;
 
-		int inputAvailable();
-		MotorMessage getInputCommand();
-		void appendOutput(MotorMessage command);
+    shared_queue<MotorMessage> output;
 
-		// Thread that has manages the serial port 
-		void SerialThread();
+    boost::thread serial_thread;
+    ros::Rate serial_loop_rate;
 
-		FRIEND_TEST(MotorSerialTests, serialClosedOnInterupt);
+    int inputAvailable();
+    MotorMessage getInputCommand();
+    void appendOutput(MotorMessage command);
+
+    // Thread that has manages the serial port
+    void SerialThread();
+
+    FRIEND_TEST(MotorSerialTests, serialClosedOnInterupt);
 };
 
 #endif
