@@ -133,24 +133,6 @@ void MotorHardware::readInputs() {
                     }
                     break;
 
-                // case MotorMessage::REG_LEFT_ODOM:
-                //     joints_[0].position = mm.getData() / TICS_PER_RADIAN;
-                //     break;
-                // case MotorMessage::REG_RIGHT_ODOM:
-                //     joints_[1].position = mm.getData() / TICS_PER_RADIAN;
-                //     break;
-
-                // case MotorMessage::REG_LEFT_SPEED_MEASURED:
-                //     joints_[0].velocity = mm.getData() *
-                //                           VELOCITY_READ_PER_SECOND /
-                //                           TICS_PER_RADIAN;
-                //     break;
-                // case MotorMessage::REG_RIGHT_SPEED_MEASURED:
-                //     joints_[1].velocity = mm.getData() *
-                //                           VELOCITY_READ_PER_SECOND /
-                //                           TICS_PER_RADIAN;
-                //     break;
-
                 case MotorMessage::REG_BOTH_ODOM: {
                     int32_t odom = mm.getData();
                     // ROS_ERROR("odom signed %d", odom);
@@ -243,47 +225,6 @@ void MotorHardware::readInputs() {
 }
 
 void MotorHardware::writeSpeeds() {
-    std::vector<MotorMessage> commands;
-    // requestOdometry();
-    // requestVelocity();
-    // requestVersion();
-
-    // MotorMessage left_odom;
-    // left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
-    // left_odom.setType(MotorMessage::TYPE_READ);
-    // left_odom.setData(0);
-    // commands.push_back(left_odom);
-
-    // MotorMessage right_odom;
-    // right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
-    // right_odom.setType(MotorMessage::TYPE_READ);
-    // right_odom.setData(0);
-    // commands.push_back(right_odom);
-
-    // MotorMessage left_vel;
-    // left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
-    // left_vel.setType(MotorMessage::TYPE_READ);
-    // left_vel.setData(0);
-    // commands.push_back(left_vel);
-
-    // MotorMessage right_vel;
-    // right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
-    // right_vel.setType(MotorMessage::TYPE_READ);
-    // right_vel.setData(0);
-    // commands.push_back(right_vel);
-
-    // MotorMessage left;
-    // left.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
-    // left.setType(MotorMessage::TYPE_WRITE);
-    // left.setData(boost::math::lround(joints_[0].velocity_command*TICS_PER_RADIAN/VELOCITY_READ_PER_SECOND));
-    // commands.push_back(left);
-
-    // MotorMessage right;
-    // right.setRegister(MotorMessage::REG_RIGHT_SPEED_SET);
-    // right.setType(MotorMessage::TYPE_WRITE);
-    // right.setData(boost::math::lround(joints_[1].velocity_command*TICS_PER_RADIAN/VELOCITY_READ_PER_SECOND));
-    // commands.push_back(right);
-
     MotorMessage both;
     both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
     both.setType(MotorMessage::TYPE_WRITE);
@@ -292,14 +233,12 @@ void MotorHardware::writeSpeeds() {
     // The masking with 0x0000ffff is necessary for handling -ve numbers
     int32_t data = (left_tics << 16) | (right_tics & 0x0000ffff);
     both.setData(data);
-    commands.push_back(both);
 
     std_msgs::Int32 smsg;
     smsg.data = left_tics;
     pubS59.publish(smsg);
 
-    // Send all commands to serial thread in one go to reduce locking
-    motor_serial_->transmitCommands(commands);
+    motor_serial_->transmitCommand(both);
 
     // ROS_ERROR("velocity_command %f rad/s %f rad/s",
     // joints_[0].velocity_command, joints_[1].velocity_command);
@@ -314,28 +253,14 @@ void MotorHardware::requestVersion() {
     motor_serial_->transmitCommand(version);
 }
 
-void MotorHardware::requestOdometry() {
-    std::vector<MotorMessage> commands;
-    _addOdometryRequest(commands);
-    motor_serial_->transmitCommands(commands);
-}
 
 void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
-    std::vector<MotorMessage> commands;
-
     ROS_ERROR("setting deadman to %d", (int)deadman_timer);
     MotorMessage mm;
     mm.setRegister(MotorMessage::REG_DEADMAN);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(deadman_timer);
-    commands.push_back(mm);
-    motor_serial_->transmitCommands(commands);
-}
-
-void MotorHardware::requestVelocity() {
-    std::vector<MotorMessage> commands;
-    _addVelocityRequest(commands);
-    motor_serial_->transmitCommands(commands);
+    motor_serial_->transmitCommand(mm);
 }
 
 void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set,
@@ -445,34 +370,4 @@ int16_t MotorHardware::calculateTicsFromRadians(double radians) const {
 
 double MotorHardware::calculateRadiansFromTics(int16_t tics) const {
     return (tics * VELOCITY_READ_PER_SECOND / QTICS_PER_RADIAN);
-}
-
-void MotorHardware::_addOdometryRequest(
-    std::vector<MotorMessage>& commands) const {
-    MotorMessage left_odom;
-    left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
-    left_odom.setType(MotorMessage::TYPE_READ);
-    left_odom.setData(0);
-    commands.push_back(left_odom);
-
-    MotorMessage right_odom;
-    right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
-    right_odom.setType(MotorMessage::TYPE_READ);
-    right_odom.setData(0);
-    commands.push_back(right_odom);
-}
-
-void MotorHardware::_addVelocityRequest(
-    std::vector<MotorMessage>& commands) const {
-    MotorMessage left_vel;
-    left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
-    left_vel.setType(MotorMessage::TYPE_READ);
-    left_vel.setData(0);
-    commands.push_back(left_vel);
-
-    MotorMessage right_vel;
-    right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
-    right_vel.setType(MotorMessage::TYPE_READ);
-    right_vel.setData(0);
-    commands.push_back(right_vel);
 }
