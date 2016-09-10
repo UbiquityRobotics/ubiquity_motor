@@ -135,10 +135,7 @@ RawMotorMessage MotorMessage::serialize() const {
     out[0] = delimeter;
     out[1] = (protocol_version << 4) | type;
     out[2] = register_addr;
-    out[3] = data[0];
-    out[4] = data[1];
-    out[5] = data[2];
-    out[6] = data[3];
+    std::copy(data.begin(), data.end(), out.begin() + 3);
     out[7] = generateChecksum(out);
     return out;
 }
@@ -151,10 +148,8 @@ int MotorMessage::deserialize(const RawMotorMessage &serialized) {
                     if (verifyRegister(serialized[2])) {
                         this->type = serialized[1] & 0x0F;
                         this->register_addr = serialized[2];
-                        this->data[0] = serialized[3];
-                        this->data[1] = serialized[4];
-                        this->data[2] = serialized[5];
-                        this->data[3] = serialized[6];
+                        std::copy(serialized.begin() + 3,
+                                  serialized.begin() + 7, data.begin());
                         return 0;
                     } else
                         return 5;
