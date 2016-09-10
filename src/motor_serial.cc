@@ -32,54 +32,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ros/ros.h>
 #include <serial/serial.h>
 
-MotorSerial::MotorSerial(const std::string &port, uint32_t baud_rate, double loopRate) {
-	// Make sure baud rate is valid
-	switch (baud_rate) {
-		case 110 :
-		case 300 :
-		case 600 :
-		case 1200 :
-		case 2400 :
-		case 4800 :
-		case 9600 :
-		case 14400 :
-		case 19200 :
-		case 28800 :
-		case 38400 :
-		case 56000 :
-		case 57600 :
-		case 115200 :
-		case 128000 :
-		case 153600 :
-		case 230400 :
-		case 256000 :
-		case 460800 :
-		case 921600 :
-		this->_baud_rate = baud_rate;
-		break;
-		default :
-		this->_baud_rate = 9600;
-		break;
-	}
+MotorSerial::MotorSerial(const std::string &port, uint32_t baud_rate, double loopRate): 
+	motors(port, baud_rate, serial::Timeout::simpleTimeout(10000)),
+	serial_loop_rate(loopRate) {
 
-	// TODO verify that port is valid
-	this->_port = port;
-
-	motors = new serial::Serial(_port, _baud_rate, serial::Timeout::simpleTimeout(10000));
-
-	serial_loop_rate = new ros::Rate(loopRate);
-
-	serial_thread = new boost::thread(&MotorSerial::SerialThread, this);
-
+	serial_thread = boost::thread(&MotorSerial::SerialThread, this);
 }
 
 MotorSerial::~MotorSerial() {
-	serial_thread->interrupt();
-	serial_thread->join();
-	motors->close();
-	delete motors;
-	delete serial_thread;
-	delete serial_loop_rate;
+	serial_thread.interrupt();
+	serial_thread.join();
+	motors.close();
 }
 
 int MotorSerial::transmitCommand(MotorMessage command) {
@@ -127,11 +90,11 @@ void MotorSerial::SerialThread() {
 		std::vector<uint8_t> in(0);
 		bool failed_update = false;
 
-		while (motors->isOpen()) {
+		while (motors.isOpen()) {
 
-			while (motors->available() >= (failed_update ? 1 : 8)) {
+			while (motors.available() >= (failed_update ? 1 : 8)) {
 				std::vector<uint8_t> innew(0);
-				motors->read(innew, failed_update ? 1 : 8);
+				motors.read(innew, failed_update ? 1 : 8);
 				in.insert(in.end(), innew.begin(), innew.end());
 
 				while (in.size() > 8) {
@@ -176,24 +139,24 @@ void MotorSerial::SerialThread() {
 				 	out[5],
 				 	out[6],
 				 	out[7]);
-				motors->write(out);
+				motors.write(out);
 				usleep(2000);
 			}
 
 			if (did_update) {
-				motors->flushOutput();
+				motors.flushOutput();
 			}
 
 			// boost::posix_time::milliseconds loopDelay(10);
 			// boost::this_thread::sleep(loopDelay);
 			boost::this_thread::interruption_point();
-			serial_loop_rate->sleep();
+			serial_loop_rate.sleep();
 		}
 
 	}
 	catch (const boost::thread_interrupted &e) {
 		// ROS_INFO("boost::thread_interrupted");
-		motors->close();
+		motors.close();
 	}
 	catch (const serial::IOException &e) {
 		ROS_ERROR("%s", e.what());

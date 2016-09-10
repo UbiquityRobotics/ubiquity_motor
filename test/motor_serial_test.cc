@@ -74,53 +74,11 @@ TEST(MotorSerialNoFixtureTests, badPortnameException) {
 }
 
 TEST_F(MotorSerialTests, serialClosedOnInterupt) {
-  ASSERT_EQ(true, motors->motors->isOpen());
-  motors->serial_thread->interrupt();
+  ASSERT_EQ(true, motors->motors.isOpen());
+  motors->serial_thread.interrupt();
   sleep(1);
-  ASSERT_EQ(false, motors->motors->isOpen());
+  ASSERT_EQ(false, motors->motors.isOpen());
 }
-
-TEST_F(MotorSerialTests, invalidBaudDefaults) {
-  try {
-    delete motors;
-    motors = new MotorSerial(std::string(name), 88980, 1000); 
-  }
-  catch (...) {
-    FAIL() << "Exception thrown when creating MotorSerial";
-  }
-  ASSERT_NE(88980, motors->_baud_rate);
-  ASSERT_EQ(9600, motors->_baud_rate);
-}
-
-// TEST_F(MotorSerialTests, readQueuesDequeues){
-//   // Stop serial thread
-//   motors->serial_thread->interrupt();
-//   motors->serial_thread->join();
-
-//   MotorMessage version;
-//   version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
-//   version.setType(MotorMessage::TYPE_RESPONSE);
-//   version.setData(18);
-
-//   ASSERT_EQ(false, motors->have_output);
-//   ASSERT_EQ(0, motors->output.size());
-//   ASSERT_EQ(true, motors->output.empty());
-//   ASSERT_EQ(false, motors->commandAvailable());
-
-//   motors->appendOutput(version);
-
-//   ASSERT_EQ(true, motors->have_output);
-//   ASSERT_EQ(1, motors->output.size());
-//   ASSERT_EQ(false, motors->output.empty());
-//   ASSERT_EQ(true, motors->commandAvailable());
-
-//   motors->receiveCommand();
-
-//   ASSERT_EQ(false, motors->have_output);
-//   ASSERT_EQ(0, motors->output.size());
-//   ASSERT_EQ(true, motors->output.empty());
-//   ASSERT_EQ(false, motors->commandAvailable());
-// }
 
 TEST_F(MotorSerialTests, goodReadWorks){
   uint8_t test[]= {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
@@ -320,44 +278,6 @@ TEST_F(MotorSerialTests, badTypeReadFails){
   }
 }
 
-// TEST_F(MotorSerialTests, writeQueues) {
-//   MotorMessage version;
-//   version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
-//   version.setType(MotorMessage::TYPE_READ);
-//   version.setData(0);
-//   motors->transmitCommand(version);
-
-//   // Lock so serial thread doesn't interfere
-//   motors->input_mtx_.lock();
-//   ASSERT_EQ(true, motors->have_input);
-//   ASSERT_EQ(1, motors->input.size());
-//   motors->input_mtx_.unlock();
-// }
-
-// TEST_F(MotorSerialTests, writeQueuesDequeues) {
-//   // Stop serial thread
-//   motors->serial_thread->interrupt();
-//   motors->serial_thread->join();
-
-//   MotorMessage version;
-//   version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
-//   version.setType(MotorMessage::TYPE_READ);
-//   version.setData(0);
-//   motors->transmitCommand(version);
-
-//   ASSERT_EQ(true, motors->have_input);
-//   ASSERT_EQ(false, motors->input.empty());
-//   ASSERT_EQ(1, motors->input.size());
-//   ASSERT_EQ(true, motors->inputAvailable());
-
-//   motors->getInputCommand();
-
-//   ASSERT_EQ(false, motors->have_input);
-//   ASSERT_EQ(true, motors->input.empty());
-//   ASSERT_EQ(0, motors->input.size());
-//   ASSERT_EQ(false, motors->inputAvailable());
-// }
-
 TEST_F(MotorSerialTests, writeOutputs) {
 	MotorMessage version;
 	version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
@@ -372,92 +292,6 @@ TEST_F(MotorSerialTests, writeOutputs) {
 
   ASSERT_EQ(input, version.serialize());
 }
-
-// TEST_F(MotorSerialTests, writeMultipleQueues) {
-//   std::vector<MotorMessage> commands;
-
-//   MotorMessage left_odom;
-//   left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
-//   left_odom.setType(MotorMessage::TYPE_READ);
-//   left_odom.setData(0);
-//   commands.push_back(left_odom);
-
-//   MotorMessage right_odom;
-//   right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
-//   right_odom.setType(MotorMessage::TYPE_READ);
-//   right_odom.setData(0);
-//   commands.push_back(right_odom);
-
-//   MotorMessage left_vel;
-//   left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
-//   left_vel.setType(MotorMessage::TYPE_READ);
-//   left_vel.setData(0);
-//   commands.push_back(left_vel);
-
-//   MotorMessage right_vel;
-//   right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
-//   right_vel.setType(MotorMessage::TYPE_READ);
-//   right_vel.setData(0);
-//   commands.push_back(right_vel);
-
-//   motors->transmitCommands(commands);
-
-//   // Lock so serial thread doesn't interfere
-//   motors->input_mtx_.lock();
-//   ASSERT_EQ(true, motors->have_input);
-//   ASSERT_EQ(4, motors->input.size());
-//   motors->input_mtx_.unlock();
-// }
-
-// TEST_F(MotorSerialTests, writeMultipleQueuesDequeues) {
-//   // Stop serial thread
-//   motors->serial_thread->interrupt();
-//   motors->serial_thread->join();
-
-//   std::vector<MotorMessage> commands;
-
-//   MotorMessage left_odom;
-//   left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
-//   left_odom.setType(MotorMessage::TYPE_READ);
-//   left_odom.setData(0);
-//   commands.push_back(left_odom);
-
-//   MotorMessage right_odom;
-//   right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
-//   right_odom.setType(MotorMessage::TYPE_READ);
-//   right_odom.setData(0);
-//   commands.push_back(right_odom);
-
-//   MotorMessage left_vel;
-//   left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
-//   left_vel.setType(MotorMessage::TYPE_READ);
-//   left_vel.setData(0);
-//   commands.push_back(left_vel);
-
-//   MotorMessage right_vel;
-//   right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
-//   right_vel.setType(MotorMessage::TYPE_READ);
-//   right_vel.setData(0);
-//   commands.push_back(right_vel);
-
-//   motors->transmitCommands(commands);
-
-//   ASSERT_EQ(true, motors->have_input);
-//   ASSERT_EQ(false, motors->input.empty());
-//   ASSERT_EQ(4, motors->input.size());
-//   ASSERT_EQ(true, motors->inputAvailable());
-
-//   motors->getInputCommand();
-//   motors->getInputCommand();
-//   motors->getInputCommand();
-//   motors->getInputCommand();
-
-//   ASSERT_EQ(false, motors->have_input);
-//   ASSERT_EQ(true, motors->input.empty());
-//   ASSERT_EQ(0, motors->input.size());
-//   ASSERT_EQ(false, motors->inputAvailable());
-
-// }
 
 TEST_F(MotorSerialTests, writeMultipleOutputs) {
   std::vector<MotorMessage> commands;

@@ -57,18 +57,15 @@ class MotorSerial
 
 	private:
 
-		serial::Serial* motors;
-		
-		std::string _port;
-		uint32_t _baud_rate;
+		serial::Serial motors;
 
 		// queue for messages that are to be transmitted
 		shared_queue<MotorMessage> input; 
 		
 		shared_queue<MotorMessage> output; 
 
-		boost::thread* serial_thread;
-		ros::Rate* serial_loop_rate;
+		boost::thread serial_thread;
+		ros::Rate serial_loop_rate;
 
 		int inputAvailable();
 		MotorMessage getInputCommand();
@@ -77,13 +74,7 @@ class MotorSerial
 		// Thread that has manages the serial port 
 		void SerialThread();
 
-		FRIEND_TEST(MotorSerialTests, invalidBaudDefaults);
 		FRIEND_TEST(MotorSerialTests, serialClosedOnInterupt);
-		FRIEND_TEST(MotorSerialTests, readQueuesDequeues);
-		FRIEND_TEST(MotorSerialTests, writeQueues);
-		FRIEND_TEST(MotorSerialTests, writeQueuesDequeues);
-		FRIEND_TEST(MotorSerialTests, writeMultipleQueues);
-		FRIEND_TEST(MotorSerialTests, writeMultipleQueuesDequeues);
 };
 
 #endif
