@@ -69,7 +69,6 @@ public:
         boost::lock_guard<boost::mutex> lock(queue_mutex_);
         internal_queue_.push(value);
 
-
         queue_empty_ = internal_queue_.empty();
     };
 

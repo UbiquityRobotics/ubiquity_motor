@@ -94,11 +94,11 @@ void MotorSerial::SerialThread() {
                 } else {
                     // Shift array contents up one
                     for (size_t i = 0; i < in.size() - 1; ++i) {
-                        in[i] = in[i+1];
+                        in[i] = in[i + 1];
                     }
-                    in[in.size()-2] = in[in.size()-1];
+                    in[in.size() - 2] = in[in.size() - 1];
 
-                    in[in.size()-1] = innew[0];
+                    in[in.size() - 1] = innew[0];
                 }
 
                 MotorMessage mc;

@@ -253,7 +253,6 @@ void MotorHardware::requestVersion() {
     motor_serial_->transmitCommand(version);
 }
 
-
 void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
     ROS_ERROR("setting deadman to %d", (int)deadman_timer);
     MotorMessage mm;

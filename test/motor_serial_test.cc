@@ -30,10 +30,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 
-#include <ubiquity_motor/motor_serial.h>
-#include <ubiquity_motor/motor_message.h>
 #include <ros/ros.h>
-
+#include <ubiquity_motor/motor_message.h>
+#include <ubiquity_motor/motor_serial.h>
 
 #include <string>
 
@@ -45,299 +44,290 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class MotorSerialTests : public ::testing::Test {
 protected:
-  virtual void SetUp() {
-    if (openpty(&master_fd, &slave_fd, name, NULL, NULL) == -1) {
-      perror("openpty");
-      exit(127);
+    virtual void SetUp() {
+        if (openpty(&master_fd, &slave_fd, name, NULL, NULL) == -1) {
+            perror("openpty");
+            exit(127);
+        }
+
+        ASSERT_TRUE(master_fd > 0);
+        ASSERT_TRUE(slave_fd > 0);
+        ASSERT_TRUE(std::string(name).length() > 0);
+
+        ros::Time::init();
+        motors = new MotorSerial(std::string(name), 9600, 1000);
     }
 
-    ASSERT_TRUE(master_fd > 0);
-    ASSERT_TRUE(slave_fd > 0);
-    ASSERT_TRUE(std::string(name).length() > 0);
+    virtual void TearDown() { delete motors; }
 
-    ros::Time::init();
-    motors = new MotorSerial(std::string(name), 9600, 1000);
-  }
-
-  virtual void TearDown() {
-    delete motors;
-  }
-
-  MotorSerial * motors;
-  int master_fd;
-  int slave_fd;
-  char name[100];
+    MotorSerial *motors;
+    int master_fd;
+    int slave_fd;
+    char name[100];
 };
 
 TEST(MotorSerialNoFixtureTests, badPortnameException) {
-  ASSERT_THROW(MotorSerial motors(std::string("foo"), 9600, 1000), serial::IOException);
+    ASSERT_THROW(MotorSerial motors(std::string("foo"), 9600, 1000),
+                 serial::IOException);
 }
 
 TEST_F(MotorSerialTests, serialClosedOnInterupt) {
-  ASSERT_EQ(true, motors->motors.isOpen());
-  motors->serial_thread.interrupt();
-  sleep(1);
-  ASSERT_EQ(false, motors->motors.isOpen());
+    ASSERT_EQ(true, motors->motors.isOpen());
+    motors->serial_thread.interrupt();
+    sleep(1);
+    ASSERT_EQ(false, motors->motors.isOpen());
 }
 
-TEST_F(MotorSerialTests, goodReadWorks){
-  uint8_t test[]= {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
-  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 8);
+TEST_F(MotorSerialTests, goodReadWorks) {
+    uint8_t test[] = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
+    // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+    write(master_fd, test, 8);
 
-  while(!motors->commandAvailable()) {
-  }
-
-  MotorMessage mm;
-  mm = motors-> receiveCommand();
-  ASSERT_EQ(300, mm.getData());
-  ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
-  ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
-}
-
-TEST_F(MotorSerialTests, misalignedOneGoodReadWorks){
-  uint8_t test[]= {0x00, 0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
-  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 9);
-
-  while(!motors->commandAvailable()) {
-  }
-
-  MotorMessage mm;
-  mm = motors-> receiveCommand();
-  ASSERT_EQ(300, mm.getData());
-  ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
-  ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
-}
-
-TEST_F(MotorSerialTests, misalignedManyGoodReadWorks){
-  uint8_t test[]= {0x01, 0x2C, 0x0E, 0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
-  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 11);
-
-  while(!motors->commandAvailable()) {
-  }
-
-  MotorMessage mm;
-  mm = motors-> receiveCommand();
-  ASSERT_EQ(300, mm.getData());
-  ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
-  ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
-}
-
-TEST_F(MotorSerialTests, errorReadWorks){
-  uint8_t test[]= {0x7E, 0x3D, 0x07, 0x00, 0x00, 0x00, 0x00, 0xBB};
-  //uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
-  write(master_fd, test, 8);
-
-  while(!motors->commandAvailable()) {
-  }
-
-  MotorMessage mm;
-  mm = motors-> receiveCommand();
-  ASSERT_EQ(MotorMessage::TYPE_ERROR, mm.getType());
-}
-
-
-TEST_F(MotorSerialTests, badReadFails){
-  uint8_t test[]= {0xdd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  //uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
-  write(master_fd, test, 9);
-
-  ros::Rate loop(100);
-  int times = 0;
-  while(!motors->commandAvailable()) {
-    loop.sleep();
-    times++;
-    if(times >= 20) {
-      break;
+    while (!motors->commandAvailable()) {
     }
-  }
 
-  if(times >= 20) {
-      SUCCEED();
-  }
-  else {
-    FAIL();
-  }
+    MotorMessage mm;
+    mm = motors->receiveCommand();
+    ASSERT_EQ(300, mm.getData());
+    ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
+    ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
 }
 
-TEST_F(MotorSerialTests, misalignedOneBadReadFails){
-  uint8_t test[]= {0x00, 0x7d, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
-  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 9);
+TEST_F(MotorSerialTests, misalignedOneGoodReadWorks) {
+    uint8_t test[] = {0x00, 0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
+    // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+    write(master_fd, test, 9);
 
-  ros::Rate loop(100);
-  int times = 0;
-  while(!motors->commandAvailable()) {
-    loop.sleep();
-    times++;
-    if(times >= 20) {
-      break;
+    while (!motors->commandAvailable()) {
     }
-  }
 
-  if(times >= 20) {
-      SUCCEED();
-  }
-  else {
-    FAIL();
-  }
+    MotorMessage mm;
+    mm = motors->receiveCommand();
+    ASSERT_EQ(300, mm.getData());
+    ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
+    ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
 }
 
-TEST_F(MotorSerialTests, incompleteReadFails){
-  uint8_t test[]= {0x7E, 0x3B, 0x00};
-  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 3);
+TEST_F(MotorSerialTests, misalignedManyGoodReadWorks) {
+    uint8_t test[] = {0x01, 0x2C, 0x0E, 0x7E, 0x3B, 0x07,
+                      0x00, 0x00, 0x01, 0x2C, 0x90};
+    // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+    write(master_fd, test, 11);
 
-  ros::Rate loop(100);
-  int times = 0;
-  while(!motors->commandAvailable()) {
-    loop.sleep();
-    times++;
-    if(times >= 20) {
-      break;
+    while (!motors->commandAvailable()) {
     }
-  }
 
-  if(times >= 20) {
-      SUCCEED();
-  }
-  else {
-    FAIL();
-  }
+    MotorMessage mm;
+    mm = motors->receiveCommand();
+    ASSERT_EQ(300, mm.getData());
+    ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
+    ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mm.getRegister());
 }
 
-TEST_F(MotorSerialTests, incompleteMisalignedReadFails){
-  uint8_t test[]= {0x0f,0x7E, 0x3B, 0x00};
-  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 4);
+TEST_F(MotorSerialTests, errorReadWorks) {
+    uint8_t test[] = {0x7E, 0x3D, 0x07, 0x00, 0x00, 0x00, 0x00, 0xBB};
+    // uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+    write(master_fd, test, 8);
 
-  ros::Rate loop(100);
-  int times = 0;
-  while(!motors->commandAvailable()) {
-    loop.sleep();
-    times++;
-    if(times >= 20) {
-      break;
+    while (!motors->commandAvailable()) {
     }
-  }
 
-  if(times >= 20) {
-      SUCCEED();
-  }
-  else {
-    FAIL();
-  }
+    MotorMessage mm;
+    mm = motors->receiveCommand();
+    ASSERT_EQ(MotorMessage::TYPE_ERROR, mm.getType());
 }
 
-TEST_F(MotorSerialTests, badProtocolReadFails){
-  uint8_t test[]= {0x7E, 0xFB, 0x07, 0x00, 0x00, 0x00, 0x00, 0xFB};
-  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 8);
+TEST_F(MotorSerialTests, badReadFails) {
+    uint8_t test[] = {0xdd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    // uint8_t test[]= {0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
+    write(master_fd, test, 9);
 
-  ros::Rate loop(100);
-  int times = 0;
-  while(!motors->commandAvailable()) {
-    loop.sleep();
-    times++;
-    if(times >= 20) {
-      break;
+    ros::Rate loop(100);
+    int times = 0;
+    while (!motors->commandAvailable()) {
+        loop.sleep();
+        times++;
+        if (times >= 20) {
+            break;
+        }
     }
-  }
 
-  if(times >= 20) {
-      SUCCEED();
-  }
-  else {
-    FAIL();
-  }
+    if (times >= 20) {
+        SUCCEED();
+    } else {
+        FAIL();
+    }
 }
 
+TEST_F(MotorSerialTests, misalignedOneBadReadFails) {
+    uint8_t test[] = {0x00, 0x7d, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
+    // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+    write(master_fd, test, 9);
 
-TEST_F(MotorSerialTests, badTypeReadFails){
-  uint8_t test[]= {0x7E, 0x2E, 0x07, 0x00, 0x00, 0x00, 0x00, 0xCA};
-  //char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-  write(master_fd, test, 8);
-
-  ros::Rate loop(100);
-  int times = 0;
-  while(!motors->commandAvailable()) {
-    loop.sleep();
-    times++;
-    if(times >= 20) {
-      break;
+    ros::Rate loop(100);
+    int times = 0;
+    while (!motors->commandAvailable()) {
+        loop.sleep();
+        times++;
+        if (times >= 20) {
+            break;
+        }
     }
-  }
 
-  if(times >= 20) {
-      SUCCEED();
-  }
-  else {
-    FAIL();
-  }
+    if (times >= 20) {
+        SUCCEED();
+    } else {
+        FAIL();
+    }
+}
+
+TEST_F(MotorSerialTests, incompleteReadFails) {
+    uint8_t test[] = {0x7E, 0x3B, 0x00};
+    // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+    write(master_fd, test, 3);
+
+    ros::Rate loop(100);
+    int times = 0;
+    while (!motors->commandAvailable()) {
+        loop.sleep();
+        times++;
+        if (times >= 20) {
+            break;
+        }
+    }
+
+    if (times >= 20) {
+        SUCCEED();
+    } else {
+        FAIL();
+    }
+}
+
+TEST_F(MotorSerialTests, incompleteMisalignedReadFails) {
+    uint8_t test[] = {0x0f, 0x7E, 0x3B, 0x00};
+    // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+    write(master_fd, test, 4);
+
+    ros::Rate loop(100);
+    int times = 0;
+    while (!motors->commandAvailable()) {
+        loop.sleep();
+        times++;
+        if (times >= 20) {
+            break;
+        }
+    }
+
+    if (times >= 20) {
+        SUCCEED();
+    } else {
+        FAIL();
+    }
+}
+
+TEST_F(MotorSerialTests, badProtocolReadFails) {
+    uint8_t test[] = {0x7E, 0xFB, 0x07, 0x00, 0x00, 0x00, 0x00, 0xFB};
+    // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+    write(master_fd, test, 8);
+
+    ros::Rate loop(100);
+    int times = 0;
+    while (!motors->commandAvailable()) {
+        loop.sleep();
+        times++;
+        if (times >= 20) {
+            break;
+        }
+    }
+
+    if (times >= 20) {
+        SUCCEED();
+    } else {
+        FAIL();
+    }
+}
+
+TEST_F(MotorSerialTests, badTypeReadFails) {
+    uint8_t test[] = {0x7E, 0x2E, 0x07, 0x00, 0x00, 0x00, 0x00, 0xCA};
+    // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+    write(master_fd, test, 8);
+
+    ros::Rate loop(100);
+    int times = 0;
+    while (!motors->commandAvailable()) {
+        loop.sleep();
+        times++;
+        if (times >= 20) {
+            break;
+        }
+    }
+
+    if (times >= 20) {
+        SUCCEED();
+    } else {
+        FAIL();
+    }
 }
 
 TEST_F(MotorSerialTests, writeOutputs) {
-	MotorMessage version;
-	version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
-	version.setType(MotorMessage::TYPE_READ);
-	version.setData(0);
-	motors->transmitCommand(version);
+    MotorMessage version;
+    version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
+    version.setType(MotorMessage::TYPE_READ);
+    version.setData(0);
+    motors->transmitCommand(version);
 
-  RawMotorMessage input;
-  read(master_fd, input.c_array(), input.size());
+    RawMotorMessage input;
+    read(master_fd, input.c_array(), input.size());
 
-  ASSERT_EQ(input, version.serialize());
+    ASSERT_EQ(input, version.serialize());
 }
 
 TEST_F(MotorSerialTests, writeMultipleOutputs) {
-  std::vector<MotorMessage> commands;
+    std::vector<MotorMessage> commands;
 
-  MotorMessage left_odom;
-  left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
-  left_odom.setType(MotorMessage::TYPE_READ);
-  left_odom.setData(0);
-  commands.push_back(left_odom);
+    MotorMessage left_odom;
+    left_odom.setRegister(MotorMessage::REG_LEFT_ODOM);
+    left_odom.setType(MotorMessage::TYPE_READ);
+    left_odom.setData(0);
+    commands.push_back(left_odom);
 
-  MotorMessage right_odom;
-  right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
-  right_odom.setType(MotorMessage::TYPE_READ);
-  right_odom.setData(0);
-  commands.push_back(right_odom);
+    MotorMessage right_odom;
+    right_odom.setRegister(MotorMessage::REG_RIGHT_ODOM);
+    right_odom.setType(MotorMessage::TYPE_READ);
+    right_odom.setData(0);
+    commands.push_back(right_odom);
 
-  MotorMessage left_vel;
-  left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
-  left_vel.setType(MotorMessage::TYPE_READ);
-  left_vel.setData(0);
-  commands.push_back(left_vel);
+    MotorMessage left_vel;
+    left_vel.setRegister(MotorMessage::REG_LEFT_SPEED_MEASURED);
+    left_vel.setType(MotorMessage::TYPE_READ);
+    left_vel.setData(0);
+    commands.push_back(left_vel);
 
-  MotorMessage right_vel;
-  right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
-  right_vel.setType(MotorMessage::TYPE_READ);
-  right_vel.setData(0);
-  commands.push_back(right_vel);
+    MotorMessage right_vel;
+    right_vel.setRegister(MotorMessage::REG_RIGHT_SPEED_MEASURED);
+    right_vel.setType(MotorMessage::TYPE_READ);
+    right_vel.setData(0);
+    commands.push_back(right_vel);
 
-  motors->transmitCommands(commands);
+    motors->transmitCommands(commands);
 
-  sleep(2);
+    sleep(2);
 
-  uint8_t arr[32];
-  read(master_fd, arr, 32);
-  std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
+    uint8_t arr[32];
+    read(master_fd, arr, 32);
+    std::vector<uint8_t> input(arr, arr + sizeof(arr) / sizeof(uint8_t));
 
-  std::vector<uint8_t> expected(0);
-  for (std::vector<MotorMessage>::iterator i = commands.begin(); i != commands.end(); ++i){
-    RawMotorMessage serialized = i->serialize();
-    expected.insert(expected.end(), serialized.begin(), serialized.end());
-  }
+    std::vector<uint8_t> expected(0);
+    for (std::vector<MotorMessage>::iterator i = commands.begin();
+         i != commands.end(); ++i) {
+        RawMotorMessage serialized = i->serialize();
+        expected.insert(expected.end(), serialized.begin(), serialized.end());
+    }
 
-  ASSERT_EQ(expected, input);
+    ASSERT_EQ(expected, input);
 }
 
-
-
-int main(int argc, char **argv){
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
