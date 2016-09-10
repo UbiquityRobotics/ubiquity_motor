@@ -111,10 +111,6 @@ MotorMessage::Registers MotorMessage::getRegister() const {
     return static_cast<MotorMessage::Registers>(this->register_addr);
 }
 
-/*bool MotorMessage::isDelimeter(uint8_t data) {
-  return (delimeter == data);
-  }*/
-
 void MotorMessage::setData(int32_t data) {
     // Spilt 32 bit data (system byte order) into 4 8bit elements in big endian
     // (network byte order)
@@ -189,19 +185,6 @@ int MotorMessage::verifyRegister(uint8_t r) {
         if (r == valid_registers[i]) return 1;
     }
     return 0;
-}
-
-uint8_t MotorMessage::generateChecksum(const std::vector<uint8_t> &data) {
-    int sum = std::accumulate(data.begin() + 1, data.end() - 1, 0);
-
-    if (sum > 0xFF) {
-        int tmp;
-        tmp = sum >> 8;
-        tmp = tmp << 8;
-        return 0xFF - (sum - tmp);
-    } else {
-        return 0xFF - sum;
-    }
 }
 
 uint8_t MotorMessage::generateChecksum(const RawMotorMessage &data) {
