@@ -136,15 +136,13 @@ void MotorSerial::SerialThread() {
                           out[1], out[2], out[3], out[4], out[5], out[6],
                           out[7]);
                 motors.write(out.c_array(), out.size());
-                usleep(2000);
+                boost::this_thread::sleep(boost::posix_time::milliseconds(2));
             }
 
             if (did_update) {
                 motors.flushOutput();
             }
 
-            // boost::posix_time::milliseconds loopDelay(10);
-            // boost::this_thread::sleep(loopDelay);
             boost::this_thread::interruption_point();
             serial_loop_rate.sleep();
         }

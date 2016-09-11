@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     10.0  // read = ticks / (100 ms), so we have scale of 10 for ticks/second
 #define CURRENT_FIRMWARE_VERSION 24
 
-MotorHardware::MotorHardware(ros::NodeHandle nh) {
+MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params, FirmwareParams firmware_params) {
     ros::V_string joint_names =
         boost::assign::list_of("left_wheel_joint")("right_wheel_joint");
 
@@ -61,27 +61,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh) {
     registerInterface(&joint_state_interface_);
     registerInterface(&velocity_joint_interface_);
 
-    std::string sPort;
-    int sBaud;
-
-    double sLoopRate;
-
-    if (!nh.getParam("ubiquity_motor/serial_port", sPort)) {
-        sPort.assign("/dev/ttyS0");
-        nh.setParam("ubiquity_motor/serial_port", sPort);
-    }
-
-    if (!nh.getParam("ubiquity_motor/serial_baud", sBaud)) {
-        sBaud = 9600;
-        nh.setParam("ubiquity_motor/serial_baud", sBaud);
-    }
-
-    if (!nh.getParam("ubiquity_motor/serial_loop_rate", sLoopRate)) {
-        sLoopRate = 100;
-        nh.setParam("ubiquity_motor/serial_loop_rate", sLoopRate);
-    }
-
-    motor_serial_ = new MotorSerial(sPort, sBaud, sLoopRate);
+    motor_serial_ = new MotorSerial(serial_params.serial_port, serial_params.baud_rate, serial_params.serial_loop_rate);
 
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
@@ -262,17 +242,15 @@ void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
     motor_serial_->transmitCommand(mm);
 }
 
-void MotorHardware::setPid(int32_t p_set, int32_t i_set, int32_t d_set,
-                           int32_t denominator_set) {
-    p_value = p_set;
-    i_value = i_set;
-    d_value = d_set;
-    denominator_value = denominator_set;
+void MotorHardware::setParams(FirmwareParams firmware_params) {
+    p_value = firmware_params.pid_proportional;
+    i_value = firmware_params.pid_integral;
+    d_value = firmware_params.pid_derivative;
+    denominator_value = firmware_params.pid_denominator;
+    moving_buffer_size = firmware_params.pid_moving_buffer_size;
 }
 
-void MotorHardware::setWindowSize(int32_t size) { moving_buffer_size = size; }
-
-void MotorHardware::sendPid() {
+void MotorHardware::sendParams() {
     std::vector<MotorMessage> commands;
 
     // ROS_ERROR("sending PID %d %d %d %d",

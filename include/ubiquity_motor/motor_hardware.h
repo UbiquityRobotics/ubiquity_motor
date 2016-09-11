@@ -41,19 +41,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "std_msgs/UInt32.h"
 
 #include <ubiquity_motor/motor_serial.h>
+#include <ubiquity_motor/motor_parmeters.h>
 
 class MotorHardware : public hardware_interface::RobotHW {
 public:
-    MotorHardware(ros::NodeHandle nh);
+    MotorHardware(ros::NodeHandle nh, CommsParams serial_params, FirmwareParams firmware_params);
     ~MotorHardware();
     void readInputs();
     void writeSpeeds();
     void requestVersion();
-    void requestOdometry();
-    void requestVelocity();
-    void setPid(int32_t p, int32_t i, int32_t d, int32_t denominator);
-    void setWindowSize(int32_t size);
-    void sendPid();
+    void setParams(FirmwareParams firmware_params);
+    void sendParams();
     void setDeadmanTimer(int32_t deadman);
     void setDebugLeds(bool led1, bool led2);
 
