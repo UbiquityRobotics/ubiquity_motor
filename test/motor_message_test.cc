@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2015, Ubiquity Robotics
+Copyright (c) 2016, Ubiquity Robotics
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -128,86 +128,62 @@ TEST(MotorMessageTest, motor_message_register_neg) {
     ASSERT_NE(0x07, mc.getRegister());
 }
 
-TEST(MotorMessageTest, motor_message_data_64bit_pos) {
+TEST(MotorMessageTest, motor_message_data_64bit) {
     MotorMessage mc;
     int64_t i = 0xABC;
     mc.setData(i);
     ASSERT_EQ(0xABC, mc.getData());
-}
-
-TEST(MotorMessageTest, motor_message_data_64bit_zero) {
-    MotorMessage mc;
-    int64_t i = 0;
+    
+    i = 0;
     mc.setData(i);
     ASSERT_EQ(0, mc.getData());
-}
-
-TEST(MotorMessageTest, motor_message_data_64bit_neg) {
-    MotorMessage mc;
-    int64_t i = -0xABC;
+    
+    i = -0xABC;
     mc.setData(i);
     ASSERT_EQ(-0xABC, mc.getData());
 }
 
-TEST(MotorMessageTest, motor_message_data_32bit_pos) {
+TEST(MotorMessageTest, motor_message_data_32bit) {
     MotorMessage mc;
     int32_t i = 0xABC;
     mc.setData(i);
     ASSERT_EQ(0xABC, mc.getData());
-}
 
-TEST(MotorMessageTest, motor_message_data_32bit_zero) {
-    MotorMessage mc;
-    int32_t i = 0;
+    i = 0;
     mc.setData(i);
     ASSERT_EQ(0, mc.getData());
-}
 
-TEST(MotorMessageTest, motor_message_data_32bit_neg) {
-    MotorMessage mc;
-    int32_t i = -0xABC;
+    i = -0xABC;
     mc.setData(i);
     ASSERT_EQ(-0xABC, mc.getData());
 }
 
-TEST(MotorMessageTest, motor_message_data_16bit_pos) {
+TEST(MotorMessageTest, motor_message_data_16bit) {
     MotorMessage mc;
     int16_t i = 0xABC;
     mc.setData(i);
     ASSERT_EQ(0xABC, mc.getData());
-}
 
-TEST(MotorMessageTest, motor_message_data_16bit_zero) {
-    MotorMessage mc;
-    int16_t i = 0;
+    i = 0;
     mc.setData(i);
     ASSERT_EQ(0, mc.getData());
-}
 
-TEST(MotorMessageTest, motor_message_data_16bit_neg) {
-    MotorMessage mc;
-    int16_t i = -0xABC;
+    i = -0xABC;
     mc.setData(i);
     ASSERT_EQ(-0xABC, mc.getData());
 }
 
-TEST(MotorMessageTest, motor_message_data_8bit_pos) {
+TEST(MotorMessageTest, motor_message_data_8bit) {
     MotorMessage mc;
     int8_t i = 0x50;
     mc.setData(i);
     ASSERT_EQ(0x50, mc.getData());
-}
 
-TEST(MotorMessageTest, motor_message_data_8bit_zero) {
-    MotorMessage mc;
-    int8_t i = 0;
+    i = 0;
     mc.setData(i);
     ASSERT_EQ(0, mc.getData());
-}
 
-TEST(MotorMessageTest, motor_message_data_8bit_neg) {
-    MotorMessage mc;
-    int8_t i = -0x50;
+    i = -0x50;
     mc.setData(i);
     ASSERT_EQ(-0x50, mc.getData());
 }
@@ -245,21 +221,6 @@ TEST(MotorMessageTest, motor_message_deserialize_delimeter_in_data) {
     ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
     ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
 }
-
-// TEST(MotorMessageTest, motor_message_deserialize_double_delimeter) {
-// 	MotorMessage mc;
-
-// 	//Test bad delimeter with good checksum
-// 	uint8_t arr[] = {0x7E, 0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C,
-// 0x0E};
-
-// 	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-
-// 	ASSERT_EQ(0, mc.deserialize(input));
-// 	ASSERT_EQ(300, mc.getData());
-// 	ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
-// 	ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
-// }
 
 TEST(MotorMessageTest, motor_message_deserialize_bad_delimeter) {
     MotorMessage mc;
