@@ -206,7 +206,7 @@ TEST_F(MotorSerialTests, incompleteReadFails) {
 TEST_F(MotorSerialTests, incompleteMisalignedReadFails) {
     uint8_t test[] = {0x0f, 0x7E, 0x3B, 0x00};
     // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
-    ASSERT_NE(-1, write(master_fd, test, 9));
+    ASSERT_NE(-1, write(master_fd, test, 4));
 
     ros::Rate loop(100);
     int times = 0;
