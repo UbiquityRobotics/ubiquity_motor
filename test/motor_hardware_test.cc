@@ -65,8 +65,56 @@ TEST_F(MotorHardwareTests, oldFirmware) {
     RawMotorMessage out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
 
-    usleep(5000);
+    usleep(1000);
     ASSERT_THROW(robot->readInputs(), std::runtime_error);
+}
+
+TEST_F(MotorHardwareTests, setParamsSendParams) {
+    FirmwareParams fp;
+    fp.pid_proportional = 12;
+    fp.pid_integral = 12;
+    fp.pid_derivative = 12;
+    fp.pid_denominator = 12;
+    fp.pid_moving_buffer_size = 12;
+
+    robot->setParams(fp);
+
+    int aval;
+    RawMotorMessage out;
+
+    for (int i; i < 5; ++i) {
+        robot->sendParams();
+        usleep(2000);
+        // Make sure that we get exactly 1 message out on port each time
+        ASSERT_NE(-1, ioctl(master_fd, FIONREAD, &aval));
+        ASSERT_EQ(out.size(), aval);
+        ASSERT_EQ(out.size(), read(master_fd, out.c_array(), out.size()));
+    }
+}
+
+static bool called;
+
+void callback(const std_msgs::UInt32 &data) {
+    SUCCEED();
+    called = true;
+}
+
+TEST_F(MotorHardwareTests, debugRegisterPublishes) {
+    ros::Subscriber sub = nh.subscribe("u50", 1, callback);
+
+    MotorMessage mm;
+    mm.setType(MotorMessage::TYPE_RESPONSE);
+    mm.setRegister(static_cast<MotorMessage::Registers>(0x50));
+    mm.setData(10);
+
+    RawMotorMessage out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+
+    usleep(5000);
+    robot->readInputs();
+    usleep(5000);
+    ros::spinOnce();
+    ASSERT_TRUE(called);
 }
 
 int main(int argc, char **argv) {
