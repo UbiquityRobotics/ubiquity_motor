@@ -277,7 +277,7 @@ TEST_F(MotorSerialTests, writeOutputs) {
     motors->transmitCommand(version);
 
     RawMotorMessage input;
-    read(master_fd, input.c_array(), input.size());
+    EXPECT_EQ(input.size(), read(master_fd, input.c_array(), input.size()));
 
     ASSERT_EQ(input, version.serialize());
 }
@@ -314,7 +314,7 @@ TEST_F(MotorSerialTests, writeMultipleOutputs) {
     sleep(2);
 
     uint8_t arr[32];
-    read(master_fd, arr, 32);
+    EXPECT_EQ(32, read(master_fd, arr, 32));
     std::vector<uint8_t> input(arr, arr + sizeof(arr) / sizeof(uint8_t));
 
     std::vector<uint8_t> expected(0);
