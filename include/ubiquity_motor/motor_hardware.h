@@ -47,7 +47,7 @@ class MotorHardware : public hardware_interface::RobotHW {
 public:
     MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
                   FirmwareParams firmware_params);
-    ~MotorHardware();
+    virtual ~MotorHardware();
     void readInputs();
     void writeSpeeds();
     void requestVersion();
