@@ -40,12 +40,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "std_msgs/Int32.h"
 #include "std_msgs/UInt32.h"
 
-#include <ubiquity_motor/motor_serial.h>
 #include <ubiquity_motor/motor_parmeters.h>
+#include <ubiquity_motor/motor_serial.h>
 
 class MotorHardware : public hardware_interface::RobotHW {
 public:
-    MotorHardware(ros::NodeHandle nh, CommsParams serial_params, FirmwareParams firmware_params);
+    MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
+                  FirmwareParams firmware_params);
     ~MotorHardware();
     void readInputs();
     void writeSpeeds();
@@ -65,17 +66,8 @@ private:
     hardware_interface::JointStateInterface joint_state_interface_;
     hardware_interface::VelocityJointInterface velocity_joint_interface_;
 
-    int32_t p_value;
-    int32_t i_value;
-    int32_t d_value;
-    int32_t denominator_value;
-    int32_t moving_buffer_size;
-
-    int32_t prev_p_value;
-    int32_t prev_i_value;
-    int32_t prev_d_value;
-    int32_t prev_denominator_value;
-    int32_t prev_moving_buffer_size;
+    FirmwareParams pid_params;
+    FirmwareParams prev_pid_params;
 
     int32_t deadman_timer;
 

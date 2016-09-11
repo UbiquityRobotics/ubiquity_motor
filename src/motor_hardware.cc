@@ -44,7 +44,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     10.0  // read = ticks / (100 ms), so we have scale of 10 for ticks/second
 #define CURRENT_FIRMWARE_VERSION 24
 
-MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params, FirmwareParams firmware_params) {
+MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
+                             FirmwareParams firmware_params) {
     ros::V_string joint_names =
         boost::assign::list_of("left_wheel_joint")("right_wheel_joint");
 
@@ -61,7 +62,9 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params, Firm
     registerInterface(&joint_state_interface_);
     registerInterface(&velocity_joint_interface_);
 
-    motor_serial_ = new MotorSerial(serial_params.serial_port, serial_params.baud_rate, serial_params.serial_loop_rate);
+    motor_serial_ =
+        new MotorSerial(serial_params.serial_port, serial_params.baud_rate,
+                        serial_params.serial_loop_rate);
 
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
@@ -89,11 +92,14 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params, Firm
 
     sendPid_count = 0;
 
-    prev_p_value = -1;
-    prev_i_value = -1;
-    prev_d_value = -1;
-    prev_denominator_value = -1;
-    prev_moving_buffer_size = -1;
+    pid_params = firmware_params;
+
+    prev_pid_params.pid_proportional = -1;
+    prev_pid_params.pid_integral = -1;
+    prev_pid_params.pid_derivative = -1;
+    prev_pid_params.pid_denominator = -1;
+    prev_pid_params.pid_moving_buffer_size = -1;
+    prev_pid_params.deadman_timer = -1;
 }
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
@@ -242,12 +248,12 @@ void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
     motor_serial_->transmitCommand(mm);
 }
 
-void MotorHardware::setParams(FirmwareParams firmware_params) {
-    p_value = firmware_params.pid_proportional;
-    i_value = firmware_params.pid_integral;
-    d_value = firmware_params.pid_derivative;
-    denominator_value = firmware_params.pid_denominator;
-    moving_buffer_size = firmware_params.pid_moving_buffer_size;
+void MotorHardware::setParams(FirmwareParams fp) {
+    pid_params.pid_proportional = fp.pid_proportional;
+    pid_params.pid_integral = fp.pid_integral;
+    pid_params.pid_derivative = fp.pid_derivative;
+    pid_params.pid_denominator = fp.pid_denominator;
+    pid_params.pid_moving_buffer_size = fp.pid_moving_buffer_size;
 }
 
 void MotorHardware::sendParams() {
@@ -259,53 +265,59 @@ void MotorHardware::sendParams() {
     // Only send one register at a time to avoid overwhelming serial comms
     int cycle = (sendPid_count++) % 5;
 
-    if (cycle == 0 && p_value != prev_p_value) {
-        ROS_WARN("Setting P to %d", p_value);
-        prev_p_value = p_value;
+    if (cycle == 0 &&
+        pid_params.pid_proportional != prev_pid_params.pid_proportional) {
+        ROS_WARN("Setting P to %d", pid_params.pid_proportional);
+        prev_pid_params.pid_proportional = pid_params.pid_proportional;
         MotorMessage p;
         p.setRegister(MotorMessage::REG_PARAM_P);
         p.setType(MotorMessage::TYPE_WRITE);
-        p.setData(p_value);
+        p.setData(pid_params.pid_proportional);
         commands.push_back(p);
     }
 
-    if (cycle == 1 && i_value != prev_i_value) {
-        ROS_WARN("Setting I to %d", i_value);
-        prev_i_value = i_value;
+    if (cycle == 1 && pid_params.pid_integral != prev_pid_params.pid_integral) {
+        ROS_WARN("Setting I to %d", pid_params.pid_integral);
+        prev_pid_params.pid_integral = pid_params.pid_integral;
         MotorMessage i;
         i.setRegister(MotorMessage::REG_PARAM_I);
         i.setType(MotorMessage::TYPE_WRITE);
-        i.setData(i_value);
+        i.setData(pid_params.pid_integral);
         commands.push_back(i);
     }
 
-    if (cycle == 2 && d_value != prev_d_value) {
-        ROS_WARN("Setting D to %d", d_value);
-        prev_d_value = d_value;
+    if (cycle == 2 &&
+        pid_params.pid_derivative != prev_pid_params.pid_derivative) {
+        ROS_WARN("Setting D to %d", pid_params.pid_derivative);
+        prev_pid_params.pid_derivative = pid_params.pid_derivative;
         MotorMessage d;
         d.setRegister(MotorMessage::REG_PARAM_D);
         d.setType(MotorMessage::TYPE_WRITE);
-        d.setData(d_value);
+        d.setData(pid_params.pid_derivative);
         commands.push_back(d);
     }
 
-    if (cycle == 3 && denominator_value != prev_denominator_value) {
-        ROS_WARN("Setting Denominator to %d", denominator_value);
-        prev_denominator_value = denominator_value;
+    if (cycle == 3 &&
+        pid_params.pid_denominator != prev_pid_params.pid_denominator) {
+        ROS_WARN("Setting Denominator to %d", pid_params.pid_denominator);
+        prev_pid_params.pid_denominator = pid_params.pid_denominator;
         MotorMessage denominator;
         denominator.setRegister(MotorMessage::REG_PARAM_C);
         denominator.setType(MotorMessage::TYPE_WRITE);
-        denominator.setData(denominator_value);
+        denominator.setData(pid_params.pid_denominator);
         commands.push_back(denominator);
     }
 
-    if (cycle == 4 && moving_buffer_size != prev_moving_buffer_size) {
-        ROS_WARN("Setting D window to %d", moving_buffer_size);
-        prev_moving_buffer_size = moving_buffer_size;
+    if (cycle == 4 &&
+        pid_params.pid_moving_buffer_size !=
+            prev_pid_params.pid_moving_buffer_size) {
+        ROS_WARN("Setting D window to %d", pid_params.pid_moving_buffer_size);
+        prev_pid_params.pid_moving_buffer_size =
+            pid_params.pid_moving_buffer_size;
         MotorMessage winsize;
         winsize.setRegister(MotorMessage::REG_MOVING_BUF_SIZE);
         winsize.setType(MotorMessage::TYPE_WRITE);
-        winsize.setData(moving_buffer_size);
+        winsize.setData(pid_params.pid_moving_buffer_size);
         commands.push_back(winsize);
     }
 
