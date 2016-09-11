@@ -92,10 +92,10 @@ public:
         return internal_queue_.front();
     };
 
-    T& front_pop() {
+    T front_pop() {
         boost::lock_guard<boost::mutex> lock(queue_mutex_);
 
-        T& value = internal_queue_.front();
+        T value = internal_queue_.front();
         internal_queue_.pop();
         queue_empty_ = internal_queue_.empty();
 
