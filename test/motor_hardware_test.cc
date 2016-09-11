@@ -40,33 +40,33 @@ protected:
 };
 
 TEST_F(MotorHardwareTests, writeSpeedsOutputs) {
-   robot->writeSpeeds();
-   usleep(1000);
+    robot->writeSpeeds();
+    usleep(1000);
 
-   int aval;
-   RawMotorMessage out;
-   // Make sure that we get exactly 1 message out on port
-   ASSERT_NE(-1, ioctl(master_fd,FIONREAD,&aval));
-   ASSERT_EQ(out.size(), aval);
-   ASSERT_EQ(out.size(), read(master_fd, out.c_array(), out.size()));
+    int aval;
+    RawMotorMessage out;
+    // Make sure that we get exactly 1 message out on port
+    ASSERT_NE(-1, ioctl(master_fd, FIONREAD, &aval));
+    ASSERT_EQ(out.size(), aval);
+    ASSERT_EQ(out.size(), read(master_fd, out.c_array(), out.size()));
 
-   MotorMessage mm;
-   ASSERT_EQ(0, mm.deserialize(out));
-   ASSERT_EQ(MotorMessage::REG_BOTH_SPEED_SET, mm.getRegister());
-   ASSERT_EQ(0, mm.getData());
+    MotorMessage mm;
+    ASSERT_EQ(0, mm.deserialize(out));
+    ASSERT_EQ(MotorMessage::REG_BOTH_SPEED_SET, mm.getRegister());
+    ASSERT_EQ(0, mm.getData());
 }
 
 TEST_F(MotorHardwareTests, oldFirmware) {
-   MotorMessage mm;
-   mm.setType(MotorMessage::TYPE_RESPONSE);
-   mm.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
-   mm.setData(10);
+    MotorMessage mm;
+    mm.setType(MotorMessage::TYPE_RESPONSE);
+    mm.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
+    mm.setData(10);
 
-   RawMotorMessage out = mm.serialize();
-   ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+    RawMotorMessage out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
 
-   usleep(5000);
-   ASSERT_THROW(robot->readInputs(), std::runtime_error);
+    usleep(5000);
+    ASSERT_THROW(robot->readInputs(), std::runtime_error);
 }
 
 int main(int argc, char **argv) {
