@@ -43,6 +43,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_parmeters.h>
 #include <ubiquity_motor/motor_serial.h>
 
+#include <gtest/gtest_prod.h>
+
 class MotorHardware : public hardware_interface::RobotHW {
 public:
     MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
@@ -107,6 +109,9 @@ private:
     ros::Publisher pubS59;
 
     MotorSerial* motor_serial_;
+
+    FRIEND_TEST(MotorHardwareTests, nonZeroWriteSpeedsOutputs);
+    FRIEND_TEST(MotorHardwareTests, odomUpdatesPosition);
 };
 
 #endif

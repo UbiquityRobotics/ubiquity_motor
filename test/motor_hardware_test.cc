@@ -56,7 +56,67 @@ TEST_F(MotorHardwareTests, writeSpeedsOutputs) {
     ASSERT_EQ(0, mm.getData());
 }
 
-TEST_F(MotorHardwareTests, oldFirmware) {
+TEST_F(MotorHardwareTests, nonZeroWriteSpeedsOutputs) {
+    robot->joints_[0].velocity_command = 5;
+    robot->joints_[1].velocity_command = -5;
+    robot->writeSpeeds();
+    usleep(1000);
+
+    int aval;
+    RawMotorMessage out;
+    // Make sure that we get exactly 1 message out on port
+    ASSERT_NE(-1, ioctl(master_fd, FIONREAD, &aval));
+    ASSERT_EQ(out.size(), aval);
+    ASSERT_EQ(out.size(), read(master_fd, out.c_array(), out.size()));
+
+    MotorMessage mm;
+    ASSERT_EQ(0, mm.deserialize(out));
+    ASSERT_EQ(MotorMessage::REG_BOTH_SPEED_SET, mm.getRegister());
+    int16_t left = (mm.getData() >> 16) & 0xffff;
+    int16_t right = mm.getData() & 0xffff;
+
+    // Left is 5 rad/s so it should be positive
+    ASSERT_LT(0, left);
+    // Right is -5 rad/s so it should be positive
+    ASSERT_GT(0, right);
+}
+
+TEST_F(MotorHardwareTests, odomUpdatesPosition) {
+    MotorMessage mm;
+    mm.setType(MotorMessage::TYPE_RESPONSE);
+    mm.setRegister(MotorMessage::REG_BOTH_ODOM);
+    mm.setData((50 << 16) | (-50 & 0x0000ffff));
+
+    RawMotorMessage out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+
+    usleep(1000);
+    robot->readInputs();
+
+    // Left is 5 rad/s so it should be positive
+    ASSERT_LT(0, robot->joints_[0].position);
+    // Right is -5 rad/s so it should be positive
+    ASSERT_GT(0, robot->joints_[1].position);
+}
+
+TEST_F(MotorHardwareTests, requestVersionOutputs) {
+    robot->requestVersion();
+    usleep(1000);
+
+    int aval;
+    RawMotorMessage out;
+    // Make sure that we get exactly 1 message out on port
+    ASSERT_NE(-1, ioctl(master_fd, FIONREAD, &aval));
+    ASSERT_EQ(out.size(), aval);
+    ASSERT_EQ(out.size(), read(master_fd, out.c_array(), out.size()));
+
+    MotorMessage mm;
+    ASSERT_EQ(0, mm.deserialize(out));
+    ASSERT_EQ(MotorMessage::REG_FIRMWARE_VERSION, mm.getRegister());
+    ASSERT_EQ(0, mm.getData());
+}
+
+TEST_F(MotorHardwareTests, oldFirmwareThrows) {
     MotorMessage mm;
     mm.setType(MotorMessage::TYPE_RESPONSE);
     mm.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
@@ -67,6 +127,23 @@ TEST_F(MotorHardwareTests, oldFirmware) {
 
     usleep(1000);
     ASSERT_THROW(robot->readInputs(), std::runtime_error);
+}
+
+TEST_F(MotorHardwareTests, setDeadmanTimerOutputs) {
+    robot->setDeadmanTimer(1000);
+    usleep(1000);
+
+    int aval;
+    RawMotorMessage out;
+    // Make sure that we get exactly 1 message out on port
+    ASSERT_NE(-1, ioctl(master_fd, FIONREAD, &aval));
+    ASSERT_EQ(out.size(), aval);
+    ASSERT_EQ(out.size(), read(master_fd, out.c_array(), out.size()));
+
+    MotorMessage mm;
+    ASSERT_EQ(0, mm.deserialize(out));
+    ASSERT_EQ(MotorMessage::REG_DEADMAN, mm.getRegister());
+    ASSERT_EQ(1000, mm.getData());
 }
 
 TEST_F(MotorHardwareTests, setParamsSendParams) {
