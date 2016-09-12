@@ -133,11 +133,11 @@ TEST(MotorMessageTest, motor_message_data_64bit) {
     int64_t i = 0xABC;
     mc.setData(i);
     ASSERT_EQ(0xABC, mc.getData());
-    
+
     i = 0;
     mc.setData(i);
     ASSERT_EQ(0, mc.getData());
-    
+
     i = -0xABC;
     mc.setData(i);
     ASSERT_EQ(-0xABC, mc.getData());

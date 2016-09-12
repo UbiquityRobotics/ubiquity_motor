@@ -3,6 +3,7 @@
 #include <ros/ros.h>
 #include <ubiquity_motor/motor_hardware.h>
 #include <ubiquity_motor/motor_message.h>
+#include <limits>
 
 #if defined(__linux__)
 #include <pty.h>
@@ -93,10 +94,101 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
     usleep(1000);
     robot->readInputs();
 
+    double left = robot->joints_[0].position;
+    double right = robot->joints_[1].position;
+
     // Left is 5 rad/s so it should be positive
-    ASSERT_LT(0, robot->joints_[0].position);
-    // Right is -5 rad/s so it should be positive
-    ASSERT_GT(0, robot->joints_[1].position);
+    ASSERT_LT(0, left);
+    // Right is -5 rad/s so it should be negative
+    ASSERT_GT(0, right);
+
+    // Send zero and re-read
+    mm.setData((0 << 16) | (0 & 0x0000ffff));
+    out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+    usleep(1000);
+    robot->readInputs();
+
+    // Make sure that the value stays same
+    ASSERT_EQ(left, robot->joints_[0].position);
+    ASSERT_EQ(right, robot->joints_[1].position);
+
+    // Send original message again and re-read
+    mm.setData((50 << 16) | (-50 & 0x0000ffff));
+    out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+    usleep(1000);
+    robot->readInputs();
+
+    // Make sure that the value accumulates
+    ASSERT_DOUBLE_EQ(left*2, robot->joints_[0].position);
+    ASSERT_DOUBLE_EQ(right*2, robot->joints_[1].position);
+
+    // Invert the odom message and re-send/read
+    mm.setData((-50 << 16) | (50 & 0x0000ffff));
+    out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+    usleep(1000);
+    robot->readInputs();
+
+    // Values should be back the the first reading
+    ASSERT_DOUBLE_EQ(left, robot->joints_[0].position);
+    ASSERT_DOUBLE_EQ(right, robot->joints_[1].position);
+}
+
+TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
+    MotorMessage mm;
+    mm.setType(MotorMessage::TYPE_RESPONSE);
+    mm.setRegister(MotorMessage::REG_BOTH_ODOM);
+    mm.setData((std::numeric_limits<int16_t>::max() << 16) | (std::numeric_limits<int16_t>::min() & 0x0000ffff));
+
+    RawMotorMessage out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+
+    usleep(1000);
+    robot->readInputs();
+
+    double left = robot->joints_[0].position;
+    double right = robot->joints_[1].position;
+
+    // Left is + rad/s so it should be positive
+    ASSERT_LT(0, left);
+    // Right is - rad/s so it should be negative
+    ASSERT_GT(0, right);
+
+    // Send zero and re-read
+    mm.setData((0 << 16) | (0 & 0x0000ffff));
+    out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+    usleep(1000);
+    robot->readInputs();
+
+    // Make sure that the value stays same
+    ASSERT_DOUBLE_EQ(left, robot->joints_[0].position);
+    ASSERT_DOUBLE_EQ(right, robot->joints_[1].position);
+
+    // Send original message again and re-read
+    mm.setData((std::numeric_limits<int16_t>::max() << 16) | (std::numeric_limits<int16_t>::min() & 0x0000ffff));
+    out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+    usleep(1000);
+    robot->readInputs();
+
+    // Make sure that the value accumulates
+    ASSERT_DOUBLE_EQ(left*2, robot->joints_[0].position);
+    ASSERT_DOUBLE_EQ(right*2, robot->joints_[1].position);
+
+    // Invert the odom message and re-send/read
+    mm.setData((std::numeric_limits<int16_t>::min() << 16) | (std::numeric_limits<int16_t>::max() & 0x0000ffff));
+    out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+    usleep(1000);
+    robot->readInputs();
+
+    // Values should be back the the first reading
+    // Need to use NEAR due to high precision loss
+    ASSERT_NEAR(left, robot->joints_[0].position, 0.1);
+    ASSERT_NEAR(right, robot->joints_[1].position, 0.1);
 }
 
 TEST_F(MotorHardwareTests, requestVersionOutputs) {

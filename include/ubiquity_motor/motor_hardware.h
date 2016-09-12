@@ -112,6 +112,7 @@ private:
 
     FRIEND_TEST(MotorHardwareTests, nonZeroWriteSpeedsOutputs);
     FRIEND_TEST(MotorHardwareTests, odomUpdatesPosition);
+    FRIEND_TEST(MotorHardwareTests, odomUpdatesPositionMax);
 };
 
 #endif
