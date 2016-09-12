@@ -23,8 +23,8 @@ protected:
         ASSERT_TRUE(slave_fd > 0);
         ASSERT_TRUE(std::string(name).length() > 0);
 
-        nh.setParam("ubiquity_motor/serial_port", std::string(name));
         CommsParams cp(nh);
+        cp.serial_port = std::string(name);
         cp.serial_loop_rate = 5000.0;
         FirmwareParams fp(nh);
 
@@ -121,8 +121,8 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
     robot->readInputs();
 
     // Make sure that the value accumulates
-    ASSERT_DOUBLE_EQ(left*2, robot->joints_[0].position);
-    ASSERT_DOUBLE_EQ(right*2, robot->joints_[1].position);
+    ASSERT_DOUBLE_EQ(left * 2, robot->joints_[0].position);
+    ASSERT_DOUBLE_EQ(right * 2, robot->joints_[1].position);
 
     // Invert the odom message and re-send/read
     mm.setData((-50 << 16) | (50 & 0x0000ffff));
@@ -140,7 +140,8 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
     MotorMessage mm;
     mm.setType(MotorMessage::TYPE_RESPONSE);
     mm.setRegister(MotorMessage::REG_BOTH_ODOM);
-    mm.setData((std::numeric_limits<int16_t>::max() << 16) | (std::numeric_limits<int16_t>::min() & 0x0000ffff));
+    mm.setData((std::numeric_limits<int16_t>::max() << 16) |
+               (std::numeric_limits<int16_t>::min() & 0x0000ffff));
 
     RawMotorMessage out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
@@ -164,22 +165,24 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
     robot->readInputs();
 
     // Make sure that the value stays same
-    ASSERT_DOUBLE_EQ(left, robot->joints_[0].position);
-    ASSERT_DOUBLE_EQ(right, robot->joints_[1].position);
+    ASSERT_EQ(left, robot->joints_[0].position);
+    ASSERT_EQ(right, robot->joints_[1].position);
 
     // Send original message again and re-read
-    mm.setData((std::numeric_limits<int16_t>::max() << 16) | (std::numeric_limits<int16_t>::min() & 0x0000ffff));
+    mm.setData((std::numeric_limits<int16_t>::max() << 16) |
+               (std::numeric_limits<int16_t>::min() & 0x0000ffff));
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     usleep(1000);
     robot->readInputs();
 
     // Make sure that the value accumulates
-    ASSERT_DOUBLE_EQ(left*2, robot->joints_[0].position);
-    ASSERT_DOUBLE_EQ(right*2, robot->joints_[1].position);
+    ASSERT_DOUBLE_EQ(left * 2, robot->joints_[0].position);
+    ASSERT_DOUBLE_EQ(right * 2, robot->joints_[1].position);
 
     // Invert the odom message and re-send/read
-    mm.setData((std::numeric_limits<int16_t>::min() << 16) | (std::numeric_limits<int16_t>::max() & 0x0000ffff));
+    mm.setData((std::numeric_limits<int16_t>::min() << 16) |
+               (std::numeric_limits<int16_t>::max() & 0x0000ffff));
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     usleep(1000);
