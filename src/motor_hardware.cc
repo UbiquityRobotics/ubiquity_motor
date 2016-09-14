@@ -217,6 +217,7 @@ void MotorHardware::writeSpeeds() {
     both.setType(MotorMessage::TYPE_WRITE);
     int16_t left_tics = calculateTicsFromRadians(joints_[0].velocity_command);
     int16_t right_tics = calculateTicsFromRadians(joints_[1].velocity_command);
+
     // The masking with 0x0000ffff is necessary for handling -ve numbers
     int32_t data = (left_tics << 16) | (right_tics & 0x0000ffff);
     both.setData(data);

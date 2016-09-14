@@ -266,13 +266,19 @@ TEST_F(MotorHardwareTests, setParamsSendParams) {
 
 static bool called;
 
-void callback(const std_msgs::UInt32 &data) {
-    SUCCEED();
+void callbackU(const std_msgs::UInt32 &data) {
+    ASSERT_EQ(10, data.data);
     called = true;
 }
 
-TEST_F(MotorHardwareTests, debugRegisterPublishes) {
-    ros::Subscriber sub = nh.subscribe("u50", 1, callback);
+void callbackS(const std_msgs::Int32 &data) {
+    ASSERT_EQ(-10, data.data);
+    called = true;
+}
+
+TEST_F(MotorHardwareTests, debugRegisterUnsignedPublishes) {
+    called = false;
+    ros::Subscriber sub = nh.subscribe("u50", 1, callbackU);
 
     MotorMessage mm;
     mm.setType(MotorMessage::TYPE_RESPONSE);
@@ -287,6 +293,29 @@ TEST_F(MotorHardwareTests, debugRegisterPublishes) {
     usleep(5000);
     ros::spinOnce();
     ASSERT_TRUE(called);
+
+    called = false;
+}
+
+TEST_F(MotorHardwareTests, debugRegisterSignedPublishes) {
+    called = false;
+    ros::Subscriber sub = nh.subscribe("s50", 1, callbackS);
+
+    MotorMessage mm;
+    mm.setType(MotorMessage::TYPE_RESPONSE);
+    mm.setRegister(static_cast<MotorMessage::Registers>(0x50));
+    mm.setData(-10);
+
+    RawMotorMessage out = mm.serialize();
+    ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
+
+    usleep(5000);
+    robot->readInputs();
+    usleep(5000);
+    ros::spinOnce();
+    ASSERT_TRUE(called);
+
+    called = false;
 }
 
 int main(int argc, char **argv) {
