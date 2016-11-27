@@ -117,6 +117,7 @@ void MotorHardware::readInputs() {
                         throw std::runtime_error("Firmware version too low");
                     } else {
                         ROS_INFO("Firmware version %d", mm.getData());
+                        firmware_version = mm.getData();
                     }
                     break;
 
