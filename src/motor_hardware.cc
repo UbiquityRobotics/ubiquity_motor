@@ -100,6 +100,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_pid_params.pid_denominator = -1;
     prev_pid_params.pid_moving_buffer_size = -1;
     prev_pid_params.deadman_timer = -1;
+
+    firmware_version = 0;
 }
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
@@ -117,6 +119,7 @@ void MotorHardware::readInputs() {
                         throw std::runtime_error("Firmware version too low");
                     } else {
                         ROS_INFO("Firmware version %d", mm.getData());
+                        firmware_version = mm.getData();
                     }
                     break;
 

@@ -87,6 +87,15 @@ int main(int argc, char* argv[]) {
     ros::Rate r(node_params.controller_loop_rate);
     robot.requestVersion();
 
+    int times = 0;
+    while(robot.firmware_version == 0) {
+        if(times >= 10)
+            throw std::runtime_error("Firmware not reporting its version");
+        robot.readInputs();
+        r.sleep();
+        times++;
+    }
+
     ros::Time last_time;
     ros::Time current_time;
     ros::Duration elapsed;
