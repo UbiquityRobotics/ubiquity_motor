@@ -100,6 +100,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_pid_params.pid_denominator = -1;
     prev_pid_params.pid_moving_buffer_size = -1;
     prev_pid_params.deadman_timer = -1;
+
+    firmware_version = 0;
 }
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }

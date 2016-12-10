@@ -58,7 +58,7 @@ public:
     void setDeadmanTimer(int32_t deadman);
     void setDebugLeds(bool led1, bool led2);
 
-    int firmware_version = 0;
+    int firmware_version;
 
 private:
     void _addOdometryRequest(std::vector<MotorMessage>& commands) const;
