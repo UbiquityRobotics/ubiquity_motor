@@ -311,8 +311,7 @@ TEST_F(MotorSerialTests, writeMultipleOutputs) {
 
     motors->transmitCommands(commands);
 
-    sleep(2);
-
+    usleep(8000);
     uint8_t arr[32];
     EXPECT_EQ(32, read(master_fd, arr, 32));
     std::vector<uint8_t> input(arr, arr + sizeof(arr) / sizeof(uint8_t));
