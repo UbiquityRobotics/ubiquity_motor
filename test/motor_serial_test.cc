@@ -38,7 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(__linux__)
 #include <pty.h>
-#include <termios.h>
 #else
 #include <util.h>
 #endif
@@ -279,7 +278,7 @@ TEST_F(MotorSerialTests, writeOutputs) {
 
     int count = 0;
     while (count < 8) {
-        ioctl(master_fd, TIOCINQ, &count);
+        ASSERT_NE(-1, ioctl(master_fd, TIOCINQ, &count));
     }
     EXPECT_EQ(8, count);
 
@@ -321,7 +320,7 @@ TEST_F(MotorSerialTests, writeMultipleOutputs) {
 
     int count = 0;
     while (count < 32) {
-        ioctl(master_fd, TIOCINQ, &count);
+        ASSERT_NE(-1, ioctl(master_fd, TIOCINQ, &count));
     }
     EXPECT_EQ(32, count);
 

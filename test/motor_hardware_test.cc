@@ -33,6 +33,24 @@ protected:
 
     virtual void TearDown() { delete robot; }
 
+    void wait_for_read(){
+        unsigned int count = 0;
+        while (count < 8) {
+            ASSERT_NE(-1, ioctl(master_fd, TIOCINQ, &count));
+        }
+        EXPECT_EQ(8, count);
+        usleep(1000);
+    }
+
+    void wait_for_write(){
+        unsigned int count_out = 8;
+        while (count_out > 0) {
+            ASSERT_NE(-1, ioctl(master_fd, TIOCOUTQ, &count_out));
+        }
+        EXPECT_EQ(0, count_out);
+        usleep(1000);
+    }
+
     MotorHardware *robot;
     ros::NodeHandle nh;
     int master_fd;
@@ -40,12 +58,15 @@ protected:
     char name[100];
 };
 
+
 TEST_F(MotorHardwareTests, writeSpeedsOutputs) {
     robot->writeSpeeds();
-    usleep(1000);
-
+    
     int aval;
     RawMotorMessage out;
+
+    wait_for_read();
+
     // Make sure that we get exactly 1 message out on port
     ASSERT_NE(-1, ioctl(master_fd, FIONREAD, &aval));
     ASSERT_EQ(out.size(), aval);
@@ -61,10 +82,12 @@ TEST_F(MotorHardwareTests, nonZeroWriteSpeedsOutputs) {
     robot->joints_[0].velocity_command = 5;
     robot->joints_[1].velocity_command = -5;
     robot->writeSpeeds();
-    usleep(1000);
 
     int aval;
     RawMotorMessage out;
+
+    wait_for_read();
+
     // Make sure that we get exactly 1 message out on port
     ASSERT_NE(-1, ioctl(master_fd, FIONREAD, &aval));
     ASSERT_EQ(out.size(), aval);
@@ -90,8 +113,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
 
     RawMotorMessage out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
-
-    usleep(1000);
+    wait_for_write();
     robot->readInputs();
 
     double left = robot->joints_[0].position;
@@ -106,7 +128,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
     mm.setData((0 << 16) | (0 & 0x0000ffff));
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
-    usleep(1000);
+    wait_for_write();
     robot->readInputs();
 
     // Make sure that the value stays same
@@ -117,7 +139,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
     mm.setData((50 << 16) | (-50 & 0x0000ffff));
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
-    usleep(1000);
+    wait_for_write();
     robot->readInputs();
 
     // Make sure that the value accumulates
@@ -128,7 +150,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
     mm.setData((-50 << 16) | (50 & 0x0000ffff));
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
-    usleep(1000);
+    wait_for_write();
     robot->readInputs();
 
     // Values should be back the the first reading
@@ -145,8 +167,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
 
     RawMotorMessage out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
-
-    usleep(1000);
+    wait_for_write();
     robot->readInputs();
 
     double left = robot->joints_[0].position;
@@ -161,7 +182,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
     mm.setData((0 << 16) | (0 & 0x0000ffff));
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
-    usleep(1000);
+    wait_for_write();
     robot->readInputs();
 
     // Make sure that the value stays same
@@ -173,7 +194,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
                (std::numeric_limits<int16_t>::min() & 0x0000ffff));
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
-    usleep(1000);
+    wait_for_write();
     robot->readInputs();
 
     // Make sure that the value accumulates
@@ -185,7 +206,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
                (std::numeric_limits<int16_t>::max() & 0x0000ffff));
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
-    usleep(1000);
+    wait_for_write();
     robot->readInputs();
 
     // Values should be back the the first reading
@@ -196,7 +217,8 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
 
 TEST_F(MotorHardwareTests, requestVersionOutputs) {
     robot->requestVersion();
-    usleep(1000);
+
+    wait_for_read();
 
     int aval;
     RawMotorMessage out;
@@ -220,13 +242,13 @@ TEST_F(MotorHardwareTests, oldFirmwareThrows) {
     RawMotorMessage out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
 
-    usleep(1000);
+    wait_for_write();
     ASSERT_THROW(robot->readInputs(), std::runtime_error);
 }
 
 TEST_F(MotorHardwareTests, setDeadmanTimerOutputs) {
     robot->setDeadmanTimer(1000);
-    usleep(1000);
+    wait_for_read();
 
     int aval;
     RawMotorMessage out;
@@ -256,7 +278,7 @@ TEST_F(MotorHardwareTests, setParamsSendParams) {
 
     for (int i; i < 5; ++i) {
         robot->sendParams();
-        usleep(2000);
+        wait_for_read();
         // Make sure that we get exactly 1 message out on port each time
         ASSERT_NE(-1, ioctl(master_fd, FIONREAD, &aval));
         ASSERT_EQ(out.size(), aval);
@@ -288,7 +310,7 @@ TEST_F(MotorHardwareTests, debugRegisterUnsignedPublishes) {
     RawMotorMessage out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
 
-    usleep(5000);
+    wait_for_write();
     robot->readInputs();
     usleep(5000);
     ros::spinOnce();
@@ -309,7 +331,7 @@ TEST_F(MotorHardwareTests, debugRegisterSignedPublishes) {
     RawMotorMessage out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
 
-    usleep(5000);
+    wait_for_write();
     robot->readInputs();
     usleep(5000);
     ros::spinOnce();
