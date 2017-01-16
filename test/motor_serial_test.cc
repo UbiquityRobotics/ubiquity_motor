@@ -317,15 +317,30 @@ TEST_F(MotorSerialTests, writeMultipleOutputs) {
 
     motors->transmitCommands(commands);
 
-
-    int count = 0;
-    while (count < 32) {
-        ASSERT_NE(-1, ioctl(master_fd, TIOCINQ, &count));
-    }
-    EXPECT_EQ(32, count);
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(master_fd, &fds);
+    struct timeval timeout = { 10, 0 }; /* 10 seconds */
 
     uint8_t arr[32];
-    EXPECT_EQ(32, read(master_fd, arr, 32));
+    int count = 0;
+
+    while (count < 31) {
+        // Wait for data
+        int ret = select(master_fd+1, &fds, NULL, NULL, &timeout);
+        EXPECT_EQ(1, ret);
+
+        // Get number of bytes availible
+        int avail = 0;
+        ASSERT_NE(-1, ioctl(master_fd, TIOCINQ, &avail));
+
+        // Read bytes into the buffer
+        EXPECT_EQ(avail, read(master_fd, arr+count, avail));
+        count += avail;
+    }
+
+    ASSERT_EQ(32, count);
+
     std::vector<uint8_t> input(arr, arr + sizeof(arr) / sizeof(uint8_t));
 
     std::vector<uint8_t> expected(0);
