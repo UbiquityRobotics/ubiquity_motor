@@ -35,9 +35,15 @@ protected:
 
     void wait_for_read(){
         unsigned int count = 0;
-        while (count < 8) {
-            ASSERT_NE(-1, ioctl(master_fd, TIOCINQ, &count));
-        }
+
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(master_fd, &fds);
+        struct timeval timeout = { 10, 0 }; /* 10 seconds */
+        int ret = select(master_fd+1, &fds, NULL, NULL, &timeout);
+        EXPECT_EQ(1, ret);
+
+        ASSERT_NE(-1, ioctl(master_fd, TIOCINQ, &count));
         EXPECT_EQ(8, count);
         usleep(1000);
     }
