@@ -147,7 +147,7 @@ public:
 
     int deserialize(const RawMotorMessage &serialized);
 
-    const static uint8_t delimeter = 0x7E; // TODO: parameterize
+    const static uint8_t delimeter = 0x7E;  // TODO: parameterize
 
 private:
     // Type of message should be in MotorMessage::MessageTypes

@@ -45,19 +45,17 @@ MotorSerial::~MotorSerial() {
 
 int MotorSerial::transmitCommand(MotorMessage command) {
     RawMotorMessage out = command.serialize();
-    ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
-          out[1], out[2], out[3], out[4], out[5], out[6],
-          out[7]);
+    ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0], out[1],
+              out[2], out[3], out[4], out[5], out[6], out[7]);
     motors.write(out.c_array(), out.size());
     return 0;
 }
 
 int MotorSerial::transmitCommands(const std::vector<MotorMessage>& commands) {
-    for (auto& command: commands) {
+    for (auto& command : commands) {
         RawMotorMessage out = command.serialize();
-        ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
-            out[1], out[2], out[3], out[4], out[5], out[6],
-            out[7]);
+        ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0], out[1],
+                  out[2], out[3], out[4], out[5], out[6], out[7]);
         motors.write(out.c_array(), out.size());
         boost::this_thread::sleep(boost::posix_time::milliseconds(2));
     }
@@ -81,10 +79,10 @@ void MotorSerial::SerialThread() {
         while (motors.isOpen()) {
             boost::this_thread::interruption_point();
             if (motors.waitReadable()) {
-                RawMotorMessage innew = {0,0,0,0,0,0,0,0};
+                RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
 
                 motors.read(innew.c_array(), 1);
-                if (innew[0] != MotorMessage::delimeter){
+                if (innew[0] != MotorMessage::delimeter) {
                     // The first byte was not the delimiter, so re-loop
                     ROS_WARN("REJECT %02x", innew[0]);
                     continue;
@@ -95,21 +93,19 @@ void MotorSerial::SerialThread() {
 
                 // Read in next 7 bytes
                 motors.read(&innew.c_array()[1], 7);
-                ROS_DEBUG("Got message %x %x %x %x %x %x %x %x", 
-                    innew[0], innew[1], innew[2], innew[3],
-                    innew[4], innew[5], innew[6], innew[7]);
+                ROS_DEBUG("Got message %x %x %x %x %x %x %x %x", innew[0],
+                          innew[1], innew[2], innew[3], innew[4], innew[5],
+                          innew[6], innew[7]);
 
                 MotorMessage mc;
                 int error_code = mc.deserialize(innew);
                 if (error_code == 0) {
                     appendOutput(mc);
                     if (mc.getType() == MotorMessage::TYPE_ERROR) {
-                        ROS_ERROR(
-                            "GOT error from Firm 0x%02x",
-                            mc.getRegister());
+                        ROS_ERROR("GOT error from Firm 0x%02x",
+                                  mc.getRegister());
                     }
-                }
-                else {
+                } else {
                     ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
                 }
             }

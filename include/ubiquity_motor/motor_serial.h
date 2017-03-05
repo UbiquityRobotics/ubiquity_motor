@@ -61,7 +61,7 @@ private:
     shared_queue<MotorMessage> output;
 
     boost::thread serial_thread;
-    
+
     void appendOutput(MotorMessage command);
 
     // Thread that has manages serial reads
