@@ -54,7 +54,7 @@ protected:
             ASSERT_NE(-1, ioctl(master_fd, TIOCOUTQ, &count_out));
         }
         EXPECT_EQ(0, count_out);
-        usleep(1000);
+        usleep(10000);
     }
 
     MotorHardware *robot;

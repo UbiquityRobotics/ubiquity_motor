@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate,
                          double loopRate)
-    : motors(port, baud_rate, serial::Timeout::simpleTimeout(10000)),
+    : motors(port, baud_rate, serial::Timeout::simpleTimeout(100)),
       serial_loop_rate(loopRate) {
     serial_thread = boost::thread(&MotorSerial::SerialThread, this);
 }
@@ -80,53 +80,41 @@ void MotorSerial::appendOutput(MotorMessage command) { output.push(command); }
 
 void MotorSerial::SerialThread() {
     try {
-        RawMotorMessage in;
-        bool failed_update = false;
-
         while (motors.isOpen()) {
-            while (motors.available() >= (failed_update ? 1 : 8)) {
-                RawMotorMessage innew;
-                motors.read(innew.c_array(), failed_update ? 1 : 8);
+            boost::this_thread::interruption_point();
+            if (motors.waitReadable()) {
+                RawMotorMessage innew = {0,0,0,0,0,0,0,0};
 
-                // TODO use circular_buffer instead of manual shifting
-                if (!failed_update) {
-                    in.swap(innew);
-                } else {
-                    // Shift array contents up one
-                    for (size_t i = 0; i < in.size() - 1; ++i) {
-                        in[i] = in[i + 1];
-                    }
-                    in[in.size() - 2] = in[in.size() - 1];
-
-                    in[in.size() - 1] = innew[0];
+                motors.read(innew.c_array(), 1);
+                if (innew[0] != MotorMessage::delimeter){
+                    // The first byte was not the delimiter, so re-loop
+                    ROS_WARN("REJECT %02x", innew[0]);
+                    continue;
                 }
 
-                MotorMessage mc;
-                int error_code = mc.deserialize(in);
+                // This will wait for the transmission time of 8 bytes
+                motors.waitByteTimes(innew.size());
 
+                // Read in next 7 bytes
+                motors.read(&innew.c_array()[1], 7);
+                ROS_DEBUG("Got message %x %x %x %x %x %x %x %x", 
+                    innew[0], innew[1], innew[2], innew[3],
+                    innew[4], innew[5], innew[6], innew[7]);
+
+                MotorMessage mc;
+                int error_code = mc.deserialize(innew);
                 if (error_code == 0) {
+                    appendOutput(mc);
                     if (mc.getType() == MotorMessage::TYPE_ERROR) {
                         ROS_ERROR(
-                            "GOT ERROR RESPONSE FROM PSOC FOR REGISTER 0x%02x",
+                            "GOT error from Firm 0x%02x",
                             mc.getRegister());
                     }
-                    appendOutput(mc);
-                    failed_update = false;
-                } else if (error_code == 1) {
-                    failed_update = true;
-                    char rejected[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-                    for (size_t i = 0; i < in.size() && i < 8; i++) {
-                        rejected[i] = in.at(i);
-                    }
-                    ROS_ERROR("REJECT: %s", rejected);
-                } else {
-                    failed_update = true;
+                }
+                else {
                     ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
                 }
             }
-
-            boost::this_thread::interruption_point();
-            serial_loop_rate.sleep();
         }
 
     } catch (const boost::thread_interrupted& e) {
