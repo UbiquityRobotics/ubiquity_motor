@@ -32,10 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <serial/serial.h>
 #include <ubiquity_motor/motor_serial.h>
 
-MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate,
-                         double loopRate)
-    : motors(port, baud_rate, serial::Timeout::simpleTimeout(100)),
-      serial_loop_rate(loopRate) {
+MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate)
+    : motors(port, baud_rate, serial::Timeout::simpleTimeout(100)) {
     serial_thread = boost::thread(&MotorSerial::SerialThread, this);
 }
 
