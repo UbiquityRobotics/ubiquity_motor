@@ -47,7 +47,7 @@ MotorSerial::~MotorSerial() {
 
 int MotorSerial::transmitCommand(MotorMessage command) {
     RawMotorMessage out = command.serialize();
-    ROS_ERROR("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
+    ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
           out[1], out[2], out[3], out[4], out[5], out[6],
           out[7]);
     motors.write(out.c_array(), out.size());
@@ -57,7 +57,7 @@ int MotorSerial::transmitCommand(MotorMessage command) {
 int MotorSerial::transmitCommands(const std::vector<MotorMessage>& commands) {
     for (auto& command: commands) {
         RawMotorMessage out = command.serialize();
-        ROS_ERROR("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
+        ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
             out[1], out[2], out[3], out[4], out[5], out[6],
             out[7]);
         motors.write(out.c_array(), out.size());
