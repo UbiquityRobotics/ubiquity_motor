@@ -46,12 +46,23 @@ MotorSerial::~MotorSerial() {
 }
 
 int MotorSerial::transmitCommand(MotorMessage command) {
-    input.push(command);  // add latest command to end of fifo
+    RawMotorMessage out = command.serialize();
+    ROS_ERROR("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
+          out[1], out[2], out[3], out[4], out[5], out[6],
+          out[7]);
+    motors.write(out.c_array(), out.size());
     return 0;
 }
 
 int MotorSerial::transmitCommands(const std::vector<MotorMessage>& commands) {
-    input.push(commands);
+    for (auto& command: commands) {
+        RawMotorMessage out = command.serialize();
+        ROS_ERROR("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
+            out[1], out[2], out[3], out[4], out[5], out[6],
+            out[7]);
+        motors.write(out.c_array(), out.size());
+        boost::this_thread::sleep(boost::posix_time::milliseconds(2));
+    }
     return 0;
 }
 
@@ -60,22 +71,10 @@ MotorMessage MotorSerial::receiveCommand() {
     if (!this->output.empty()) {
         mc = output.front_pop();
     }
-
     return mc;
 }
 
 int MotorSerial::commandAvailable() { return !output.fast_empty(); }
-
-int MotorSerial::inputAvailable() { return !input.fast_empty(); }
-
-MotorMessage MotorSerial::getInputCommand() {
-    MotorMessage mc;
-    if (!this->input.empty()) {
-        mc = input.front_pop();
-    }
-
-    return mc;
-}
 
 void MotorSerial::appendOutput(MotorMessage command) { output.push(command); }
 
@@ -124,22 +123,6 @@ void MotorSerial::SerialThread() {
                     failed_update = true;
                     ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
                 }
-            }
-
-            bool did_update = false;
-            while (inputAvailable()) {
-                did_update = true;
-
-                RawMotorMessage out = getInputCommand().serialize();
-                ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
-                          out[1], out[2], out[3], out[4], out[5], out[6],
-                          out[7]);
-                motors.write(out.c_array(), out.size());
-                boost::this_thread::sleep(boost::posix_time::milliseconds(2));
-            }
-
-            if (did_update) {
-                motors.flushOutput();
             }
 
             boost::this_thread::interruption_point();

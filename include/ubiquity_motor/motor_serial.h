@@ -58,19 +58,14 @@ public:
 private:
     serial::Serial motors;
 
-    // queue for messages that are to be transmitted
-    shared_queue<MotorMessage> input;
-
     shared_queue<MotorMessage> output;
 
     boost::thread serial_thread;
     ros::Rate serial_loop_rate;
 
-    int inputAvailable();
-    MotorMessage getInputCommand();
     void appendOutput(MotorMessage command);
 
-    // Thread that has manages the serial port
+    // Thread that has manages serial reads
     void SerialThread();
 
     FRIEND_TEST(MotorSerialTests, serialClosedOnInterupt);
