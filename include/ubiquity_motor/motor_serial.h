@@ -31,67 +31,49 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MOTORSERIAL_H
 #define MOTORSERIAL_H
 
-#include <ubiquity_motor/motor_message.h>
-#include <serial/serial.h>
-#include <boost/thread.hpp>
 #include <ros/ros.h>
+#include <serial/serial.h>
+#include <ubiquity_motor/motor_message.h>
+#include <ubiquity_motor/shared_queue.h>
+#include <boost/thread.hpp>
 #include <queue>
 
 #include <gtest/gtest_prod.h>
 
-class MotorSerial
-{
-	public:
-		MotorSerial(const std::string& port = "/dev/ttyUSB0" , uint32_t baud_rate = 9600, double loopRate = 100);
-		~MotorSerial();
+class MotorSerial {
+public:
+    MotorSerial(const std::string& port = "/dev/ttyUSB0",
+                uint32_t baud_rate = 9600, double loopRate = 100);
+    ~MotorSerial();
 
-		int transmitCommand(MotorMessage command);
-		int transmitCommands(const std::vector<MotorMessage> &commands);
-		
-		MotorMessage receiveCommand();
-		int commandAvailable();
-		
-		MotorSerial( const MotorSerial& other ); // non construction-copyable
-		MotorSerial& operator=( const MotorSerial& ); // non copyable
+    int transmitCommand(MotorMessage command);
+    int transmitCommands(const std::vector<MotorMessage>& commands);
 
-	private:
+    MotorMessage receiveCommand();
+    int commandAvailable();
 
-		serial::Serial* motors;
-		
-		std::string _port;
-		uint32_t _baud_rate;
+    MotorSerial(const MotorSerial& other);       // non construction-copyable
+    MotorSerial& operator=(const MotorSerial&);  // non copyable
 
-		// bool to check for input to avoid unnecessary locking                
-		bool have_input;
-		//locking mutex for the input queue
-		boost::mutex input_mtx_;
-		// queue for messages that are to be transmitted
-		std::queue<MotorMessage> input; 
-		
-		// bool to check for output to avoid unnecessary locking                
-		bool have_output;
-		//locking mutex for the output queue
-		boost::mutex output_mtx_;
-		//queue for messages that have been received
-		std::queue<MotorMessage> output; 
+private:
+    serial::Serial motors;
 
-		boost::thread* serial_thread;
-		ros::Rate* serial_loop_rate;
+    // queue for messages that are to be transmitted
+    shared_queue<MotorMessage> input;
 
-		int inputAvailable();
-		MotorMessage getInputCommand();
-		void appendOutput(MotorMessage command);
+    shared_queue<MotorMessage> output;
 
-		// Thread that has manages the serial port 
-		void SerialThread();
+    boost::thread serial_thread;
+    ros::Rate serial_loop_rate;
 
-		FRIEND_TEST(MotorSerialTests, invalidBaudDefaults);
-		FRIEND_TEST(MotorSerialTests, serialClosedOnInterupt);
-		FRIEND_TEST(MotorSerialTests, readQueuesDequeues);
-		FRIEND_TEST(MotorSerialTests, writeQueues);
-		FRIEND_TEST(MotorSerialTests, writeQueuesDequeues);
-		FRIEND_TEST(MotorSerialTests, writeMultipleQueues);
-		FRIEND_TEST(MotorSerialTests, writeMultipleQueuesDequeues);
+    int inputAvailable();
+    MotorMessage getInputCommand();
+    void appendOutput(MotorMessage command);
+
+    // Thread that has manages the serial port
+    void SerialThread();
+
+    FRIEND_TEST(MotorSerialTests, serialClosedOnInterupt);
 };
 
 #endif

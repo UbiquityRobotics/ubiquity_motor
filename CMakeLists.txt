@@ -13,10 +13,11 @@ find_package(catkin REQUIRED COMPONENTS
 	controller_manager
 	dynamic_reconfigure)
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS  
-	thread)
+find_package(Boost REQUIRED COMPONENTS
+	thread
+	atomic)
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 generate_dynamic_reconfigure_options(
   cfg/PID.cfg
 )
@@ -140,14 +141,29 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 ## Add gtest based cpp test target and link libraries
 if(CATKIN_ENABLE_TESTING)
+	find_package(rostest REQUIRED)
 
-	catkin_add_gtest(ubiquity_motor_message_test
+	catkin_add_gtest(motor_message_test 
 		test/motor_message_test.cc)
-	target_link_libraries(ubiquity_motor_message_test  ubiquity_motor ${catkin_LIBRARIES})
+	target_link_libraries(motor_message_test ubiquity_motor ${catkin_LIBRARIES})
 
-	catkin_add_gtest(ubiquity_motor_serial_test
+	catkin_add_gtest(motor_serial_test 
 		test/motor_serial_test.cc)
-	target_link_libraries(ubiquity_motor_serial_test  ubiquity_motor util ${catkin_LIBRARIES})
+	target_link_libraries(motor_serial_test ubiquity_motor util ${catkin_LIBRARIES})
+
+	catkin_add_gtest(shared_queue_test 
+		test/shared_queue_test.cc)
+	target_link_libraries(shared_queue_test ubiquity_motor ${catkin_LIBRARIES})
+
+	add_rostest_gtest(motor_param_test 
+		test/rostest/motor_parameters.test 
+		test/motor_parameter_test.cc )
+	target_link_libraries(motor_param_test ubiquity_motor ${catkin_LIBRARIES})
+
+	add_rostest_gtest(motor_hardware_test 
+		test/rostest/motor_hardware.test 
+		test/motor_hardware_test.cc )
+	target_link_libraries(motor_hardware_test ubiquity_motor util ${catkin_LIBRARIES})
 
 endif()
 

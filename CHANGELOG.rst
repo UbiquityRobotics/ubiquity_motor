@@ -2,6 +2,16 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.1 (2017-03-04)
+------------------
+* Reduce flakey-ness of the tests
+* Try to get firmware version, throw after 10 tries
+* Code cleanup
+* Use fixed sized arrays (not vectors) where they make sense
+* Use a seperate shared_queue class
+* Performance improvements
+* Contributors: Rohan Agrawal
+
 0.5.0 (2016-09-04)
 ------------------
 * **NOTE:** This version drops support for firmware versions before 24

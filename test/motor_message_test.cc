@@ -1,5 +1,5 @@
 /**
-Copyright (c) 2015, Ubiquity Robotics
+Copyright (c) 2016, Ubiquity Robotics
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -24,306 +24,250 @@ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN AiiiiiiiiiiiNY WAY OUT OF THE USE
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <ubiquity_motor/motor_message.h>
 #include <gtest/gtest.h>
+#include <ubiquity_motor/motor_message.h>
 
 TEST(MotorMessageTest, motor_message_commandtype) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setType(MotorMessage::TYPE_READ);
-	ASSERT_EQ(MotorMessage::TYPE_READ, mc.getType());
+    mc.setType(MotorMessage::TYPE_READ);
+    ASSERT_EQ(MotorMessage::TYPE_READ, mc.getType());
 
-	mc.setType(MotorMessage::TYPE_WRITE);
-	ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
+    mc.setType(MotorMessage::TYPE_WRITE);
+    ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
 
-	mc.setType(MotorMessage::TYPE_RESPONSE);
-	ASSERT_EQ(MotorMessage::TYPE_RESPONSE, mc.getType());
+    mc.setType(MotorMessage::TYPE_RESPONSE);
+    ASSERT_EQ(MotorMessage::TYPE_RESPONSE, mc.getType());
 
-	mc.setType(MotorMessage::TYPE_ERROR);
-	ASSERT_EQ(MotorMessage::TYPE_ERROR, mc.getType());
+    mc.setType(MotorMessage::TYPE_ERROR);
+    ASSERT_EQ(MotorMessage::TYPE_ERROR, mc.getType());
 }
 
 TEST(MotorMessageTest, motor_message_commandtype_values) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setType(static_cast<MotorMessage::MessageTypes>(0xA));
-	ASSERT_EQ(MotorMessage::TYPE_READ, mc.getType());
+    mc.setType(static_cast<MotorMessage::MessageTypes>(0xA));
+    ASSERT_EQ(MotorMessage::TYPE_READ, mc.getType());
 
-	mc.setType(static_cast<MotorMessage::MessageTypes>(0xB));
-	ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
+    mc.setType(static_cast<MotorMessage::MessageTypes>(0xB));
+    ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
 
-	mc.setType(static_cast<MotorMessage::MessageTypes>(0xC));
-	ASSERT_EQ(MotorMessage::TYPE_RESPONSE, mc.getType());
+    mc.setType(static_cast<MotorMessage::MessageTypes>(0xC));
+    ASSERT_EQ(MotorMessage::TYPE_RESPONSE, mc.getType());
 
-	mc.setType(static_cast<MotorMessage::MessageTypes>(0xD));
-	ASSERT_EQ(MotorMessage::TYPE_ERROR, mc.getType());
+    mc.setType(static_cast<MotorMessage::MessageTypes>(0xD));
+    ASSERT_EQ(MotorMessage::TYPE_ERROR, mc.getType());
 }
 
 TEST(MotorMessageTest, motor_message_commandtype_invalid) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setType(static_cast<MotorMessage::MessageTypes>(0xF));
-	ASSERT_NE(0xAB, mc.getType());
+    mc.setType(static_cast<MotorMessage::MessageTypes>(0xF));
+    ASSERT_NE(0xAB, mc.getType());
 }
 
 TEST(MotorMessageTest, motor_message_commandtype_overflow) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setType(static_cast<MotorMessage::MessageTypes>(0xFFFFFF));
-	ASSERT_NE(0xFFFFFF, mc.getType());
+    mc.setType(static_cast<MotorMessage::MessageTypes>(0xFFFFFF));
+    ASSERT_NE(0xFFFFFF, mc.getType());
 }
 
 TEST(MotorMessageTest, motor_message_commandtype_neg) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setType(static_cast<MotorMessage::MessageTypes>(-0xA));
-	ASSERT_NE(-0xAA, mc.getType());
-	ASSERT_NE(0xAA, mc.getType());
+    mc.setType(static_cast<MotorMessage::MessageTypes>(-0xA));
+    ASSERT_NE(-0xAA, mc.getType());
+    ASSERT_NE(0xAA, mc.getType());
 }
 
 TEST(MotorMessageTest, motor_message_register) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setRegister(MotorMessage::REG_BRAKE_STOP);
-	ASSERT_EQ(MotorMessage::REG_BRAKE_STOP, mc.getRegister());
-	ASSERT_NE(MotorMessage::REG_STOP_START, mc.getRegister());
+    mc.setRegister(MotorMessage::REG_BRAKE_STOP);
+    ASSERT_EQ(MotorMessage::REG_BRAKE_STOP, mc.getRegister());
+    ASSERT_NE(MotorMessage::REG_STOP_START, mc.getRegister());
 }
 
 TEST(MotorMessageTest, motor_message_register_values) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setRegister(static_cast<MotorMessage::Registers>(0x01));
-	ASSERT_EQ(MotorMessage::REG_BRAKE_STOP, mc.getRegister());
+    mc.setRegister(static_cast<MotorMessage::Registers>(0x01));
+    ASSERT_EQ(MotorMessage::REG_BRAKE_STOP, mc.getRegister());
 
-	mc.setRegister(static_cast<MotorMessage::Registers>(0x10));
-	ASSERT_EQ(MotorMessage::REG_ERROR_COUNT, mc.getRegister());
+    mc.setRegister(static_cast<MotorMessage::Registers>(0x10));
+    ASSERT_EQ(MotorMessage::REG_ERROR_COUNT, mc.getRegister());
 
-	mc.setRegister(static_cast<MotorMessage::Registers>(0x0B));
-	ASSERT_EQ(MotorMessage::REG_LEFT_ODOM, mc.getRegister());
+    mc.setRegister(static_cast<MotorMessage::Registers>(0x0B));
+    ASSERT_EQ(MotorMessage::REG_LEFT_ODOM, mc.getRegister());
 }
 
 TEST(MotorMessageTest, motor_message_register_invalid) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setRegister(static_cast<MotorMessage::Registers>(0x05));
-	ASSERT_NE(0x05, mc.getRegister());
+    mc.setRegister(static_cast<MotorMessage::Registers>(0x05));
+    ASSERT_NE(0x05, mc.getRegister());
 }
 
 TEST(MotorMessageTest, motor_message_register_overflow) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setRegister(static_cast<MotorMessage::Registers>(0xFFFFFF));
-	ASSERT_NE(0xFFFFFF, mc.getRegister());
+    mc.setRegister(static_cast<MotorMessage::Registers>(0xFFFFFF));
+    ASSERT_NE(0xFFFFFF, mc.getRegister());
 }
 
 TEST(MotorMessageTest, motor_message_register_neg) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	mc.setRegister(static_cast<MotorMessage::Registers>(-0x07));
-	ASSERT_NE(-0x07, mc.getRegister());
-	ASSERT_NE(0x07, mc.getRegister());
+    mc.setRegister(static_cast<MotorMessage::Registers>(-0x07));
+    ASSERT_NE(-0x07, mc.getRegister());
+    ASSERT_NE(0x07, mc.getRegister());
 }
 
-TEST(MotorMessageTest, motor_message_data_64bit_pos) {
-	MotorMessage mc;
-	int64_t i = 0xABC;
-	mc.setData(i);
-	ASSERT_EQ(0xABC, mc.getData());
+TEST(MotorMessageTest, motor_message_data_64bit) {
+    MotorMessage mc;
+    int64_t i = 0xABC;
+    mc.setData(i);
+    ASSERT_EQ(0xABC, mc.getData());
+
+    i = 0;
+    mc.setData(i);
+    ASSERT_EQ(0, mc.getData());
+
+    i = -0xABC;
+    mc.setData(i);
+    ASSERT_EQ(-0xABC, mc.getData());
 }
 
-TEST(MotorMessageTest, motor_message_data_64bit_zero) {
-	MotorMessage mc;
-	int64_t i = 0;
-	mc.setData(i);
-	ASSERT_EQ(0, mc.getData());
+TEST(MotorMessageTest, motor_message_data_32bit) {
+    MotorMessage mc;
+    int32_t i = 0xABC;
+    mc.setData(i);
+    ASSERT_EQ(0xABC, mc.getData());
+
+    i = 0;
+    mc.setData(i);
+    ASSERT_EQ(0, mc.getData());
+
+    i = -0xABC;
+    mc.setData(i);
+    ASSERT_EQ(-0xABC, mc.getData());
 }
 
-TEST(MotorMessageTest, motor_message_data_64bit_neg) {
-	MotorMessage mc;
-	int64_t i = -0xABC;
-	mc.setData(i);
-	ASSERT_EQ(-0xABC, mc.getData());
+TEST(MotorMessageTest, motor_message_data_16bit) {
+    MotorMessage mc;
+    int16_t i = 0xABC;
+    mc.setData(i);
+    ASSERT_EQ(0xABC, mc.getData());
+
+    i = 0;
+    mc.setData(i);
+    ASSERT_EQ(0, mc.getData());
+
+    i = -0xABC;
+    mc.setData(i);
+    ASSERT_EQ(-0xABC, mc.getData());
 }
 
-TEST(MotorMessageTest, motor_message_data_32bit_pos) {
-	MotorMessage mc;
-	int32_t i = 0xABC;
-	mc.setData(i);
-	ASSERT_EQ(0xABC, mc.getData());
-}
+TEST(MotorMessageTest, motor_message_data_8bit) {
+    MotorMessage mc;
+    int8_t i = 0x50;
+    mc.setData(i);
+    ASSERT_EQ(0x50, mc.getData());
 
-TEST(MotorMessageTest, motor_message_data_32bit_zero) {
-	MotorMessage mc;
-	int32_t i = 0;
-	mc.setData(i);
-	ASSERT_EQ(0, mc.getData());
-}
+    i = 0;
+    mc.setData(i);
+    ASSERT_EQ(0, mc.getData());
 
-TEST(MotorMessageTest, motor_message_data_32bit_neg) {
-	MotorMessage mc;
-	int32_t i = -0xABC;
-	mc.setData(i);
-	ASSERT_EQ(-0xABC, mc.getData());
-}
-
-TEST(MotorMessageTest, motor_message_data_16bit_pos) {
-	MotorMessage mc;
-	int16_t i = 0xABC;
-	mc.setData(i);
-	ASSERT_EQ(0xABC, mc.getData());
-}
-
-TEST(MotorMessageTest, motor_message_data_16bit_zero) {
-	MotorMessage mc;
-	int16_t i = 0;
-	mc.setData(i);
-	ASSERT_EQ(0, mc.getData());
-}
-
-TEST(MotorMessageTest, motor_message_data_16bit_neg) {
-	MotorMessage mc;
-	int16_t i = -0xABC;
-	mc.setData(i);
-	ASSERT_EQ(-0xABC, mc.getData());
-}
-
-TEST(MotorMessageTest, motor_message_data_8bit_pos) {
-	MotorMessage mc;
-	int8_t i = 0x50;
-	mc.setData(i);
-	ASSERT_EQ(0x50, mc.getData());
-}
-
-TEST(MotorMessageTest, motor_message_data_8bit_zero) {
-	MotorMessage mc;
-	int8_t i = 0;
-	mc.setData(i);
-	ASSERT_EQ(0, mc.getData());
-}
-
-TEST(MotorMessageTest, motor_message_data_8bit_neg) {
-	MotorMessage mc;
-	int8_t i = -0x50;
-	mc.setData(i);
-	ASSERT_EQ(-0x50, mc.getData());
+    i = -0x50;
+    mc.setData(i);
+    ASSERT_EQ(-0x50, mc.getData());
 }
 
 TEST(MotorMessageTest, motor_message_serialize) {
-	MotorMessage mc;
-	mc.setData(300);
-	mc.setType(MotorMessage::TYPE_WRITE);
-	mc.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
+    MotorMessage mc;
+    mc.setData(300);
+    mc.setType(MotorMessage::TYPE_WRITE);
+    mc.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
 
-	uint8_t arr[] = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
+    RawMotorMessage expect = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
 
-	std::vector<uint8_t> expect(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-
-	ASSERT_EQ(expect, mc.serialize());
+    ASSERT_EQ(expect, mc.serialize());
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_good) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	//Test good message
-	uint8_t arr[] = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
+    // Test good message
+    RawMotorMessage input = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
 
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-
-	ASSERT_EQ(0, mc.deserialize(input));
-	ASSERT_EQ(300, mc.getData());
-	ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
-	ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
+    ASSERT_EQ(0, mc.deserialize(input));
+    ASSERT_EQ(300, mc.getData());
+    ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
+    ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_delimeter_in_data) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	//Test good message
-	uint8_t arr[] = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x7E, 0x3E};
+    RawMotorMessage input = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x7E, 0x3E};
 
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-
-	ASSERT_EQ(0, mc.deserialize(input));
-	ASSERT_EQ(382, mc.getData());
-	ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
-	ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
+    ASSERT_EQ(0, mc.deserialize(input));
+    ASSERT_EQ(382, mc.getData());
+    ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
+    ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
 }
 
-// TEST(MotorMessageTest, motor_message_deserialize_double_delimeter) {
-// 	MotorMessage mc;
-
-// 	//Test bad delimeter with good checksum
-// 	uint8_t arr[] = {0x7E, 0x7E, 0x02, 0xBB, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0E};
-
-// 	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-
-// 	ASSERT_EQ(0, mc.deserialize(input));
-// 	ASSERT_EQ(300, mc.getData());
-// 	ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
-// 	ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
-// }
-
-
 TEST(MotorMessageTest, motor_message_deserialize_bad_delimeter) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	//Test bad delimeter with good checksum
-	uint8_t arr[] = {0x67, 0x3B, 0x07, 0x00, 0x00, 0x00, 0x00, 0xBD};
+    // Test bad delimeter with good checksum
+    RawMotorMessage input = {0x67, 0x3B, 0x07, 0x00, 0x00, 0x00, 0x00, 0xBD};
 
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-
-	ASSERT_EQ(1, mc.deserialize(input));
+    ASSERT_EQ(1, mc.deserialize(input));
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_bad_protocol) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	//Test bad protocol_verstion with good checksum
-	uint8_t arr[] = {0x7E, 0x2B, 0x07, 0x00, 0x00, 0x00, 0x00, 0x3D};
+    // Test bad protocol_verstion with good checksum
+    RawMotorMessage input = {0x7E, 0x2B, 0x07, 0x00, 0x00, 0x00, 0x00, 0x3D};
 
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-
-	ASSERT_EQ(2, mc.deserialize(input));
+    ASSERT_EQ(2, mc.deserialize(input));
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_bad_checksum) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	//Test bad checksum
-	uint8_t arr1[] = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0F};
+    // Test bad checksum
+    RawMotorMessage input = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x0F};
 
-	std::vector<uint8_t> input1(arr1, arr1 + sizeof(arr1)/ sizeof(uint8_t));
-
-	ASSERT_EQ(3, mc.deserialize(input1));
+    ASSERT_EQ(3, mc.deserialize(input));
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_bad_type) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	//Test type with good checksum
-	uint8_t arr1[] = {0x7E, 0x3F, 0x07, 0x00, 0x00, 0x00, 0x00, 0xB9};
+    // Test type with good checksum
+    RawMotorMessage input = {0x7E, 0x3F, 0x07, 0x00, 0x00, 0x00, 0x00, 0xB9};
 
-	std::vector<uint8_t> input1(arr1, arr1 + sizeof(arr1)/ sizeof(uint8_t));
-
-	ASSERT_EQ(4, mc.deserialize(input1));
+    ASSERT_EQ(4, mc.deserialize(input));
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_bad_register) {
-	MotorMessage mc;
+    MotorMessage mc;
 
-	//Test bad register with good checksum
-	uint8_t arr[] = {0x7E, 0x3B, 0x60, 0x00, 0x00, 0x00, 0x2C, 0x38};
+    // Test bad register with good checksum
+    RawMotorMessage input = {0x7E, 0x3B, 0x60, 0x00, 0x00, 0x00, 0x2C, 0x38};
 
-	std::vector<uint8_t> input(arr, arr + sizeof(arr)/ sizeof(uint8_t));
-
-	ASSERT_EQ(5, mc.deserialize(input));
+    ASSERT_EQ(5, mc.deserialize(input));
 }
 
-int main(int argc, char **argv){
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
