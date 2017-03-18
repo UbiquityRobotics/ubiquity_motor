@@ -98,8 +98,6 @@ struct CommsParams {
             nh, "ubiquity_motor/serial_port", serial_port);
         baud_rate = getParamOrDefault(
             nh, "ubiquity_motor/serial_baud", baud_rate);
-        serial_loop_rate = getParamOrDefault(
-            nh, "ubiquity_motor/serial_loop_rate", serial_loop_rate);
         // clang-format on
     };
 };

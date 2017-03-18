@@ -147,6 +147,8 @@ public:
 
     int deserialize(const RawMotorMessage &serialized);
 
+    const static uint8_t delimeter = 0x7E;  // TODO: parameterize
+
 private:
     // Type of message should be in MotorMessage::MessageTypes
     uint8_t type;
@@ -156,8 +158,6 @@ private:
     // 4 bytes of data, numbers should be in big endian format
     boost::array<uint8_t, 4> data;
 
-    const static uint8_t delimeter =
-        0x7E;  // Hard coded for now, should be parameterized
     const static uint8_t protocol_version =
         0x03;  // Hard coded for now, should be parameterized
 
