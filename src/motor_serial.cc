@@ -33,7 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_serial.h>
 
 MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate)
-    : motors(port, baud_rate, serial::Timeout::simpleTimeout(100)) {
+    : motors(port, baud_rate, serial::Timeout::simpleTimeout(100)), 
+      serial_errors(0), error_threshold(12) {
     serial_thread = boost::thread(&MotorSerial::SerialThread, this);
 }
 
@@ -84,7 +85,9 @@ void MotorSerial::SerialThread() {
                 motors.read(innew.c_array(), 1);
                 if (innew[0] != MotorMessage::delimeter) {
                     // The first byte was not the delimiter, so re-loop
-                    ROS_WARN("REJECT %02x", innew[0]);
+                    if (++serial_errors > error_threshold) {
+                        ROS_WARN("REJECT %02x", innew[0]);
+                    }
                     continue;
                 }
 
@@ -106,7 +109,9 @@ void MotorSerial::SerialThread() {
                                   mc.getRegister());
                     }
                 } else {
-                    ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
+                    if (++serial_errors > error_threshold) {
+                        ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
+                    }
                 }
             }
         }

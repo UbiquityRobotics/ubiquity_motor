@@ -47,6 +47,10 @@ static NodeParams node_params;
 
 void PID_update_callback(const ubiquity_motor::PIDConfig& config,
                          uint32_t level) {
+    if (level == 0xFFFFFFFF) {
+        return;
+    }
+
     if (level == 1) {
         firmware_params.pid_proportional = config.PID_P;
     } else if (level == 2) {

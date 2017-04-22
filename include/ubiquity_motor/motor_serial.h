@@ -64,6 +64,9 @@ private:
 
     void appendOutput(MotorMessage command);
 
+    int serial_errors;
+    int error_threshold;
+
     // Thread that has manages serial reads
     void SerialThread();
 
