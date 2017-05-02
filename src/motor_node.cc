@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
 
     while (ros::ok()) {
         current_time = ros::Time::now();
-        elapsed = last_time - current_time;
+        elapsed = current_time - last_time;
         last_time = current_time;
         robot.readInputs();
         cm.update(ros::Time::now(), elapsed);
