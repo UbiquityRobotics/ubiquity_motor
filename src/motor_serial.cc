@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate)
     : motors(port, baud_rate, serial::Timeout::simpleTimeout(100)), 
-      serial_errors(0), error_threshold(12) {
+      serial_errors(0), error_threshold(20) {
     serial_thread = boost::thread(&MotorSerial::SerialThread, this);
 }
 
