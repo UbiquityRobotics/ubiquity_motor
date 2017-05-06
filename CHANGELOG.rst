@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.2 (2017-05-06)
+------------------
 * Remove debug topics (`#25 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/25>`_)
   * Remove debug topics
   * Remove tests of debug registers
