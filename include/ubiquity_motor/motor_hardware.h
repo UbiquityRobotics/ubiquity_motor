@@ -89,27 +89,6 @@ private:
     ros::Publisher leftError;
     ros::Publisher rightError;
 
-    ros::Publisher pubU50;
-    ros::Publisher pubS50;
-    ros::Publisher pubU51;
-    ros::Publisher pubS51;
-    ros::Publisher pubU52;
-    ros::Publisher pubS52;
-    ros::Publisher pubU53;
-    ros::Publisher pubS53;
-    ros::Publisher pubU54;
-    ros::Publisher pubS54;
-    ros::Publisher pubU55;
-    ros::Publisher pubS55;
-    ros::Publisher pubU56;
-    ros::Publisher pubS56;
-    ros::Publisher pubU57;
-    ros::Publisher pubS57;
-    ros::Publisher pubU58;
-    ros::Publisher pubS58;
-    ros::Publisher pubU59;
-    ros::Publisher pubS59;
-
     MotorSerial* motor_serial_;
 
     FRIEND_TEST(MotorHardwareTests, nonZeroWriteSpeedsOutputs);
