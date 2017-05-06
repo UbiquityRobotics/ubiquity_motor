@@ -2,6 +2,26 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.2 (2017-05-06)
+------------------
+* Remove debug topics (`#25 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/25>`_)
+  * Remove debug topics
+  * Remove tests of debug registers
+* Merge pull request `#22 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/22>`_ from UbiquityRobotics/suppresserrorsatstartup
+  Supress some potentially confusing warnings
+* Increase error_threshold
+* Merge pull request `#23 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/23>`_ from UbiquityRobotics/fix_acceleration_limits
+  Fix computaion of elapsed time so that it is +ve
+* Fix computaion of elapsed time so that it is +ve
+* Supress some potentially confusing warnings
+* Clean out serial loop (`#20 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/20>`_)
+  * Transmit the the same thread caller, not in serial thread
+  * go back to debug on tranmissions
+  * Use smarter waits and reads in reading thread
+  * Get rid of serial loop rate
+  * Reformat
+* Contributors: Jim Vaughan, Rohan Agrawal
+
 0.5.1 (2017-03-04)
 ------------------
 * Reduce flakey-ness of the tests
