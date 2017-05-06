@@ -47,6 +47,10 @@ static NodeParams node_params;
 
 void PID_update_callback(const ubiquity_motor::PIDConfig& config,
                          uint32_t level) {
+    if (level == 0xFFFFFFFF) {
+        return;
+    }
+
     if (level == 1) {
         firmware_params.pid_proportional = config.PID_P;
     } else if (level == 2) {
@@ -88,8 +92,8 @@ int main(int argc, char* argv[]) {
     robot.requestVersion();
 
     int times = 0;
-    while(robot.firmware_version == 0) {
-        if(times >= 10)
+    while (robot.firmware_version == 0) {
+        if (times >= 10)
             throw std::runtime_error("Firmware not reporting its version");
         robot.readInputs();
         r.sleep();
@@ -108,7 +112,7 @@ int main(int argc, char* argv[]) {
 
     while (ros::ok()) {
         current_time = ros::Time::now();
-        elapsed = last_time - current_time;
+        elapsed = current_time - last_time;
         last_time = current_time;
         robot.readInputs();
         cm.update(ros::Time::now(), elapsed);

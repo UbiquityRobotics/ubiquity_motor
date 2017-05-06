@@ -43,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class MotorSerial {
 public:
     MotorSerial(const std::string& port = "/dev/ttyUSB0",
-                uint32_t baud_rate = 9600, double loopRate = 100);
+                uint32_t baud_rate = 9600);
     ~MotorSerial();
 
     int transmitCommand(MotorMessage command);
@@ -58,19 +58,16 @@ public:
 private:
     serial::Serial motors;
 
-    // queue for messages that are to be transmitted
-    shared_queue<MotorMessage> input;
-
     shared_queue<MotorMessage> output;
 
     boost::thread serial_thread;
-    ros::Rate serial_loop_rate;
 
-    int inputAvailable();
-    MotorMessage getInputCommand();
     void appendOutput(MotorMessage command);
 
-    // Thread that has manages the serial port
+    int serial_errors;
+    int error_threshold;
+
+    // Thread that has manages serial reads
     void SerialThread();
 
     FRIEND_TEST(MotorSerialTests, serialClosedOnInterupt);

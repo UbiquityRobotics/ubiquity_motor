@@ -54,7 +54,7 @@ protected:
             ASSERT_NE(-1, ioctl(master_fd, TIOCOUTQ, &count_out));
         }
         EXPECT_EQ(0, count_out);
-        usleep(1000);
+        usleep(10000);
     }
 
     MotorHardware *robot;
@@ -304,6 +304,7 @@ void callbackS(const std_msgs::Int32 &data) {
     called = true;
 }
 
+/*
 TEST_F(MotorHardwareTests, debugRegisterUnsignedPublishes) {
     called = false;
     ros::Subscriber sub = nh.subscribe("u50", 1, callbackU);
@@ -345,6 +346,7 @@ TEST_F(MotorHardwareTests, debugRegisterSignedPublishes) {
 
     called = false;
 }
+*/
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

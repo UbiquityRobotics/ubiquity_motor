@@ -32,10 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <serial/serial.h>
 #include <ubiquity_motor/motor_serial.h>
 
-MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate,
-                         double loopRate)
-    : motors(port, baud_rate, serial::Timeout::simpleTimeout(10000)),
-      serial_loop_rate(loopRate) {
+MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate)
+    : motors(port, baud_rate, serial::Timeout::simpleTimeout(100)), 
+      serial_errors(0), error_threshold(20) {
     serial_thread = boost::thread(&MotorSerial::SerialThread, this);
 }
 
@@ -46,12 +45,21 @@ MotorSerial::~MotorSerial() {
 }
 
 int MotorSerial::transmitCommand(MotorMessage command) {
-    input.push(command);  // add latest command to end of fifo
+    RawMotorMessage out = command.serialize();
+    ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0], out[1],
+              out[2], out[3], out[4], out[5], out[6], out[7]);
+    motors.write(out.c_array(), out.size());
     return 0;
 }
 
 int MotorSerial::transmitCommands(const std::vector<MotorMessage>& commands) {
-    input.push(commands);
+    for (auto& command : commands) {
+        RawMotorMessage out = command.serialize();
+        ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0], out[1],
+                  out[2], out[3], out[4], out[5], out[6], out[7]);
+        motors.write(out.c_array(), out.size());
+        boost::this_thread::sleep(boost::posix_time::milliseconds(2));
+    }
     return 0;
 }
 
@@ -60,90 +68,52 @@ MotorMessage MotorSerial::receiveCommand() {
     if (!this->output.empty()) {
         mc = output.front_pop();
     }
-
     return mc;
 }
 
 int MotorSerial::commandAvailable() { return !output.fast_empty(); }
 
-int MotorSerial::inputAvailable() { return !input.fast_empty(); }
-
-MotorMessage MotorSerial::getInputCommand() {
-    MotorMessage mc;
-    if (!this->input.empty()) {
-        mc = input.front_pop();
-    }
-
-    return mc;
-}
-
 void MotorSerial::appendOutput(MotorMessage command) { output.push(command); }
 
 void MotorSerial::SerialThread() {
     try {
-        RawMotorMessage in;
-        bool failed_update = false;
-
         while (motors.isOpen()) {
-            while (motors.available() >= (failed_update ? 1 : 8)) {
-                RawMotorMessage innew;
-                motors.read(innew.c_array(), failed_update ? 1 : 8);
+            boost::this_thread::interruption_point();
+            if (motors.waitReadable()) {
+                RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
 
-                // TODO use circular_buffer instead of manual shifting
-                if (!failed_update) {
-                    in.swap(innew);
-                } else {
-                    // Shift array contents up one
-                    for (size_t i = 0; i < in.size() - 1; ++i) {
-                        in[i] = in[i + 1];
+                motors.read(innew.c_array(), 1);
+                if (innew[0] != MotorMessage::delimeter) {
+                    // The first byte was not the delimiter, so re-loop
+                    if (++serial_errors > error_threshold) {
+                        ROS_WARN("REJECT %02x", innew[0]);
                     }
-                    in[in.size() - 2] = in[in.size() - 1];
-
-                    in[in.size() - 1] = innew[0];
+                    continue;
                 }
+
+                // This will wait for the transmission time of 8 bytes
+                motors.waitByteTimes(innew.size());
+
+                // Read in next 7 bytes
+                motors.read(&innew.c_array()[1], 7);
+                ROS_DEBUG("Got message %x %x %x %x %x %x %x %x", innew[0],
+                          innew[1], innew[2], innew[3], innew[4], innew[5],
+                          innew[6], innew[7]);
 
                 MotorMessage mc;
-                int error_code = mc.deserialize(in);
-
+                int error_code = mc.deserialize(innew);
                 if (error_code == 0) {
-                    if (mc.getType() == MotorMessage::TYPE_ERROR) {
-                        ROS_ERROR(
-                            "GOT ERROR RESPONSE FROM PSOC FOR REGISTER 0x%02x",
-                            mc.getRegister());
-                    }
                     appendOutput(mc);
-                    failed_update = false;
-                } else if (error_code == 1) {
-                    failed_update = true;
-                    char rejected[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-                    for (size_t i = 0; i < in.size() && i < 8; i++) {
-                        rejected[i] = in.at(i);
+                    if (mc.getType() == MotorMessage::TYPE_ERROR) {
+                        ROS_ERROR("GOT error from Firm 0x%02x",
+                                  mc.getRegister());
                     }
-                    ROS_ERROR("REJECT: %s", rejected);
                 } else {
-                    failed_update = true;
-                    ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
+                    if (++serial_errors > error_threshold) {
+                        ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
+                    }
                 }
             }
-
-            bool did_update = false;
-            while (inputAvailable()) {
-                did_update = true;
-
-                RawMotorMessage out = getInputCommand().serialize();
-                ROS_DEBUG("out %02x %02x %02x %02x %02x %02x %02x %02x", out[0],
-                          out[1], out[2], out[3], out[4], out[5], out[6],
-                          out[7]);
-                motors.write(out.c_array(), out.size());
-                boost::this_thread::sleep(boost::posix_time::milliseconds(2));
-            }
-
-            if (did_update) {
-                motors.flushOutput();
-            }
-
-            boost::this_thread::interruption_point();
-            serial_loop_rate.sleep();
         }
 
     } catch (const boost::thread_interrupted& e) {

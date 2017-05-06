@@ -55,7 +55,7 @@ protected:
         ASSERT_TRUE(std::string(name).length() > 0);
 
         ros::Time::init();
-        motors = new MotorSerial(std::string(name), 9600, 1000);
+        motors = new MotorSerial(std::string(name), 9600);
     }
 
     virtual void TearDown() { delete motors; }
@@ -67,7 +67,7 @@ protected:
 };
 
 TEST(MotorSerialNoFixtureTests, badPortnameException) {
-    ASSERT_THROW(MotorSerial motors(std::string("foo"), 9600, 1000),
+    ASSERT_THROW(MotorSerial motors(std::string("foo"), 9600),
                  serial::IOException);
 }
 
