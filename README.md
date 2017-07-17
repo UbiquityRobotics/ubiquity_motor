@@ -7,9 +7,7 @@ This is a Package that provides a ROS interface for the motors in UbiquityRoboti
 
 Installation - From Binary
 
-This package may be installed from binaries for both x86 and ARM architectures. To install the ppa for this package use the following command:
-
-[insert ppa command here]
+This package may be installed from binaries for both x86 and ARM architectures.
 
 The package may be installed with:
 
