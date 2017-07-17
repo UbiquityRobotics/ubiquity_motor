@@ -13,7 +13,7 @@ The package may be installed with:
 
 `sudo apt-get install ros-kinetic-ubiquity-motor`
 
-Configuration launch files for the _Magni_ robot are in the package [[magni_robot][https://github.com/UbiquityRobotics/magni_robot]].
+Configuration launch files for the _Magni_ robot are in the package [[magni_robot](https://github.com/UbiquityRobotics/magni_robot)].
 
 Running your ubiquity motor controller over USB using an FTDI USB-serial device with ubiquity_motor
 
