@@ -1,21 +1,18 @@
 # ubiquity_motor
 [![Build Status](https://travis-ci.org/UbiquityRobotics/ubiquity_motor.svg?branch=indigo-devel)](https://travis-ci.org/UbiquityRobotics/ubiquity_motor)
 
-Introduction
+## Introduction
 
 This is a Package that provides a ROS interface for the motors in UbiquityRobotics robots
 
-Installation - From Binary
+## Installation - From Binary
 
 This package may be installed from binaries for both x86 and ARM architectures.
 
 The package may be installed with:
 
- sudo apt-get install ros-kinetic-ubiquity-motor
+`sudo apt-get install ros-kinetic-ubiquity-motor`
 
-Installation - From Source
-
-[to be completed]
 
 Running your ubiquity motor controller  on the native rasperry pi interface with ubiquity_motor
 
