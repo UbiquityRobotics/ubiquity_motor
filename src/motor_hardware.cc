@@ -146,9 +146,10 @@ void MotorHardware::readInputs() {
                 }
                 case MotorMessage::REG_BATTERY_VOLTAGE: {
                     int32_t data = mm.getData();
-                    float v = (float)data * 0.05185 + 0.40948;
-                    //printf("battery voltage %d %f\n", data, v);
-                    batteryVoltage.publish(v);
+                    std_msgs::Float32 voltage;
+                    voltage.data = (float)data * pid_params.battery_voltage_multiplier +
+                                   pid_params.battery_voltage_offset;
+                    batteryVoltage.publish(voltage);
                     break;
                 }
                 default:
