@@ -68,6 +68,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
 
+    batteryVoltage = nh.advertise<std_msgs::Float32>("battery_voltage", 1);
+
     sendPid_count = 0;
 
     pid_params = firmware_params;
@@ -140,6 +142,13 @@ void MotorHardware::readInputs() {
                     if (data & MotorMessage::LIM_M2_INTEGRAL) {
                         ROS_WARN("right Integral limit reached");
                     }
+                    break;
+                }
+                case MotorMessage::REG_BATTERY_VOLTAGE: {
+                    int32_t data = mm.getData();
+                    float v = (float)data * 0.05185 + 0.40948;
+                    //printf("battery voltage %d %f\n", data, v);
+                    batteryVoltage.publish(v);
                     break;
                 }
                 default:
