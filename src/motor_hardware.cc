@@ -68,7 +68,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
 
-    batteryVoltage = nh.advertise<std_msgs::Float32>("battery_voltage", 1);
+    battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
 
     sendPid_count = 0;
 
@@ -146,10 +146,18 @@ void MotorHardware::readInputs() {
                 }
                 case MotorMessage::REG_BATTERY_VOLTAGE: {
                     int32_t data = mm.getData();
-                    std_msgs::Float32 voltage;
-                    voltage.data = (float)data * pid_params.battery_voltage_multiplier +
+                    sensor_msgs::BatteryState bstate;
+                    bstate.voltage = (float)data * pid_params.battery_voltage_multiplier +
                                    pid_params.battery_voltage_offset;
-                    batteryVoltage.publish(voltage);
+                    bstate.current = std::numeric_limits<float>::quiet_NaN();
+                    bstate.charge = std::numeric_limits<float>::quiet_NaN();
+                    bstate.capacity = std::numeric_limits<float>::quiet_NaN();
+                    bstate.design_capacity = std::numeric_limits<float>::quiet_NaN();
+                    bstate.percentage = std::numeric_limits<float>::quiet_NaN();
+                    bstate.power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
+                    bstate.power_supply_health = sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
+                    bstate.power_supply_technology = sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+                    battery_state.publish(bstate);
                     break;
                 }
                 default:

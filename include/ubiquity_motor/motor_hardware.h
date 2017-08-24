@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "std_msgs/Int32.h"
 #include "std_msgs/UInt32.h"
-#include "std_msgs/Float32.h"
+#include "sensor_msgs/BatteryState.h"
 
 #include <ubiquity_motor/motor_parmeters.h>
 #include <ubiquity_motor/motor_serial.h>
@@ -90,7 +90,7 @@ private:
     ros::Publisher leftError;
     ros::Publisher rightError;
 
-    ros::Publisher batteryVoltage;
+    ros::Publisher battery_state;
 
     MotorSerial* motor_serial_;
 
