@@ -153,12 +153,7 @@ void MotorHardware::readInputs() {
                     bstate.charge = std::numeric_limits<float>::quiet_NaN();
                     bstate.capacity = std::numeric_limits<float>::quiet_NaN();
                     bstate.design_capacity = std::numeric_limits<float>::quiet_NaN();
-                    if (bstate.voltage < 20.0) 
-                      bstate.percentage = 0.0;
-                    }
-                    else {
-                        bstate.percentage = std::min(1.0, (bstate.voltage - 20.0) * 0.125);
-                    }
+                    bstate.percentage = std::max(0.0, std::min(1.0, (bstate.voltage - 20.0) * 0.125));
                     bstate.power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
                     bstate.power_supply_health = sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
                     bstate.power_supply_technology = sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
