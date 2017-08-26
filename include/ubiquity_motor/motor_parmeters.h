@@ -50,6 +50,8 @@ struct FirmwareParams {
     int32_t pid_denominator;
     int32_t pid_moving_buffer_size;
     int32_t deadman_timer;
+    float battery_voltage_multiplier;
+    float battery_voltage_offset;
 
     FirmwareParams()
         : pid_proportional(5000),
@@ -57,7 +59,9 @@ struct FirmwareParams {
           pid_derivative(1),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
-          deadman_timer(2400000){};
+          deadman_timer(2400000),
+          battery_voltage_multiplier(0.05185),
+          battery_voltage_offset(0.40948){};
 
     FirmwareParams(ros::NodeHandle nh)
         : pid_proportional(5000),
@@ -65,7 +69,9 @@ struct FirmwareParams {
           pid_derivative(1),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
-          deadman_timer(2400000) {
+          deadman_timer(2400000),
+          battery_voltage_multiplier(0.05185),
+          battery_voltage_offset(0.40948){
         // clang-format off
         pid_proportional = getParamOrDefault(
             nh, "ubiquity_motor/pid_proportional", pid_proportional);
@@ -79,6 +85,10 @@ struct FirmwareParams {
             nh, "ubiquity_motor/window_size", pid_moving_buffer_size);
         deadman_timer = getParamOrDefault(
             nh, "ubiquity_motor/deadman_timer", deadman_timer);
+        battery_voltage_offset = getParamOrDefault(
+            nh, "ubiquity_motor/battery_voltage_offset", battery_voltage_offset);
+        battery_voltage_multiplier = getParamOrDefault(
+            nh, "ubiquity_motor/battery_voltage_multiplier", battery_voltage_multiplier);
         // clang-format on
     };
 };
