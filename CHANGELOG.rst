@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.0 (2017-09-15)
+------------------
 * Publish battery voltage messages (`#29 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/29>`_)
   Added battery status message calibrated on 4.4 board serial no 450
 * Contributors: Jim Vaughan, Rohan Agrawal, David Crawley
