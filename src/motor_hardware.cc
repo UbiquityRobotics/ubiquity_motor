@@ -68,6 +68,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
 
+    battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
+
     sendPid_count = 0;
 
     pid_params = firmware_params;
@@ -140,6 +142,22 @@ void MotorHardware::readInputs() {
                     if (data & MotorMessage::LIM_M2_INTEGRAL) {
                         ROS_WARN("right Integral limit reached");
                     }
+                    break;
+                }
+                case MotorMessage::REG_BATTERY_VOLTAGE: {
+                    int32_t data = mm.getData();
+                    sensor_msgs::BatteryState bstate;
+                    bstate.voltage = (float)data * pid_params.battery_voltage_multiplier +
+                                   pid_params.battery_voltage_offset;
+                    bstate.current = std::numeric_limits<float>::quiet_NaN();
+                    bstate.charge = std::numeric_limits<float>::quiet_NaN();
+                    bstate.capacity = std::numeric_limits<float>::quiet_NaN();
+                    bstate.design_capacity = std::numeric_limits<float>::quiet_NaN();
+                    bstate.percentage = std::max(0.0, std::min(1.0, (bstate.voltage - 20.0) * 0.125));
+                    bstate.power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
+                    bstate.power_supply_health = sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
+                    bstate.power_supply_technology = sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+                    battery_state.publish(bstate);
                     break;
                 }
                 default:
