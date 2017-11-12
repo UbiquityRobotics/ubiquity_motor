@@ -121,6 +121,7 @@ int main(int argc, char* argv[]) {
         float elapsedSecs = elapsed.toSec();
         if (minCycleTime < elapsedSecs && elapsedSecs < maxCycleTime) {
             cm.update(ros::Time::now(), elapsed);
+            robot.writeSpeeds();
         }
         else {
             ROS_WARN("Resetting controller due to time jump %f seconds",
@@ -129,7 +130,6 @@ int main(int argc, char* argv[]) {
         }
         robot.setParams(firmware_params);
         robot.sendParams();
-        robot.writeSpeeds();
 
         r.sleep();
     }
