@@ -86,6 +86,12 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
 
+void MotorHardware::clearCommands() {
+    for (size_t i = 0; i < sizeof(joints_) / sizeof(joints_[0]); i++) {
+        joints_[i].velocity_command = 0;
+    }
+}
+
 void MotorHardware::readInputs() {
     while (motor_serial_->commandAvailable()) {
         MotorMessage mm;

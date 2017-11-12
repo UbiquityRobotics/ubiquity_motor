@@ -51,6 +51,7 @@ public:
     MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
                   FirmwareParams firmware_params);
     virtual ~MotorHardware();
+    void clearCommands();
     void readInputs();
     void writeSpeeds();
     void requestVersion();
