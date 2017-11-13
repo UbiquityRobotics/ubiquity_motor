@@ -2,6 +2,12 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Reset controller when time jumps (`#31 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/31>`_)
+  Reset the controller and zero commanded velocity an unexpected time change occurs (such as by NTP).  This prevents unexpected robot motion.
+* Contributors: Jim Vaughan, Rohan Agrawal
+
 0.6.0 (2017-09-15)
 ------------------
 * Publish battery voltage messages (`#29 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/29>`_)
