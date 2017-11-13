@@ -109,13 +109,25 @@ int main(int argc, char* argv[]) {
         r.sleep();
         robot.sendParams();
     }
+    float expectedCycleTime = r.expectedCycleTime().toSec();
+    float minCycleTime = 0.75 * expectedCycleTime;
+    float maxCycleTime = 1.25 * expectedCycleTime;
 
     while (ros::ok()) {
         current_time = ros::Time::now();
         elapsed = current_time - last_time;
         last_time = current_time;
         robot.readInputs();
-        cm.update(ros::Time::now(), elapsed);
+        float elapsedSecs = elapsed.toSec();
+        if (minCycleTime < elapsedSecs && elapsedSecs < maxCycleTime) {
+            cm.update(current_time, elapsed);
+        }
+        else {
+            ROS_WARN("Resetting controller due to time jump %f seconds",
+                     elapsedSecs);
+            cm.update(current_time, r.expectedCycleTime(), true);
+            robot.clearCommands();
+        }
         robot.setParams(firmware_params);
         robot.sendParams();
         robot.writeSpeeds();
