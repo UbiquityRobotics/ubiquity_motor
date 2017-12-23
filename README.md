@@ -3,7 +3,7 @@
 
 ## Introduction
 
-This is a Package that provides a ROS interface for the motors in UbiquityRobotics robots.gIt communicates with the motor controller via a serial port.
+This is a Package that provides a ROS interface for the motors in UbiquityRobotics robots. It communicates with the motor controller via a serial port.
 
 ## Installation
 
