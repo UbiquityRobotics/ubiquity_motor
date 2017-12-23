@@ -25,7 +25,6 @@ protected:
 
         CommsParams cp(nh);
         cp.serial_port = std::string(name);
-        cp.serial_loop_rate = 5000.0;
         FirmwareParams fp(nh);
 
         robot = new MotorHardware(nh, cp, fp);

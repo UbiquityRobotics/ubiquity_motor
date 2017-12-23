@@ -96,13 +96,12 @@ struct FirmwareParams {
 struct CommsParams {
     std::string serial_port;
     int32_t baud_rate;
-    double serial_loop_rate;
 
     CommsParams()
-        : serial_port("/dev/ttyS0"), baud_rate(9600), serial_loop_rate(100.0){};
+        : serial_port("/dev/ttyS0"), baud_rate(9600) {};
 
     CommsParams(ros::NodeHandle nh)
-        : serial_port("/dev/ttyS0"), baud_rate(9600), serial_loop_rate(100.0) {
+        : serial_port("/dev/ttyS0"), baud_rate(9600) {
         // clang-format off
         serial_port = getParamOrDefault(
             nh, "ubiquity_motor/serial_port", serial_port);
