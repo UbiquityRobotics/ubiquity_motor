@@ -135,4 +135,5 @@ The register value in the message is the same as the bad message, and the data i
 | 0x2C     |Integral Limit Reached           |                 |R           |
 | 0x2D     |Both Motor Error                 |0x00 = OK        |R           |
 | 0x30     |Both Odom                        |                 |R           |
+| 0x31     |Robot Id                         |                 |R           |
 | 0x50-5F  |Reserved for debugging           |                 |R           |
