@@ -44,7 +44,7 @@ return FF - sum
 
 ### Checksum Verification
 1. Compute the sum of all characters *without including the command delimiter and the checksum*. Ex: `2A+F3+C2+D3+3E+4F = 33F`
-2. Keep the last eight bits and discard the rest. Ex: =~~3~~ 3F = 3F
+2. Keep the last eight bits and discard the rest. Ex: =~~3~~ FF = FF
 3. The result of above should be `0xFF`
 
 Psudeo-code for checksum verification:
