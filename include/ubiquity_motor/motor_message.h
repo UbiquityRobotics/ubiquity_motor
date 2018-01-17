@@ -114,6 +114,7 @@ public:
         REG_LIMIT_REACHED = 0x2C,
         REG_BOTH_ERROR = 0x2D,
         REG_BOTH_ODOM = 0x30,
+        REG_ROBOT_ID = 0x31,
 
         DEBUG_50 = 0x50,
         DEBUG_51 = 0x51,
