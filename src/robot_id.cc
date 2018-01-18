@@ -83,9 +83,68 @@ Options parse_args(const std::vector<std::string>& args) {
     return op;
 }
 
-int main(int argc, char const *argv[])
+class TimeoutException : public std::exception
 {
+  // Disable copy constructors
+  TimeoutException& operator=(const TimeoutException&);
+  std::string e_what_;
+public:
+  TimeoutException (const char *description) {
+      e_what_ = description;
+  }
+  TimeoutException (const TimeoutException& other) : e_what_(other.e_what_) {}
+  virtual ~TimeoutException() throw() {}
+  virtual const char* what () const throw () {
+    return e_what_.c_str();
+  }
+};
+
+MotorMessage readRegister(MotorMessage::Registers reg, serial::Serial& robot) {
+    MotorMessage req;
+    req.setRegister(reg);
+    req.setType(MotorMessage::TYPE_READ);
+    req.setData(0);
+
+    RawMotorMessage out = req.serialize();
+    robot.write(out.c_array(), out.size());
+
+    robot.flush();
+
+    bool timedout = false;
+    struct timespec start, current_time;
+    clock_gettime(CLOCK_MONOTONIC, &current_time);
+    start = current_time;
+
+    while (robot.isOpen() && !timedout) {
+    if (robot.waitReadable()) {
+        RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
+
+        robot.read(innew.c_array(), 1);
+        if (innew[0] != MotorMessage::delimeter) continue;
+
+        robot.waitByteTimes(innew.size()-1);
+        robot.read(&innew.c_array()[1], 7);
+
+        MotorMessage rsp;
+        if (!rsp.deserialize(innew)) {
+            if (rsp.getType() == MotorMessage::TYPE_RESPONSE &&
+                rsp.getRegister() == reg) {
+                return rsp;
+            }
+        }               
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &current_time);
+    timedout = (current_time.tv_sec >= start.tv_sec + 5);
+    }
+
+    if (timedout) {throw TimeoutException("Timed Out Waiting for Serial Response");}
+}
+
+int main(int argc, char const *argv[]) {
 	std::vector<std::string> args(argv + 1, argv + argc);
+
+    int ret_code = 0;
 
     Options op = parse_args(args);
 
@@ -118,52 +177,42 @@ int main(int argc, char const *argv[])
         serial::Serial robot(op.serial_port, 115200, serial::Timeout::simpleTimeout(100));
 
         if (op.robot) {
-            MotorMessage robot_id;
-            robot_id.setRegister(MotorMessage::REG_ROBOT_ID);
-            robot_id.setType(MotorMessage::TYPE_READ);
-            robot_id.setData(0);
-
-            RawMotorMessage out = robot_id.serialize();
-            robot.write(out.c_array(), out.size());
-
-            robot.flush();
-
-            bool timedout = false;
-            struct timespec start, current_time;
-            clock_gettime(CLOCK_MONOTONIC, &current_time);
-            start = current_time;
-
-            while (robot.isOpen() && !timedout) {
-                if (robot.waitReadable()) {
-                    RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
-
-                    robot.read(innew.c_array(), 1);
-                    if (innew[0] != MotorMessage::delimeter) continue;
-
-                    robot.waitByteTimes(innew.size()-1);
-                    robot.read(&innew.c_array()[1], 7);
-
-                    MotorMessage rsp;
-                    rsp.deserialize(innew);
-
-                    if (rsp.getData() == 0x00) {
-                        printf("%s\n", "magni");
-                    }
-                    if (rsp.getData() == 0x01) {
-                        printf("%s\n", "loki");
-                    }
-
-                    break;
+            try {
+                MotorMessage robot_id = readRegister(MotorMessage::REG_ROBOT_ID, robot);
+                int id_num = robot_id.getData();
+                if (id_num == 0x00) {
+                    printf("%s\n", "magni");
                 }
-
-                clock_gettime(CLOCK_MONOTONIC, &current_time);
-                timedout = (current_time.tv_sec >= start.tv_sec + 5);
+                else if (id_num == 0x01) {
+                    printf("%s\n", "loki");
+                }
+                else {
+                    printf("%s\n", "unknown");
+                }
             }
-
-            if (timedout) {
-                if (op.verbose) {fprintf(stderr, "%s\n", "Timed out waiting for response");}
+            catch (TimeoutException e) {
                 printf("%s\n", "none");
-                return 2;
+                ret_code = 2;
+            }
+        }
+        if (op.firmware) {
+            try {
+                MotorMessage firmware = readRegister(MotorMessage::REG_FIRMWARE_VERSION, robot);
+                printf("%d\n", firmware.getData());
+            }
+            catch (TimeoutException e) {
+                printf("%s\n", "Timeout getting firmware version");
+                ret_code = 2;
+            }
+        }
+        if (op.pcb_rev) {
+            try {
+                MotorMessage hardware = readRegister(MotorMessage::REG_HARDWARE_VERSION, robot);
+                printf("%d\n", hardware.getData());
+            }
+            catch (TimeoutException e) {
+                printf("%s\n", "Timeout getting hardware version");
+                ret_code = 2;
             }
         }
     }
@@ -172,5 +221,5 @@ int main(int argc, char const *argv[])
         return 1;
     }
 	
-	return 0;
+	return ret_code;
 }
