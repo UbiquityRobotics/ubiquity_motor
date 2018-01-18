@@ -85,18 +85,19 @@ Options parse_args(const std::vector<std::string>& args) {
 
 class TimeoutException : public std::exception
 {
-  // Disable copy constructors
-  TimeoutException& operator=(const TimeoutException&);
-  std::string e_what_;
+    // Disable copy constructors
+    TimeoutException& operator=(const TimeoutException&);
+    std::string e_what_;
+
 public:
-  TimeoutException (const char *description) {
-      e_what_ = description;
-  }
-  TimeoutException (const TimeoutException& other) : e_what_(other.e_what_) {}
-  virtual ~TimeoutException() throw() {}
-  virtual const char* what () const throw () {
-    return e_what_.c_str();
-  }
+    TimeoutException (const char *description) {
+        e_what_ = description;
+    }
+    TimeoutException (const TimeoutException& other) : e_what_(other.e_what_) {}
+    virtual ~TimeoutException() throw() {}
+    virtual const char* what () const throw () {
+        return e_what_.c_str();
+    }
 };
 
 MotorMessage readRegister(MotorMessage::Registers reg, serial::Serial& robot) {
@@ -201,7 +202,7 @@ int main(int argc, char const *argv[]) {
                 printf("%d\n", firmware.getData());
             }
             catch (TimeoutException e) {
-                printf("%s\n", "Timeout getting firmware version");
+                fprintf(stderr, "%s\n", "Timeout getting firmware version");
                 ret_code = 2;
             }
         }
@@ -211,7 +212,7 @@ int main(int argc, char const *argv[]) {
                 printf("%d\n", hardware.getData());
             }
             catch (TimeoutException e) {
-                printf("%s\n", "Timeout getting hardware version");
+                fprintf(stderr, "%s\n", "Timeout getting hardware version");
                 ret_code = 2;
             }
         }
