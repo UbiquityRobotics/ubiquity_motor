@@ -93,6 +93,13 @@ target_link_libraries(motor_node
  ${Boost_LIBRARIES}
 )
 
+add_executable(robot_id src/robot_id.cc)
+target_link_libraries(robot_id
+ ubiquity_motor
+ ${catkin_LIBRARIES}
+ ${Boost_LIBRARIES}
+)
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 #add_dependencies(controller)
