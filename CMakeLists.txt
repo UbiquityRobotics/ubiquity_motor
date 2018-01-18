@@ -93,8 +93,8 @@ target_link_libraries(motor_node
  ${Boost_LIBRARIES}
 )
 
-add_executable(robot_id src/robot_id.cc)
-target_link_libraries(robot_id
+add_executable(probe_robot src/probe_robot.cc)
+target_link_libraries(probe_robot
  ubiquity_motor
  ${catkin_LIBRARIES}
  ${Boost_LIBRARIES}
@@ -124,7 +124,7 @@ target_link_libraries(robot_id
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ubiquity_motor motor_node
+install(TARGETS ubiquity_motor motor_node probe_robot
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
