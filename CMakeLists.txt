@@ -93,6 +93,13 @@ target_link_libraries(motor_node
  ${Boost_LIBRARIES}
 )
 
+add_executable(probe_robot src/probe_robot.cc)
+target_link_libraries(probe_robot
+ ubiquity_motor
+ ${catkin_LIBRARIES}
+ ${Boost_LIBRARIES}
+)
+
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 #add_dependencies(controller)
@@ -117,7 +124,7 @@ target_link_libraries(motor_node
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ubiquity_motor motor_node
+install(TARGETS ubiquity_motor motor_node probe_robot
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
