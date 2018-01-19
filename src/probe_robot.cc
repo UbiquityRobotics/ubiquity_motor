@@ -28,42 +28,37 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <ubiquity_motor/motor_message.h>
 #include <serial/serial.h>
+#include <ubiquity_motor/motor_message.h>
 
-struct Options
-{
-	bool robot = false;
-	bool firmware = false;
-	bool pcb_rev = false;
-	bool verbose = false;
+struct Options {
+    bool robot = false;
+    bool firmware = false;
+    bool pcb_rev = false;
+    bool verbose = false;
     bool help = false;
     std::string serial_port = "";
 };
 
-bool find_switch(const std::vector<std::string>& args, 
-    const std::string& short_sw, const std::string& long_sw) {
-
+bool find_switch(const std::vector<std::string> &args, const std::string &short_sw,
+                 const std::string &long_sw) {
     bool has_short = (std::find(args.cbegin(), args.cend(), short_sw)) != args.cend();
     bool has_long = (std::find(args.cbegin(), args.cend(), long_sw)) != args.cend();
 
     return (has_long || has_short);
 }
 
-std::string get_option(const std::vector<std::string>& args, 
-    const std::string& option, const std::string& default_val) {
-
+std::string get_option(const std::vector<std::string> &args, const std::string &option,
+                       const std::string &default_val) {
     auto opt = std::find(args.cbegin(), args.cend(), option);
-
     if (opt != args.cend() && opt++ != args.cend()) {
         return *(opt++);
-    }
-    else {
+    } else {
         return default_val;
     }
 }
 
-Options parse_args(const std::vector<std::string>& args) {
+Options parse_args(const std::vector<std::string> &args) {
     Options op;
 
     op.robot = find_switch(args, "-r", "--robot");
@@ -83,24 +78,19 @@ Options parse_args(const std::vector<std::string>& args) {
     return op;
 }
 
-class TimeoutException : public std::exception
-{
+class TimeoutException : public std::exception {
     // Disable copy constructors
-    TimeoutException& operator=(const TimeoutException&);
+    TimeoutException &operator=(const TimeoutException &);
     std::string e_what_;
 
 public:
-    TimeoutException (const char *description) {
-        e_what_ = description;
-    }
-    TimeoutException (const TimeoutException& other) : e_what_(other.e_what_) {}
+    TimeoutException(const char *description) { e_what_ = description; }
+    TimeoutException(const TimeoutException &other) : e_what_(other.e_what_) {}
     virtual ~TimeoutException() throw() {}
-    virtual const char* what () const throw () {
-        return e_what_.c_str();
-    }
+    virtual const char *what() const throw() { return e_what_.c_str(); }
 };
 
-MotorMessage readRegister(MotorMessage::Registers reg, serial::Serial& robot) {
+MotorMessage readRegister(MotorMessage::Registers reg, serial::Serial &robot) {
     MotorMessage req;
     req.setRegister(reg);
     req.setType(MotorMessage::TYPE_READ);
@@ -117,33 +107,34 @@ MotorMessage readRegister(MotorMessage::Registers reg, serial::Serial& robot) {
     start = current_time;
 
     while (robot.isOpen() && !timedout) {
-    if (robot.waitReadable()) {
-        RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
+        if (robot.waitReadable()) {
+            RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
 
-        robot.read(innew.c_array(), 1);
-        if (innew[0] != MotorMessage::delimeter) continue;
+            robot.read(innew.c_array(), 1);
+            if (innew[0] != MotorMessage::delimeter) continue;
 
-        robot.waitByteTimes(innew.size()-1);
-        robot.read(&innew.c_array()[1], 7);
+            robot.waitByteTimes(innew.size() - 1);
+            robot.read(&innew.c_array()[1], 7);
 
-        MotorMessage rsp;
-        if (!rsp.deserialize(innew)) {
-            if (rsp.getType() == MotorMessage::TYPE_RESPONSE &&
-                rsp.getRegister() == reg) {
-                return rsp;
+            MotorMessage rsp;
+            if (!rsp.deserialize(innew)) {
+                if (rsp.getType() == MotorMessage::TYPE_RESPONSE && rsp.getRegister() == reg) {
+                    return rsp;
+                }
             }
-        }               
+        }
+
+        clock_gettime(CLOCK_MONOTONIC, &current_time);
+        timedout = (current_time.tv_sec >= start.tv_sec + 5);
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &current_time);
-    timedout = (current_time.tv_sec >= start.tv_sec + 5);
+    if (timedout) {
+        throw TimeoutException("Timed Out Waiting for Serial Response");
     }
-
-    if (timedout) {throw TimeoutException("Timed Out Waiting for Serial Response");}
 }
 
 int main(int argc, char const *argv[]) {
-	std::vector<std::string> args(argv + 1, argv + argc);
+    std::vector<std::string> args(argv + 1, argv + argc);
 
     int ret_code = 0;
 
@@ -183,15 +174,12 @@ int main(int argc, char const *argv[]) {
                 int id_num = robot_id.getData();
                 if (id_num == 0x00) {
                     printf("%s\n", "magni");
-                }
-                else if (id_num == 0x01) {
+                } else if (id_num == 0x01) {
                     printf("%s\n", "loki");
-                }
-                else {
+                } else {
                     printf("%s\n", "unknown");
                 }
-            }
-            catch (TimeoutException e) {
+            } catch (TimeoutException e) {
                 printf("%s\n", "none");
                 ret_code = 2;
             }
@@ -200,8 +188,7 @@ int main(int argc, char const *argv[]) {
             try {
                 MotorMessage firmware = readRegister(MotorMessage::REG_FIRMWARE_VERSION, robot);
                 printf("%d\n", firmware.getData());
-            }
-            catch (TimeoutException e) {
+            } catch (TimeoutException e) {
                 fprintf(stderr, "%s\n", "Timeout getting firmware version");
                 ret_code = 2;
             }
@@ -210,17 +197,17 @@ int main(int argc, char const *argv[]) {
             try {
                 MotorMessage hardware = readRegister(MotorMessage::REG_HARDWARE_VERSION, robot);
                 printf("%d\n", hardware.getData());
-            }
-            catch (TimeoutException e) {
+            } catch (TimeoutException e) {
                 fprintf(stderr, "%s\n", "Timeout getting hardware version");
                 ret_code = 2;
             }
         }
-    }
-    catch (const serial::IOException& e) {
-        if (op.verbose) {fprintf(stderr, "Error opening Serial Port %s\n", op.serial_port.c_str());}
+    } catch (const serial::IOException &e) {
+        if (op.verbose) {
+            fprintf(stderr, "Error opening Serial Port %s\n", op.serial_port.c_str());
+        }
         return 1;
     }
-	
-	return ret_code;
+
+    return ret_code;
 }
