@@ -38,6 +38,7 @@ struct Options {
     bool verbose = false;
     bool help = false;
     std::string serial_port = "";
+    int baud_rate = 0;
 };
 
 bool find_switch(const std::vector<std::string> &args, const std::string &short_sw,
@@ -53,6 +54,16 @@ std::string get_option(const std::vector<std::string> &args, const std::string &
     auto opt = std::find(args.cbegin(), args.cend(), option);
     if (opt != args.cend() && opt++ != args.cend()) {
         return *(opt++);
+    } else {
+        return default_val;
+    }
+}
+
+int get_option(const std::vector<std::string> &args, const std::string &option,
+                       const int default_val) {
+    auto opt = std::find(args.cbegin(), args.cend(), option);
+    if (opt != args.cend() && opt++ != args.cend()) {
+        return std::stoi(*(opt++));
     } else {
         return default_val;
     }
@@ -74,6 +85,7 @@ Options parse_args(const std::vector<std::string> &args) {
     }
 
     op.serial_port = get_option(args, "-D", "/dev/ttyAMA0");
+    op.baud_rate = get_option(args, "-B", 38400);
 
     return op;
 }
@@ -144,6 +156,7 @@ int main(int argc, char const *argv[]) {
         printf("%s\n", "Used to probe Ubiquity Robotics robots for version info");
         printf("%s\n", "Options:");
         printf("%s\n", "  -D {PATH TO PORT}: Set the Serial Port to use (e.g. /dev/ttyAMA0)");
+        printf("%s\n", "  -B {BAUD RATE}: Set the Baud Rate to use (e.g. 38400)");
         printf("%s\n", "Switches:");
         printf("%s\n", "  -a --all: Print out all options.");
         printf("%s\n", "  -r --robot: Print out robot platform (e.g. loki, magni, none)");
@@ -163,10 +176,11 @@ int main(int argc, char const *argv[]) {
         fprintf(stderr, "  Verbose: %d\n", op.verbose);
         fprintf(stderr, "  Help: %d\n", op.help);
         fprintf(stderr, "  Serial Port: %s\n", op.serial_port.c_str());
+        fprintf(stderr, "  Baud Rate: %d\n", op.baud_rate);
     }
 
     try {
-        serial::Serial robot(op.serial_port, 115200, serial::Timeout::simpleTimeout(100));
+        serial::Serial robot(op.serial_port, op.baud_rate, serial::Timeout::simpleTimeout(100));
 
         if (op.robot) {
             try {
