@@ -52,8 +52,8 @@ bool find_switch(const std::vector<std::string> &args, const std::string &short_
 std::string get_option(const std::vector<std::string> &args, const std::string &option,
                        const std::string &default_val) {
     auto opt = std::find(args.cbegin(), args.cend(), option);
-    if (opt != args.cend() && opt++ != args.cend()) {
-        return *(opt++);
+    if (opt != args.cend() && std::next(opt) != args.cend()) {
+        return *(++opt);
     } else {
         return default_val;
     }
@@ -62,8 +62,8 @@ std::string get_option(const std::vector<std::string> &args, const std::string &
 int get_option(const std::vector<std::string> &args, const std::string &option,
                        const int default_val) {
     auto opt = std::find(args.cbegin(), args.cend(), option);
-    if (opt != args.cend() && opt++ != args.cend()) {
-        return std::stoi(*(opt++));
+    if (opt != args.cend() && std::next(opt) != args.cend()) {
+        return std::stoi(*(++opt));
     } else {
         return default_val;
     }
@@ -85,7 +85,13 @@ Options parse_args(const std::vector<std::string> &args) {
     }
 
     op.serial_port = get_option(args, "-D", "/dev/ttyAMA0");
-    op.baud_rate = get_option(args, "-B", 38400);
+
+    try {
+        op.baud_rate = get_option(args, "-B", 38400);
+    } catch (std::invalid_argument e) {
+        fprintf(stderr, "%s\n", "Expected integer for option -B");
+        throw e;
+    }
 
     return op;
 }
@@ -149,8 +155,15 @@ int main(int argc, char const *argv[]) {
     std::vector<std::string> args(argv + 1, argv + argc);
 
     int ret_code = 0;
+    Options op;
 
-    Options op = parse_args(args);
+    try {
+        op = parse_args(args);
+    }
+    catch (...) {
+        fprintf(stderr, "%s\n", "Error parsing arguments");
+        return 2;
+    }
 
     if (op.help) {
         printf("%s\n", "Used to probe Ubiquity Robotics robots for version info");
