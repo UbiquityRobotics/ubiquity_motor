@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2018-04-15)
+------------------
 * Add script to probe the robot for information
 * Add Serial Protocol Documentation
   Fixes `#33 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/33>`_
