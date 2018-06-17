@@ -2,6 +2,16 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2018-04-15)
+------------------
+* Add script to probe the robot for information
+* Add Serial Protocol Documentation
+  Fixes `#33 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/33>`_
+* Add ROS API documentation (`#32 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/32>`_)
+  * Add API documentation
+  * Remove unused serial_loop_rate variable
+* Contributors: Jim Vaughan, Rohan Agrawal
+
 0.6.1 (2017-11-12)
 ------------------
 * Reset controller when time jumps (`#31 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/31>`_)
