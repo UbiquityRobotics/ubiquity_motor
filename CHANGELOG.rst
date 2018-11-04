@@ -2,6 +2,11 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.1 (2018-06-16)
+------------------
+* new pid params
+* Contributors: Rohan Agrawal
+
 0.7.0 (2018-04-15)
 ------------------
 * Add script to probe the robot for information
