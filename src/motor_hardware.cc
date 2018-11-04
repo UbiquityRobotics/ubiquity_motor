@@ -137,16 +137,16 @@ void MotorHardware::readInputs() {
                     int32_t data = mm.getData();
 
                     if (data & MotorMessage::LIM_M1_PWM) {
-                        ROS_ERROR("left PWM limit reached");
+                        ROS_WARN("left PWM limit reached");
                     }
                     if (data & MotorMessage::LIM_M2_PWM) {
-                        ROS_ERROR("right PWM limit reached");
+                        ROS_WARN("right PWM limit reached");
                     }
                     if (data & MotorMessage::LIM_M1_INTEGRAL) {
-                        ROS_WARN("left Integral limit reached");
+                        ROS_DEBUG("left Integral limit reached");
                     }
                     if (data & MotorMessage::LIM_M2_INTEGRAL) {
-                        ROS_WARN("right Integral limit reached");
+                        ROS_DEBUG("right Integral limit reached");
                     }
                     break;
                 }
