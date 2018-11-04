@@ -149,6 +149,9 @@ MotorMessage readRegister(MotorMessage::Registers reg, serial::Serial &robot) {
     if (timedout) {
         throw TimeoutException("Timed Out Waiting for Serial Response");
     }
+    else {
+        throw std::runtime_error("unknown error while wating for serial");
+    }
 }
 
 int main(int argc, char const *argv[]) {
