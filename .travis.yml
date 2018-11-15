@@ -1,39 +1,34 @@
-sudo: required
+sudo: true
 dist: trusty
-language: generic
-notifications:
-  email:
-    recipients:
-    - rohan@aleopile.com
-    on_success: change
-    on_failure: always
-  slack:
-    secure: QFvV//me3w8XkgmzaxPoVoqQNVLZ4055ptdEDccQHJtEZZQ5FylI+khsl8DPH4UuqkDm8VyL1rRaNK5o1e1BwZkbZFTd5gJk5mFfjAT9lR3zBlSS1VHTwoAlf3wi7KEjv3sql+ATivv36lsww4n+ESPF7Vs09wcBbOzgMNhMCNI=
-before_install:
-- export ROS_DISTRO=indigo
-- export CI_SOURCE_PATH=$(pwd)
-- export REPOSITORY_NAME=${PWD##*/}
-- echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-- sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-- sudo apt-key adv --keyserver hkp://pool.sks-keyservers.net --recv-key 0xB01FA116
-- sudo apt-get update -qq
-- sudo apt-get install -qq -y ros-$ROS_DISTRO-ros-base ros-$ROS_DISTRO-catkin python-rosdep python-wstool
-- sudo apt-get install -y python-catkin-pkg
-- sudo rosdep init
-- rosdep update
+language: python
+python:
+  - "3.4"
+env:
+  global:
+    - JOB_PATH=/tmp/devel_job
+  matrix:
+    #- ROS_DISTRO_NAME=indigo OS_NAME=ubuntu OS_CODE_NAME=trusty ARCH=amd64
+    #- ROS_DISTRO_NAME=jade OS_NAME=ubuntu OS_CODE_NAME=trusty ARCH=amd64
+    - ROS_DISTRO_NAME=kinetic OS_NAME=ubuntu OS_CODE_NAME=xenial ARCH=amd64
 install:
-- source /opt/ros/$ROS_DISTRO/setup.bash
-- mkdir -p ~/ros/catkin_ws/src
-- cd ~/ros/catkin_ws/src
-- catkin_init_workspace
-- git clone -b $TRAVIS_BRANCH https://github.com/UbiquityRobotics/ubiquity_motor.git
-- rm -rf $REPOSITORY_NAME
-- ln -s $CI_SOURCE_PATH .
-- cd ../
-- rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-before_script:
-- source /opt/ros/$ROS_DISTRO/setup.bash
+  # either install the latest released version of ros_buildfarm
+  - pip install ros_buildfarm
+  # or checkout a specific branch
+  #- git clone -b master https://github.com/ros-infrastructure/ros_buildfarm /tmp/ros_buildfarm
+  #- pip install /tmp/ros_buildfarm
+  # checkout catkin for catkin_test_results script
+  - git clone https://github.com/ros/catkin /tmp/catkin
+  # run devel job for a ROS repository with the same name as this repo
+  - export REPOSITORY_NAME=`basename $TRAVIS_BUILD_DIR`
+  # use the code already checked out by Travis
+  - mkdir -p $JOB_PATH/catkin_workspace/src
+  - cp -R $TRAVIS_BUILD_DIR $JOB_PATH/catkin_workspace/src/
+  # generate the script to run a devel job for that target and repo
+  - generate_devel_script.py https://raw.githubusercontent.com/ros-infrastructure/ros_buildfarm_config/production/index.yaml $ROS_DISTRO_NAME default $REPOSITORY_NAME $OS_NAME $OS_CODE_NAME $ARCH > $JOB_PATH/devel_job.sh
+  - cd $JOB_PATH
+  - cat devel_job.sh
+  # run the actual job which involves Docker
+  - sh devel_job.sh -y
 script:
-- catkin_make
-- catkin_make run_tests
-- catkin_test_results
+  # get summary of test results
+  - /tmp/catkin/bin/catkin_test_results $JOB_PATH/catkin_workspace/test_results --all
