@@ -38,6 +38,7 @@ with open('/tmp/firmware', 'w+b') as fd:
     for chunk in r.iter_content(chunk_size=128):
         fd.write(chunk)
 
+print "Updating firmware now. Do not power off the robot. This is expected to take less than a minute."
 
 
 # Begin the code firmware uploading code

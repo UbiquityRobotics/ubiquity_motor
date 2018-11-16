@@ -20,5 +20,6 @@
   <depend>dynamic_reconfigure</depend>
   <exec_depend>diff_drive_controller</exec_depend>
   <exec_depend>joint_state_controller</exec_depend>
+  <exec_depend>python-requests</exec_depend>
 
 </package>
