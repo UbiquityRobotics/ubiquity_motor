@@ -3,7 +3,7 @@ import requests
 
 import time
 import serial
-import os
+import os, sys, subprocess
 
 print """-------------------------------------------------------------
 Welcome to the Ubiquity Robotics Firmware Updater!
@@ -15,13 +15,20 @@ Note: Updating the firmware requires access to the internet.
 -------------------------------------------------------------
 """
 
+if (subprocess.call(['fuser','-v', '/dev/ttyAMA0'], stdout=None) == 0):
+    print ""
+    print "Another process is using the serial port, cannot upgrade firmware"
+    print "Make sure you stopped any running ROS nodes. To stop default nodes:"
+    print "sudo systemctl stop magni-base"
+    sys.exit(1)
+
 email = raw_input("Please enter your email address: ").strip()
 
 r = requests.post('https://api.ubiquityrobotics.com/token/', json = {'email': email}) 
 
 if r.status_code != 200:
 	print "Error with requesting a token %d" % r.status_code
-	exit(1)
+	sys.exit(1)
 
 print "An access token was sent to your email address"
 
@@ -32,13 +39,13 @@ r = requests.get('https://api.ubiquityrobotics.com/firmware/latest', headers=aut
 
 if r.status_code != 200:
 	print "Error downloading firmware %d" % r.status_code
-	exit(1)
+	sys.exit(1)
 
 with open('/tmp/firmware', 'w+b') as fd:
     for chunk in r.iter_content(chunk_size=128):
         fd.write(chunk)
 
-print "Updating firmware now. Do not power off the robot. This is expected to take less than a minute."
+print "\nUpdating firmware now. Do not power off the robot. This is expected to take less than a minute."
 
 
 # Begin the code firmware uploading code
