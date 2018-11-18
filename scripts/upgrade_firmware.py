@@ -152,13 +152,16 @@ class Packet:
         self.id_ptr = 0
         self.inp = []
         self.ignore_response = False
+
     def do_ignore_response(self): #For exit packet
         self.ignore_response = True
+
     def require_len(self, mylen):
         if type(mylen) != int or mylen < 0:
             raise Exception("Invalid length goal for packet: " + cstr(mylen))
         if len(self.inp) != mylen:
             raise Exception("Invalid length for packet: " + len(self.inp) + " should be " + str(inp))
+
     def write(self, x, mylen = None):
         if mylen != None:
             num = long(x)
@@ -176,6 +179,7 @@ class Packet:
             self.out.extend([i for i in x])
         else:
             self.out.append(chr(x))
+
     def read(self, bytes):
         if not self.is_sent:
             raise Exception("Read from packet before send")
@@ -184,8 +188,10 @@ class Packet:
         r = self.inp[self.id_ptr:self.id_ptr+bytes]
         self.id_ptr += bytes
         return r
+
     def read_num(self, bytes):
         return convert_num(self.read(bytes))
+
     def send(self):
         self.is_sent = True
         init_bytes = [chr(0x1), self.cmd, 
@@ -272,6 +278,7 @@ def send__erase_row(ser, flash_id, row_number):
     p.send()
     p.require_len(0)
     return None
+
 def send__enter_bootloader(ser):
     p = Packet(ser, 0x38)
     p.send()
@@ -280,6 +287,7 @@ def send__enter_bootloader(ser):
     silicon_rev = p.read(1)
     bootloader_version = p.read(3)
     return silicon_id, silicon_rev, bootloader_version
+
 def send__get_flash_size(ser, flash_id):
     p = Packet(ser, 0x32)
     p.write(flash_id, 1)
@@ -288,6 +296,7 @@ def send__get_flash_size(ser, flash_id):
     flash_first_row = p.read_num(2)
     flash_last_row = p.read_num(2)
     return flash_first_row, flash_last_row
+
 def send__program_row(ser, flash_id, row_number, data_next):
     p = Packet(ser, 0x39)
     p.write(flash_id, 1)
@@ -296,6 +305,7 @@ def send__program_row(ser, flash_id, row_number, data_next):
     p.send()
     p.require_len(0)
     return None
+
 def send__encrypted_program_row(ser, flash_id, row_number, data_next):
     p = Packet(ser, 0x3D)
     p.write(flash_id, 1)
@@ -304,6 +314,7 @@ def send__encrypted_program_row(ser, flash_id, row_number, data_next):
     p.send()
     p.require_len(0)
     return None
+
 def send__verify_row(ser, flash_id, row_number):
     p = Packet(ser, 0x3A)
     p.write(flash_id, 1)
@@ -312,18 +323,21 @@ def send__verify_row(ser, flash_id, row_number):
     p.require_len(1)
     checksum = p.read_num(1)
     return checksum
+
 def send__data(ser, data_next):
     p = Packet(ser, 0x37)
     p.write(data_next)
     p.send()
     p.require_len(0)
     return None
+
 def send__verify_checksum(ser):
     p = Packet(ser, 0x31)
     p.send()
     p.require_len(1)
     r = p.read_num(1)
     return r
+
 def send__get_application_status(ser, app_number):
     p = Packet(ser, 0x33)
     p.write(app_number, 1)
@@ -332,17 +346,20 @@ def send__get_application_status(ser, app_number):
     valid_app_number = p.read_num(1)
     active_app_number = p.read_num(1)
     return valid_app_number, active_app_number
+
 def send__set_active_application(ser, app_number):
     p = Packet(ser, 0x36)
     p.write(app_number, 1)
     p.send()
     p.require_len(0)
     return
+
 def send__sync_bootloader(ser):
     p = Packet(ser, 0x35)
     p.send()
     p.require_len(0)
     return
+
 def send__exit_bootloader(ser):
     p = Packet(ser, 0x3B)
     p.do_ignore_response()
@@ -352,6 +369,7 @@ def send__exit_bootloader(ser):
 
 def add8(a, b):
     return ((a & 0xFF) + (b & 0xFF)) & 0xFF
+    
 def convert_checksum(checksum, flash_id, row_number, row_size):
     r = add8(checksum, flash_id)
     r = add8(r, row_number)
