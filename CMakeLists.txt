@@ -120,6 +120,8 @@ target_link_libraries(probe_robot
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
   scripts/upgrade_firmware.py
+  scripts/test_motor_board.py
+  scripts/test_pi_gpio.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
