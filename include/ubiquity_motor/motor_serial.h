@@ -52,8 +52,8 @@ public:
     MotorMessage receiveCommand();
     int commandAvailable();
 
-    MotorSerial(const MotorSerial& other);       // non construction-copyable
-    MotorSerial& operator=(const MotorSerial&);  // non copyable
+    MotorSerial(MotorSerial const&) = delete;
+    MotorSerial& operator=(MotorSerial const&) = delete;
 
 private:
     serial::Serial motors;

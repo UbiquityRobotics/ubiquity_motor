@@ -74,8 +74,26 @@ int main(int argc, char* argv[]) {
     serial_params = CommsParams(nh);
     node_params = NodeParams(nh);
 
-    MotorHardware robot(nh, serial_params, firmware_params);
-    controller_manager::ControllerManager cm(&robot, nh);
+    ros::Rate r(node_params.controller_loop_rate);
+
+    std::unique_ptr<MotorHardware> robot = nullptr;
+    // Keep trying to open serial
+    {
+        int times = 0;
+        while (ros::ok() && robot.get() == nullptr) {
+            try {
+                robot.reset(new MotorHardware(nh, serial_params, firmware_params));
+            }
+            catch (const serial::IOException& e) {
+                if (times % 30 == 0)
+                    ROS_FATAL("Error opening serial port %s, trying again", serial_params.serial_port.c_str());
+            }
+            r.sleep();
+            times++;
+        }
+    }
+
+    controller_manager::ControllerManager cm(robot.get(), nh);
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
@@ -86,18 +104,21 @@ int main(int argc, char* argv[]) {
     f = boost::bind(&PID_update_callback, _1, _2);
     server.setCallback(f);
 
-    robot.setParams(firmware_params);
+    robot->setParams(firmware_params);
+    robot->requestVersion();
 
-    ros::Rate r(node_params.controller_loop_rate);
-    robot.requestVersion();
-
-    int times = 0;
-    while (robot.firmware_version == 0) {
-        if (times >= 10)
-            throw std::runtime_error("Firmware not reporting its version");
-        robot.readInputs();
-        r.sleep();
-        times++;
+    // Make sure firmware is listening
+    {
+        // Start times counter at 1 to prevent false error print (0 % n = 0)
+        int times = 1;
+        while (ros::ok() && robot->firmware_version == 0) {
+            if (times % 30 == 0)
+                ROS_ERROR("Firmware not reporting its version");
+                robot->requestVersion();
+            robot->readInputs();
+            r.sleep();
+            times++;
+        }
     }
 
     ros::Time last_time;
@@ -107,7 +128,7 @@ int main(int argc, char* argv[]) {
 
     for (int i = 0; i < 5; i++) {
         r.sleep();
-        robot.sendParams();
+        robot->sendParams();
     }
     float expectedCycleTime = r.expectedCycleTime().toSec();
     float minCycleTime = 0.75 * expectedCycleTime;
@@ -117,7 +138,7 @@ int main(int argc, char* argv[]) {
         current_time = ros::Time::now();
         elapsed = current_time - last_time;
         last_time = current_time;
-        robot.readInputs();
+        robot->readInputs();
         float elapsedSecs = elapsed.toSec();
         if (minCycleTime < elapsedSecs && elapsedSecs < maxCycleTime) {
             cm.update(current_time, elapsed);
@@ -126,11 +147,11 @@ int main(int argc, char* argv[]) {
             ROS_WARN("Resetting controller due to time jump %f seconds",
                      elapsedSecs);
             cm.update(current_time, r.expectedCycleTime(), true);
-            robot.clearCommands();
+            robot->clearCommands();
         }
-        robot.setParams(firmware_params);
-        robot.sendParams();
-        robot.writeSpeeds();
+        robot->setParams(firmware_params);
+        robot->sendParams();
+        robot->writeSpeeds();
 
         r.sleep();
     }

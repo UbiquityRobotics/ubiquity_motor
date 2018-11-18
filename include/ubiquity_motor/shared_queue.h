@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SHAREDQUEUE_H
 #define SHAREDQUEUE_H
 
-#include <boost/atomic.hpp>
-#include <boost/thread.hpp>
+#include <atomic>
+#include <mutex>
 #include <queue>
 
 template <typename T>
@@ -42,8 +42,8 @@ public:
     ~shared_queue(){};
 
     shared_queue(const shared_queue& other) {
-        boost::lock_guard<boost::mutex> other_lock(other.queue_mutex_);
-        boost::lock_guard<boost::mutex> this_lock(queue_mutex_);
+        std::lock_guard<std::mutex> other_lock(other.queue_mutex_);
+        std::lock_guard<std::mutex> this_lock(queue_mutex_);
 
         // Copy is not atomic
         bool qe = other.queue_empty_;
@@ -53,8 +53,8 @@ public:
     };
 
     shared_queue& operator=(const shared_queue& other) {
-        boost::lock_guard<boost::mutex> other_lock(other.queue_mutex_);
-        boost::lock_guard<boost::mutex> this_lock(queue_mutex_);
+        std::lock_guard<std::mutex> other_lock(other.queue_mutex_);
+        std::lock_guard<std::mutex> this_lock(queue_mutex_);
 
         // Copy is not atomic
         bool qe = other.queue_empty_;
@@ -66,14 +66,14 @@ public:
     };
 
     void push(const T& value) {
-        boost::lock_guard<boost::mutex> lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock(queue_mutex_);
         internal_queue_.push(value);
 
         queue_empty_ = internal_queue_.empty();
     };
 
     void push(const std::vector<T>& values) {
-        boost::lock_guard<boost::mutex> lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock(queue_mutex_);
 
         for (typename std::vector<T>::const_iterator it = values.begin();
              it != values.end(); ++it) {
@@ -83,17 +83,17 @@ public:
     };
 
     T& front() {
-        boost::lock_guard<boost::mutex> lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock(queue_mutex_);
         return internal_queue_.front();
     };
 
     const T& front() const {
-        boost::lock_guard<boost::mutex> lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock(queue_mutex_);
         return internal_queue_.front();
     };
 
     T front_pop() {
-        boost::lock_guard<boost::mutex> lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock(queue_mutex_);
 
         T value = internal_queue_.front();
         internal_queue_.pop();
@@ -103,27 +103,27 @@ public:
     };
 
     void pop() {
-        boost::lock_guard<boost::mutex> lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock(queue_mutex_);
         internal_queue_.pop();
 
         queue_empty_ = internal_queue_.empty();
     };
 
     bool empty() const {
-        boost::lock_guard<boost::mutex> lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock(queue_mutex_);
         return internal_queue_.empty();
     }
 
     bool fast_empty() const { return queue_empty_; }
 
     size_t size() const {
-        boost::lock_guard<boost::mutex> lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock(queue_mutex_);
         return internal_queue_.size();
     }
 
 private:
-    mutable boost::mutex queue_mutex_;
-    boost::atomic<bool> queue_empty_;
+    mutable std::mutex queue_mutex_;
+    std::atomic<bool> queue_empty_;
     std::queue<T> internal_queue_;
 };
 
