@@ -109,7 +109,8 @@ int main(int argc, char* argv[]) {
 
     // Make sure firmware is listening
     {
-        int times = 0;
+        // Start times counter at 1 to prevent false error print (0 % n = 0)
+        int times = 1;
         while (ros::ok() && robot->firmware_version == 0) {
             if (times % 30 == 0)
                 ROS_ERROR("Firmware not reporting its version");
