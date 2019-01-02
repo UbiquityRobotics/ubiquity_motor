@@ -2,6 +2,15 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added firmware loading tool
+* Added misc testing scripts
+* Don't die when communication not working, only print error
+* Use std mutex/atomic instead of boost
+* Reduce print level on integral/pid limits
+* Contributors: Rohan Agrawal
+
 0.7.1 (2018-06-16)
 ------------------
 * new pid params
