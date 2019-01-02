@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.0 (2019-01-01)
+------------------
 * Added firmware loading tool
 * Added misc testing scripts
 * Don't die when communication not working, only print error
