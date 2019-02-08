@@ -59,8 +59,12 @@ public:
     void sendParams();
     void setDeadmanTimer(int32_t deadman);
     void setDebugLeds(bool led1, bool led2);
+    void setHardwareVersion(int32_t hardware_version);
+    void setEstopPidThreshold(int32_t estop_pid_threshold);
 
     int firmware_version;
+    int hardware_version;
+    int estop_pid_threshold;
 
 private:
     void _addOdometryRequest(std::vector<MotorMessage>& commands) const;

@@ -37,6 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef boost::array<uint8_t, 8> RawMotorMessage;
 
+
+// It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
+// In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose
+//
 class MotorMessage {
 public:
     // Using default constructor and destructor
@@ -114,7 +118,10 @@ public:
         REG_LIMIT_REACHED = 0x2C,
         REG_BOTH_ERROR = 0x2D,
         REG_BOTH_ODOM = 0x30,
-        REG_ROBOT_ID = 0x31,
+        REG_ROBOT_ID = 0x31,	    // Indicates 0 for Magni controller or 1 for Loki robot controller as of late 2018
+        REG_MOT_PWR_ACTIVE = 0x32,  // Readback register for host to know if motor controller thinks motor power is active
+        REG_ESTOP_ENABLE = 0x33,    // An override that may be set to 0 to force motor controller firmware to NOT use some ESTOP logic
+        REG_PID_MAX_ERROR = 0x34,   // A value that when non-zero enables motor firmware to limit harsh restarts in position after ESTOP release
 
         DEBUG_50 = 0x50,
         DEBUG_51 = 0x51,

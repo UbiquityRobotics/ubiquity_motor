@@ -113,12 +113,22 @@ int main(int argc, char* argv[]) {
         int times = 1;
         while (ros::ok() && robot->firmware_version == 0) {
             if (times % 30 == 0)
-                ROS_ERROR("Firmware not reporting its version");
+                ROS_ERROR("The Firmware not reporting its version");
                 robot->requestVersion();
             robot->readInputs();
             r.sleep();
             times++;
         }
+    }
+
+    // Tell the controller board firmware what version the hardware is at this time.
+    // TODO: Read from I2C.   At this time we only allow setting the version from ros parameters
+    if (robot->firmware_version >= 32) {
+        ROS_ERROR("DEBUG: Firmware is version %d. Setting Controller board version to %d", 
+            robot->firmware_version, firmware_params.controller_board_version);
+        robot->setHardwareVersion(firmware_params.controller_board_version);
+        ROS_ERROR("DEBUG: Controller board version has been set to %d", 
+            firmware_params.controller_board_version);
     }
 
     ros::Time last_time;

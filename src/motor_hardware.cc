@@ -80,7 +80,9 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_pid_params.pid_denominator = -1;
     prev_pid_params.pid_moving_buffer_size = -1;
     prev_pid_params.deadman_timer = -1;
+    prev_pid_params.estop_pid_threshold = -1;
 
+    hardware_version = 0;
     firmware_version = 0;
 }
 
@@ -202,6 +204,31 @@ void MotorHardware::requestVersion() {
     motor_serial_->transmitCommand(version);
 }
 
+
+// Due to greatly limited pins on the firmware processor the host figures out the hardware rev and sends it to fw
+// The hardware version is 0x0000MMmm  where MM is major rev like 4 and mm is minor rev like 9 for first units.
+// The 1st firmware version this is set for is 32, before it was always 1
+void MotorHardware::setHardwareVersion(int32_t hardware_version) {
+    ROS_ERROR("setting hardware_version to %x", (int)hardware_version);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_HARDWARE_VERSION);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(hardware_version);
+    motor_serial_->transmitCommand(mm);
+}
+
+// Setup the controller board threshold to put into force estop protection on boards prior to rev 5.0 with hardware support
+void MotorHardware::setEstopPidThreshold(int32_t estop_pid_threshold) {
+    ROS_ERROR("setting Estop PID threshold to %x", (int)estop_pid_threshold);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_PID_MAX_ERROR);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(estop_pid_threshold);
+    motor_serial_->transmitCommand(mm);
+}
+
+
+
 void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
     ROS_ERROR("setting deadman to %d", (int)deadman_timer);
     MotorMessage mm;
@@ -217,6 +244,8 @@ void MotorHardware::setParams(FirmwareParams fp) {
     pid_params.pid_derivative = fp.pid_derivative;
     pid_params.pid_denominator = fp.pid_denominator;
     pid_params.pid_moving_buffer_size = fp.pid_moving_buffer_size;
+    pid_params.pid_denominator = fp.pid_denominator;
+    pid_params.estop_pid_threshold = fp.estop_pid_threshold;
 }
 
 void MotorHardware::sendParams() {
@@ -226,7 +255,7 @@ void MotorHardware::sendParams() {
     //(int)p_value, (int)i_value, (int)d_value, (int)denominator_value);
 
     // Only send one register at a time to avoid overwhelming serial comms
-    int cycle = (sendPid_count++) % 5;
+    int cycle = (sendPid_count++) % 6;
 
     if (cycle == 0 &&
         pid_params.pid_proportional != prev_pid_params.pid_proportional) {
@@ -282,6 +311,17 @@ void MotorHardware::sendParams() {
         winsize.setType(MotorMessage::TYPE_WRITE);
         winsize.setData(pid_params.pid_moving_buffer_size);
         commands.push_back(winsize);
+    }
+
+    if (cycle == 5 &&
+        pid_params.estop_pid_threshold != prev_pid_params.estop_pid_threshold) {
+        ROS_WARN("Setting estop pid threshold to %d", pid_params.estop_pid_threshold);
+        prev_pid_params.estop_pid_threshold = pid_params.estop_pid_threshold;
+        MotorMessage estop_pid_thresh;
+        estop_pid_thresh.setRegister(MotorMessage::REG_PID_MAX_ERROR);
+        estop_pid_thresh.setType(MotorMessage::TYPE_WRITE);
+        estop_pid_thresh.setData(pid_params.estop_pid_threshold);
+        commands.push_back(estop_pid_thresh);
     }
 
     if (commands.size() != 0) {
