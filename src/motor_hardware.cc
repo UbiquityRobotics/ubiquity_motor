@@ -79,8 +79,13 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_pid_params.pid_derivative = -1;
     prev_pid_params.pid_denominator = -1;
     prev_pid_params.pid_moving_buffer_size = -1;
+    prev_pid_params.max_speed_fwd = -1;
+    prev_pid_params.max_speed_rev = -1;
+    prev_pid_params.max_pwm = -1;
     prev_pid_params.deadman_timer = -1;
+    prev_pid_params.controller_board_version = -1;
     prev_pid_params.estop_pid_threshold = -1;
+    prev_pid_params.estop_enable = -1;
 
     hardware_version = 0;
     firmware_version = 0;
@@ -255,7 +260,8 @@ void MotorHardware::sendParams() {
     //(int)p_value, (int)i_value, (int)d_value, (int)denominator_value);
 
     // Only send one register at a time to avoid overwhelming serial comms
-    int cycle = (sendPid_count++) % 6;
+    // SUPPORT NOTE!  Adjust modulo for cycle and be sure no duplicate modulos are used!
+    int cycle = (sendPid_count++) % 10;
 
     if (cycle == 0 &&
         pid_params.pid_proportional != prev_pid_params.pid_proportional) {
@@ -313,16 +319,58 @@ void MotorHardware::sendParams() {
         commands.push_back(winsize);
     }
 
-    if (cycle == 5 &&
-        pid_params.estop_pid_threshold != prev_pid_params.estop_pid_threshold) {
+    if (cycle == 5 && pid_params.max_pwm != prev_pid_params.max_pwm) {
+        ROS_WARN("Setting max firmware PWM to %d", pid_params.max_pwm);
+        prev_pid_params.max_pwm = pid_params.max_pwm;
+        MotorMessage setFwParamMessage;
+        setFwParamMessage.setRegister(MotorMessage::REG_MAX_PWM);
+        setFwParamMessage.setType(MotorMessage::TYPE_WRITE);
+        setFwParamMessage.setData(pid_params.max_pwm);
+        commands.push_back(setFwParamMessage);
+    }
+
+    if (cycle == 6 && pid_params.max_speed_fwd != prev_pid_params.max_speed_fwd) {
+        ROS_WARN("Setting max firmware forward speed to %d", pid_params.max_speed_fwd);
+        prev_pid_params.max_speed_fwd = pid_params.max_speed_fwd;
+        MotorMessage setFwParamMessage;
+        setFwParamMessage.setRegister(MotorMessage::REG_MAX_SPEED_FWD);
+        setFwParamMessage.setType(MotorMessage::TYPE_WRITE);
+        setFwParamMessage.setData(pid_params.max_speed_fwd);
+        commands.push_back(setFwParamMessage);
+    }
+
+    if (cycle == 7 && pid_params.max_speed_rev != prev_pid_params.max_speed_rev) {
+        ROS_WARN("Setting max firmware reverse speed to %d", pid_params.max_speed_rev);
+        prev_pid_params.max_speed_rev = pid_params.max_speed_rev;
+        MotorMessage setFwParamMessage;
+        setFwParamMessage.setRegister(MotorMessage::REG_MAX_SPEED_REV);
+        setFwParamMessage.setType(MotorMessage::TYPE_WRITE);
+        setFwParamMessage.setData(pid_params.max_speed_rev);
+        commands.push_back(setFwParamMessage);
+    }
+
+    if (cycle == 8 && pid_params.estop_pid_threshold != prev_pid_params.estop_pid_threshold) {
         ROS_WARN("Setting estop pid threshold to %d", pid_params.estop_pid_threshold);
         prev_pid_params.estop_pid_threshold = pid_params.estop_pid_threshold;
-        MotorMessage estop_pid_thresh;
-        estop_pid_thresh.setRegister(MotorMessage::REG_PID_MAX_ERROR);
-        estop_pid_thresh.setType(MotorMessage::TYPE_WRITE);
-        estop_pid_thresh.setData(pid_params.estop_pid_threshold);
-        commands.push_back(estop_pid_thresh);
+        MotorMessage setFwParamMessage;
+        setFwParamMessage.setRegister(MotorMessage::REG_PID_MAX_ERROR);
+        setFwParamMessage.setType(MotorMessage::TYPE_WRITE);
+        setFwParamMessage.setData(pid_params.estop_pid_threshold);
+        commands.push_back(setFwParamMessage);
     }
+
+    if (cycle == 9 &&
+        pid_params.estop_enable != prev_pid_params.estop_enable) {
+        ROS_WARN("Setting estop enable to %d", pid_params.estop_enable);
+        prev_pid_params.estop_enable = pid_params.estop_enable;
+        MotorMessage setFwParamMessage;
+        setFwParamMessage.setRegister(MotorMessage::REG_ESTOP_ENABLE);
+        setFwParamMessage.setType(MotorMessage::TYPE_WRITE);
+        setFwParamMessage.setData(pid_params.estop_enable);
+        commands.push_back(setFwParamMessage);
+    }
+
+    // SUPPORT NOTE!  Adjust modulo for cycle and be sure no duplicate modulos are used!
 
     if (commands.size() != 0) {
         motor_serial_->transmitCommands(commands);

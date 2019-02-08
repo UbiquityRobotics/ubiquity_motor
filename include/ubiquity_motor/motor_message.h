@@ -119,9 +119,14 @@ public:
         REG_BOTH_ERROR = 0x2D,
         REG_BOTH_ODOM = 0x30,
         REG_ROBOT_ID = 0x31,	    // Indicates 0 for Magni controller or 1 for Loki robot controller as of late 2018
+
         REG_MOT_PWR_ACTIVE = 0x32,  // Readback register for host to know if motor controller thinks motor power is active
         REG_ESTOP_ENABLE = 0x33,    // An override that may be set to 0 to force motor controller firmware to NOT use some ESTOP logic
         REG_PID_MAX_ERROR = 0x34,   // A value that when non-zero enables motor firmware to limit harsh restarts in position after ESTOP release
+
+        REG_MAX_SPEED_FWD = 0x35,   // Max forward speed cap in a speed message 
+        REG_MAX_SPEED_REV = 0x36,   // Max reverse speed cap in a speed message  (This is negative)
+        REG_MAX_PWM       = 0x37,   // A value that when non-zero enables motor firmware to limit harsh restarts in position after ESTOP release
 
         DEBUG_50 = 0x50,
         DEBUG_51 = 0x51,
