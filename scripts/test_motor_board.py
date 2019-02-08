@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/pythmn -u
 
 #
 # Command control direct to Ubiquity Robotics Magni Controller Board
@@ -8,10 +8,8 @@
 # The idea started as a simple serial controller to do basic tests.
 #
 # Usage:
-# Verify that serialDev is set for default Magni com port of /dev/ttyAMA0
-# or some other serial port if you are using a non-standard configuration.
-# Stop the ROS magni control using:  sudo systemctl stop    magni-base
-# sudo python magni_cmd.py     # User needs permission for serial port
+# Stop the ROS magni control using:  sudo systemctl stop magni-base
+# sudo python magni_cmd.py    # OPTIONALLY add --dev /dev/ttyUSB0 for other port
 # Enter single keys followed by return to change speeds.   
 # Example:  enter '1' for slow speed then enter 3 and speed goes to 3
 # Change speeds like this and when done enter 'e' for exit or 's' for stop.
@@ -43,8 +41,10 @@ import string
 import thread
 
 # simple version string
-g_version = "20180812"
+g_version = "20190201"
 
+# default serial device.  An  adapter in USB is often  '/dev/ttyUSB0'
+g_serialDev = '/dev/ttyAMA0' 
 
 # This debug flag if set True enables prints and so on but cannot be used in production
 g_debug = False
@@ -76,6 +76,25 @@ def calcPacketCksum(msgBytes):
         idx = idx + 1
     cksum = 0xff - (cksum & 0xff)
     return cksum
+
+# Form a bytearray holding the LSB for a parameter set message to a given register
+def formMagniParamSetMessage(registerNumber, paramValue):
+    # Start with  a general message 
+    paramSetCmd = [ 0x7e, 0x3b, 0x32, 0, 0, 0, 0 ]
+   
+    # fill in the register number
+    #paramSetCmd[2] = int(registerNumber) & int(0xff)
+    paramSetCmd[2] = registerNumber
+
+    # fill in the least significant byte of the 32 bit value in the message
+    msByte =  (int(paramValue)/int(256))
+    paramSetCmd[5] = msByte & 0xff
+    paramSetCmd[6] = int(paramValue) & 0xff
+
+    # print("formMsg5 ", int(paramSetCmd[5]), " and lsb ", int(paramSetCmd[6]))
+    pktCksum = calcPacketCksum(paramSetCmd)
+    paramSetCmd.append(pktCksum)
+    return paramSetCmd
 
 # Form a bytearray holding a speed message with the left and right speed values
 # This routine only handles -254 to 255 speeds but that is generally quite alright
@@ -124,22 +143,137 @@ def stopMotors():
     ser.write(cmdPacket)
     return 0
 
+# Fetch a single byte from the fixed length reply for a parameter fetch of a given type
+def fetchReplyByte(ser, cmdHex, regHex):
+    # get each byte of the reply and wait for the reply we need (totally nasty! why all the junk?)
+    # The Magni controller 'spews' forth loads of status all the time.  VERY MESSY!
+    # We just read it all and search for the packet we need that starts with hex  7e 3c 22
+    time.sleep(0.02)
+    charsRead = 0
+    charState = 0
+    replyByte = '00'
+    read_byte = ser.read()
+    while read_byte is not None:
+        charsRead += 1
+        if (charsRead > 80):
+            print("fetchReplyByte: Too many reply chars ")
+            break
+        hexData = read_byte.encode('hex')
+        # print("char: ",hexData)
+        if (charState == 6):
+            replyByte = hexData
+            break
+        if (charState == 5):
+            charState += 1
+        if (charState == 4):
+            charState += 1
+        if (charState == 3):
+            charState += 1
+        if (charState == 2):
+            if (hexData ==  regHex):
+                charState += 1
+            else:
+                charState = 0     # if we are not on the packet we want reset the state
+        if (charState == 1):
+            if (hexData ==  cmdHex):
+                charState += 1
+            else:
+                charState = 0     # if we are not on the packet we want reset the state
+        if (charState == 0) and (hexData == '7e'):
+            charState += 1
+        read_byte = ser.read()
+    return replyByte
+
+
+# Fetch a 16 bit value from the fixed length reply for a parameter fetch of a given type
+def fetchReplyWord(ser, cmdHex, regHex):
+    # get each byte of the reply and wait for the reply we need (totally nasty! why all the junk?)
+    # The Magni controller 'spews' forth loads of status all the time.  VERY MESSY!
+    # We just read it all and search for the packet we need that starts with hex  7e 3c 22
+    time.sleep(0.02)
+    charsRead = 0
+    charState = 0
+    replyMsb  = '00'
+    replyWord = '0000'
+    read_byte = ser.read()
+    while read_byte is not None:
+        charsRead += 1
+        if (charsRead > 80):
+            print("fetchReplyWord: Too many reply chars ")
+            break
+        hexData = read_byte.encode('hex')
+        # print("char: ",hexData)
+        if (charState == 6):
+            replyWord = replyMsb + hexData
+            break
+        if (charState == 5):
+            replyMsb = hexData
+            charState += 1
+        if (charState == 4):
+            charState += 1
+        if (charState == 3):
+            charState += 1
+        if (charState == 2):
+            # if (hexData ==  int(regDec,16)):
+            if (hexData ==  regHex):
+                charState += 1
+            else:
+                charState = 0     # if we are not on the packet we want reset the state
+        if (charState == 1):
+            if (hexData ==  cmdHex):
+                charState += 1
+            else:
+                charState = 0     # if we are not on the packet we want reset the state
+        if (charState == 0) and (hexData == '7e'):
+            charState += 1
+        read_byte = ser.read()
+    return replyWord
+
+
+# utility to set right and left wheel speeds then exit when key is hit
+def setSpeedTillKeypress(ser, speed1, speed2):
+    intKeys = []
+    thread.start_new_thread(keyboard_thread, (intKeys,))
+    while not intKeys:
+        cmdPacket = formMagniSpeedMessage(speed1, speed2)
+        ser.write(cmdPacket)
+        time.sleep(0.02)
+    logAlways("Finished with run command")
+    cmdPacket = formMagniSpeedMessage(0, 0)
+    ser.write(cmdPacket)
+    keyInput = intKeys[0]
+    return keyInput
+
+def showHelp():
+    logAlways("ONLY USE THIS LOW LEVEL UTILITY WITH EXPLICIT HELP FROM Ubiquity Robotics SUPPORT!")
+    logAlways("ONLY RUN WHEN MAGNI IS STOPPED!. Use  sudo systemctl stop magni-base.service")
+    logAlways("Commands: h or ? for help.  v for versions of firmware and hardware. Use Control-C to quit or E")
+    logAlways("Speeds:   Enter 0 - 9 fwd speed. n,N slow/fast reverse. s for 'any speed' or c cycle last fwd/reverse")
+    logAlways("  q  - Query a word value from any register. Register value entered as 2 char hex digit")
+    logAlways("  S  - Set a word value from for any register.   Enter reg as hex and value as decimal")
+    logAlways("  21 = Hardware Rev (50 = 5.0)                   22 = Firmware version")
+    logAlways("  32 = Query if firmware thinks motors active    33 = Set to 1 to enable any exit of ESTOP feature")
+    logAlways("  34 = Set to max PID threshold where pre rev 5.0 boards did a safer ESTOP release. 0 to disable")
+    logAlways("  35 = Set to the max forward limit speed        36 - Set to a max negative reverse limit speed")
+    logAlways("  37 = Set max PWM setting [250]         ")
+    return 0
+
+
 class serCommander():
     def __init__(self):
+        global g_serialDev
         intKeys = []
         keyBuf  = []
 
-        # Setup serial port for default Magni of ttyAMA0 or other serial port
-        # serialDev = '/dev/ttyUSB0'
-        serialDev = '/dev/ttyAMA0'
+        serialDev = g_serialDev
         
         # The bits we see here are placed in globals by notification callback
 
         nextInput=''
         lastSpeed=0
         lastNegativeSpeed=0
-        cycleOnPeriod=50        # cycles of constant running or time motor is ON for cycle test
-        cycleOffPeriod=50       # cycles of stopped running or time motor is OFF for cycle test
+        cycleOnPeriod=40        # cycles of constant running or time motor is ON for cycle test
+        cycleOffPeriod=40       # cycles of stopped running or time motor is OFF for cycle test
 
         # start thread to pick up keyboard presses
         intKeys = []
@@ -152,21 +286,33 @@ class serCommander():
 
         # First USB serial port (safer for reasons of static and power blowouts
         print("Start Serial port using device ", serialDev)
-        ser = serial.Serial(serialDev, 38400, 8, 'N', 1, timeout=1)
-        logAlways("Serial port started")
+        try:
+            ser = serial.Serial(serialDev, 38400, 8, 'N', 1, timeout=1)
+        except Exception:
+            logAlways("Unable to open serial port. Verify correct port was specified")
+            exit()
+
+        logAlways("Serial port opened")
 
         # always set speed to zero at the start to initialize motor controller zero point
         logAlways("Set motors to run at 0.0 MPs")
         lastSpeed = 0
         cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-        ser.write(cmdPacket)
+
+        try:
+            ser.write(cmdPacket)
+        except Exception:
+            logAlways("Unable to properly send the command to Magni. This pregram canno run with Magni running.")
+            logAlways("Did you stop main software using   sudo systemctl stop magni-base.service")
+            exit()
+
         time.sleep(0.05)
         logAlways("Finished with run command")
 
+        showHelp()
+
         try:
           while True :
-            logAlways("Run Commands:    0 thru 9, s   Single number then enter for new speed each time")
-            logAlways("Single Commands: q=quit e=exit c=crawl  i=forward  f=fast   These do just one cmd then stop")
 
             # clear out interrupt keys if any are present
             intKeys = []
@@ -181,164 +327,75 @@ class serCommander():
             # Python 3 users
             # input = input(">> ")
 
+            if input == 'h':
+                showHelp()
+            if input == '?':
+                showHelp()
+
             if input == '0':
                 logAlways("Run at 0.0 MPs till a key is pressed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
                 lastSpeed = 0
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '1':
                 logAlways("Run at 0.1 MPs till a key is pressed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
                 lastSpeed = 5
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '2':
                 logAlways("Run at 0.2 MPs till a key is pressed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
                 lastSpeed = 16
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '3':
                 logAlways("Run at 0.3 MPs till a key is pressed")
                 lastSpeed = 24 
-                # DEBUG: We want this to work but it cannot do the send so ... debug later
-                # intKeys = runTillKeypress(lastSpeed)
-                # nextInput = intKeys[0]
-                thread.start_new_thread(keyboard_thread, (intKeys,))
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '4':
                 logAlways("Run at 0.4 MPs till a key is pressed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
                 lastSpeed = 32
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '5':
                 logAlways("Run at 0.5 MPs till a key is pressed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
                 lastSpeed = 40
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.03)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '6':
                 logAlways("Run at 0.65 MPS or 1 rev per second")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
-                lastSpeed = 51
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.03)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                lastSpeed = 48
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '7':
                 logAlways("Run at 0.5 MPs till a key is pressed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
                 lastSpeed = 56
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.03)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '8':
                 logAlways("Run at 0.5 MPs till a key is pressed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
                 lastSpeed = 64
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.04)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '9':
                 logAlways("Run FAST till a key is pressed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
-                lastSpeed = 90
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.04)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                lastSpeed = 72
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
+
+            if input == 's':
+                logAlways("Set speed to any value")
+                lastSpeed = int(raw_input("Enter peed value 0-255 max integer: "))
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == 'n':
-                lastNegativeSpeed = -16
                 logAlways("Run reverse using slow negative speed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastNegativeSpeed, lastNegativeSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                lastNegativeSpeed = -16
+                nextInput = setSpeedTillKeypress(ser, lastNegativeSpeed, lastNegativeSpeed)
 
             if input == 'N':
-                lastNegativeSpeed = -60
                 logAlways("Run reverse using fast negative speed")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastNegativeSpeed, lastNegativeSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                lastNegativeSpeed = -95
+                nextInput = setSpeedTillKeypress(ser, lastNegativeSpeed, lastNegativeSpeed)
 
             if input == 'c':          # Cycle from stop to last speed that was set over and over
                 logAlways("Cycle between last speed that was set to zero and back over and over")
@@ -363,109 +420,116 @@ class serCommander():
                 ser.write(cmdPacket)
                 nextInput = intKeys[0]
 
+            if input == 'B':
+                cmdPacket = formMagniParamSetMessage(0x21, 50)
+                ser.write(cmdPacket)
+                logAlways("Forced Board Revision to rev 5.0")
+                time.sleep(0.02)
+
+            if input == 'b':
+                cmdPacket = formMagniParamSetMessage(0x21, 49)
+                ser.write(cmdPacket)
+                logAlways("Forced Board Revision to rev 4.9")
+                time.sleep(0.02)
+
+            if input == 'E':  # Enable ESET stop speed feature in firmware
+                logAlways("Enable firmware ESET stop safety feature")
+                queryBytes = [ 0x7e, 0x3a, 0x33, 0, 0, 0, 0 ]
+                pktCksum = calcPacketCksum(queryBytes)
+                queryBytes.append(pktCksum)
+                ser.flushInput()
+                ser.write(queryBytes)
+                estopEnableState = fetchReplyByte(ser, '3c', '33')
+                print("Prior ESTOP enable setting was ", estopEnableState)
+                time.sleep(0.02)
+                cmdPacket = formMagniParamSetMessage(0x33, 1)
+                ser.write(cmdPacket)
+                logAlways("Enabled firmware ESET stop safety feature")
+
+            if input == 'i':
+                logAlways("Fetch Robot type ID")
+                queryBytes = [ 0x7e, 0x3a, 0x31, 0, 0, 0, 0 ]
+                pktCksum = calcPacketCksum(queryBytes)
+                queryBytes.append(pktCksum)
+                ser.flushInput()
+                ser.write(queryBytes)
+                robotTypeId = fetchReplyByte(ser, '3c', '31')
+                print("Robot type ID is ", robotTypeId)
+                time.sleep(0.02)
+
             if input == 'l':
                 logAlways("Rotate left ")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(6, 15)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                rightSpeed = 6
+                leftSpeed  = 15
+                nextInput = setSpeedTillKeypress(ser, rightSpeed, leftSpeed)
+
+            if input == 'm':
+                logAlways("Fetch motor controller motor power state")
+                queryBytes = [ 0x7e, 0x3a, 0x32, 0, 0, 0, 0 ]
+                pktCksum = calcPacketCksum(queryBytes)
+                queryBytes.append(pktCksum)
+                ser.flushInput()
+                ser.write(queryBytes)
+                motPowState = fetchReplyByte(ser, '3c', '32')
+                print("Motor controller things motor power state is ", motPowState)
+                time.sleep(0.02)
 
             if input == 'r':
                 logAlways("Rotate right ")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(15, 6)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
+                rightSpeed = 15
+                leftSpeed  = 6
+                nextInput = setSpeedTillKeypress(ser, rightSpeed, leftSpeed)
+
+            if input == 'q':          # query any register to any value
+                logAlways("Query any control register to any value up to one word size")
+                cmdRegAsHex = raw_input("Enter control register number in hex: ")
+                cmdRegNumber = int(cmdRegAsHex,16)
+                queryBytes = [ 0x7e, 0x3a, 0x34, 0, 0, 0, 0 ]
+                queryBytes[2] = cmdRegNumber
+                pktCksum = calcPacketCksum(queryBytes)
+                queryBytes.append(pktCksum)
+                ser.flushInput()
+                ser.write(queryBytes)
+                registerValue = fetchReplyWord(ser, '3c', cmdRegAsHex)
+                print("Register was set to  ", int(registerValue,16), " decimal", registerValue, " hex")
+                time.sleep(0.02)
+
+            if input == 'S':          # Set any register to any value
+                logAlways("Set any control register to any value up to one word size")
+                cmdRegAsHex  = raw_input("Enter control register number in as hex digits:  ")
+                cmdRegValue  = raw_input("Enter control register value to be set in decimal: ")
+                cmdRegNumber = int(cmdRegAsHex,16)
+                cmdPacket = formMagniParamSetMessage(cmdRegNumber, cmdRegValue)
                 ser.write(cmdPacket)
-                nextInput = intKeys[0]
+                time.sleep(0.02)
+                nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
-
-            if input == 's':
-                logAlways("send stop command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-
-            if input == 'e':
+            if input == 'x':
                 logAlways("Exit after sending stop command")
                 cmdPacket = formMagniSpeedMessage(0, 0)
                 ser.write(cmdPacket)
                 exit()
-
-            if input == 'q':
-                logAlways("Exit after sending stop command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                exit()
-
-            if input == 'R':          # Resume to last speed that was set
-                logAlways("Resume to last speed that was set")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
-                while not intKeys:
-                    cmdPacket = formMagniSpeedMessage(lastSpeed, lastSpeed)
-                    ser.write(cmdPacket)
-                    time.sleep(0.02)
-                logAlways("Finished with run command")
-                cmdPacket = formMagniSpeedMessage(0, 0)
-                ser.write(cmdPacket)
-                nextInput = intKeys[0]
 
             if input == 'v':
-                logAlways("Fetch version information")
-                # send query for the version
+                logAlways("Fetch software and hardware version information")
+                # send query for the firmware version
                 queryVersion = [ 0x7e, 0x3a, 0x22, 0, 0, 0, 0 ]
                 pktCksum = calcPacketCksum(queryVersion)
                 queryVersion.append(pktCksum)
-
                 ser.flushInput()
                 ser.write(queryVersion)
-
-                # get each byte of the reply and wait for the reply we need (totally nasty! why all the junk?)
-                # The Magni controller 'spews' forth loads of status all the time.  VERY MESSY!
-                # We just read it all and search for the packet we need that starts with hex  7e 3c 22
+                fwRev = fetchReplyByte(ser, '3c', '22')
+                print("fw rev query returned hex ", fwRev , ", decimal version " , int(fwRev,16))
                 time.sleep(0.02)
-                charsRead = 0
-                charState = 0
-                fwRev = '00'
-                read_byte = ser.read()
-                while read_byte is not None:
-                    charsRead += 1
-                    if (charsRead > 40):
-                        break
-                    hexData = read_byte.encode('hex')
-                    # print("char: ",hexData)
-                    if (charState == 6):
-                        fwRev = hexData
-                        break
-                    if (charState == 5):
-                        charState += 1
-                    if (charState == 4):
-                        charState += 1
-                    if (charState == 3):
-                        charState += 1
-                    if (charState == 2):
-                        if (hexData == '22'):
-                            charState += 1
-                        else:
-                            charState = 0     # if we are not on the packet we want reset the state
-                    if (charState == 1):
-                        if (hexData == '3c'):
-                            charState += 1
-                        else:
-                            charState = 0     # if we are not on the packet we want reset the state
-                    if (charState == 0) and (hexData == '7e'):
-                        charState += 1
-                    read_byte = ser.read()
-
-                print("fw rev query returned hex ", fwRev)
-
+                # send query for the controller board hardware version
+                queryVersion = [ 0x7e, 0x3a, 0x21, 0, 0, 0, 0 ]
+                pktCksum = calcPacketCksum(queryVersion)
+                queryVersion.append(pktCksum)
+                ser.flushInput()
+                ser.write(queryVersion)
+                fwRev = fetchReplyByte(ser, '3c', '21')
+                boardRev = int(fwRev,16) / 10.0
+                print("hw rev query returned hex ", fwRev , " or board rev of ", boardRev)
                 time.sleep(0.02)
 
         except RuntimeError,e: 
@@ -478,10 +542,16 @@ class serCommander():
           time.sleep(0.05)
         except Exception:
           logAlways("magni_cmd terminated.")
+          logAlways("NOTE: Program requires prior use of:  sudo systemctl stop magni-base")
 
 
 if __name__ == '__main__':
     print("Running with version: " + g_version)
+   
+    if str(len(sys.argv)) == "3":
+        if str(sys.argv[1]) == "--dev":
+            g_serialDev = str(sys.argv[2])
+            print("Using serial device file: " + g_serialDev)
  
     try:
         serCommander()
