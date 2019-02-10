@@ -100,6 +100,7 @@ public:
 
     int firmware_version;
 
+    diagnostic_updater::Updater diag_updater;
 private:
     void _addOdometryRequest(std::vector<MotorMessage>& commands) const;
     void _addVelocityRequest(std::vector<MotorMessage>& commands) const;
@@ -134,7 +135,6 @@ private:
     MotorSerial* motor_serial_;
 
     MotorDiagnostics motor_diag_;
-    diagnostic_updater::Updater updater;
 
     FRIEND_TEST(MotorHardwareTests, nonZeroWriteSpeedsOutputs);
     FRIEND_TEST(MotorHardwareTests, odomUpdatesPosition);

@@ -82,6 +82,11 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_pid_params.deadman_timer = -1;
 
     firmware_version = 0;
+
+    diag_updater.setHardwareID("Motor Controller");
+    diag_updater.add("Firmware", &motor_diag_, &MotorDiagnostics::firmware_status);
+    diag_updater.add("Limits", &motor_diag_, &MotorDiagnostics::limit_status);
+    diag_updater.add("Battery", &motor_diag_, &MotorDiagnostics::battery_status);
 }
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
@@ -338,11 +343,15 @@ using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_msgs::DiagnosticStatus;
 
 void MotorDiagnostics::firmware_status(DiagnosticStatusWrapper &stat) {
+    stat.add("Firmware Version", firmware_version);
     if (firmware_version == 0) {
         stat.summary(DiagnosticStatus::ERROR, "No firmware version reported");
-    } else if (firmware_version < 30) {
+    }
+    else if (firmware_version < 30) {
         stat.summary(DiagnosticStatus::WARN, "Firmware is older than reccomended");
-        stat.add("Firmware Version", firmware_version);
+    }
+    else {
+        stat.summary(DiagnosticStatus::OK, "Firmware version is OK");
     }
 }
 
