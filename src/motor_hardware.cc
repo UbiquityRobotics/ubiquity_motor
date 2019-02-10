@@ -106,6 +106,7 @@ void MotorHardware::readInputs() {
                     } else {
                         ROS_INFO("Firmware version %d", mm.getData());
                         firmware_version = mm.getData();
+			motor_diag_.firmware_version = firmware_version;
                     }
                     break;
 
@@ -118,6 +119,8 @@ void MotorHardware::readInputs() {
 
                     joints_[0].position += (odomLeft / TICS_PER_RADIAN);
                     joints_[1].position += (odomRight / TICS_PER_RADIAN);
+
+		    motor_diag_.odom_update_status.tick(); // Let diag know we got odom
                     break;
                 }
                 case MotorMessage::REG_BOTH_ERROR: {
@@ -138,15 +141,19 @@ void MotorHardware::readInputs() {
 
                     if (data & MotorMessage::LIM_M1_PWM) {
                         ROS_WARN("left PWM limit reached");
+		    	motor_diag_.left_pwm_limit = true; 
                     }
                     if (data & MotorMessage::LIM_M2_PWM) {
                         ROS_WARN("right PWM limit reached");
+		    	motor_diag_.right_pwm_limit = true; 
                     }
                     if (data & MotorMessage::LIM_M1_INTEGRAL) {
                         ROS_DEBUG("left Integral limit reached");
+		    	motor_diag_.left_integral_limit = true; 
                     }
                     if (data & MotorMessage::LIM_M2_INTEGRAL) {
                         ROS_DEBUG("right Integral limit reached");
+		    	motor_diag_.right_integral_limit = true; 
                     }
                     break;
                 }
@@ -164,6 +171,8 @@ void MotorHardware::readInputs() {
                     bstate.power_supply_health = sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
                     bstate.power_supply_technology = sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
                     battery_state.publish(bstate);
+
+		    motor_diag_.battery_voltage = bstate.voltage; 
                     break;
                 }
                 default:

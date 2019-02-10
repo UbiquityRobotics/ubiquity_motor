@@ -41,10 +41,44 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "std_msgs/UInt32.h"
 #include "sensor_msgs/BatteryState.h"
 
+#include <diagnostic_updater/update_functions.h>
+
 #include <ubiquity_motor/motor_parmeters.h>
 #include <ubiquity_motor/motor_serial.h>
 
 #include <gtest/gtest_prod.h>
+
+struct MotorDiagnostics {
+    MotorDiagnostics()
+        : odom_update_status(
+              diagnostic_updater::FrequencyStatusParam(&odom_min_freq, &odom_max_freq)) {}
+    // Communication Statuses
+    int firmware_version = 0;
+   
+    double odom_max_freq = 1000;
+    double odom_min_freq = 50;
+    diagnostic_updater::FrequencyStatus odom_update_status;
+
+    // Limits
+    bool left_pwm_limit = false;
+    bool right_pwm_limit = false;
+    bool left_integral_limit = false;
+    bool right_integral_limit = false;
+
+    // Power supply statuses
+    float battery_voltage = 0.0;
+    /* For later implementation (firmware support)
+    bool  main_5V_error = false;
+    bool  main_5V_ol = false;
+    bool  main_12V_error = false;
+    bool  main_12V_ol = false;
+    bool  aux_5V_error = false;
+    bool  aux_5V_ol = false;
+    bool  aux_12V_error = false;
+    bool  aux_12V_ol = false;
+    */
+
+};
 
 class MotorHardware : public hardware_interface::RobotHW {
 public:
@@ -94,6 +128,8 @@ private:
     ros::Publisher battery_state;
 
     MotorSerial* motor_serial_;
+
+    MotorDiagnostics motor_diag_;
 
     FRIEND_TEST(MotorHardwareTests, nonZeroWriteSpeedsOutputs);
     FRIEND_TEST(MotorHardwareTests, odomUpdatesPosition);
