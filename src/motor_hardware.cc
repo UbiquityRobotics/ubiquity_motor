@@ -359,15 +359,19 @@ void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
     stat.summary(DiagnosticStatus::OK, "Limits reached:");
     if (left_pwm_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::ERROR, " left pwm,");
+	left_pwm_limit = false;
     }
     if (right_pwm_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::ERROR, " right pwm,");
+	right_pwm_limit = false;
     }
     if (left_integral_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " left integral,");
+	left_integral_limit = false;
     }
     if (right_integral_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " right integral,");
+	right_integral_limit = false;
     }
 }
 
