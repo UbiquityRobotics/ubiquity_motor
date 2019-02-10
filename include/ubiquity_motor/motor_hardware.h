@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "sensor_msgs/BatteryState.h"
 
 #include <diagnostic_updater/update_functions.h>
+#include <diagnostic_updater/diagnostic_updater.h>
 
 #include <ubiquity_motor/motor_parmeters.h>
 #include <ubiquity_motor/motor_serial.h>
@@ -78,6 +79,9 @@ struct MotorDiagnostics {
     bool  aux_12V_ol = false;
     */
 
+    void firmware_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void limit_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void battery_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
 };
 
 class MotorHardware : public hardware_interface::RobotHW {
@@ -130,6 +134,7 @@ private:
     MotorSerial* motor_serial_;
 
     MotorDiagnostics motor_diag_;
+    diagnostic_updater::Updater updater;
 
     FRIEND_TEST(MotorHardwareTests, nonZeroWriteSpeedsOutputs);
     FRIEND_TEST(MotorHardwareTests, odomUpdatesPosition);

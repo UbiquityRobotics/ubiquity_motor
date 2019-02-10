@@ -332,3 +332,46 @@ int16_t MotorHardware::calculateTicsFromRadians(double radians) const {
 double MotorHardware::calculateRadiansFromTics(int16_t tics) const {
     return (tics * VELOCITY_READ_PER_SECOND / QTICS_PER_RADIAN);
 }
+
+// Diagnostics Status Updater Functions
+using diagnostic_updater::DiagnosticStatusWrapper;
+using diagnostic_msgs::DiagnosticStatus;
+
+void MotorDiagnostics::firmware_status(DiagnosticStatusWrapper &stat) {
+    if (firmware_version == 0) {
+        stat.summary(DiagnosticStatus::ERROR, "No firmware version reported");
+    } else if (firmware_version < 30) {
+        stat.summary(DiagnosticStatus::WARN, "Firmware is older than reccomended");
+        stat.add("Firmware Version", firmware_version);
+    }
+}
+
+void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
+    stat.summary(DiagnosticStatus::OK, "Limits reached:");
+    if (left_pwm_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::ERROR, " left pwm,");
+    }
+    if (right_pwm_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::ERROR, " right pwm,");
+    }
+    if (left_integral_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::WARN, " left integral,");
+    }
+    if (right_integral_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::WARN, " right integral,");
+    }
+}
+
+void MotorDiagnostics::battery_status(DiagnosticStatusWrapper &stat) {
+    stat.add("Battery Voltage", battery_voltage);
+    if (battery_voltage < 22.5) {
+        stat.summary(DiagnosticStatusWrapper::WARN, "Battery low");
+    } 
+    else if (battery_voltage < 21.0) {
+        stat.summary(DiagnosticStatusWrapper::ERROR, "Battery critical");
+    }
+    else {
+        stat.summary(DiagnosticStatusWrapper::OK, "Battery OK");
+    }
+}
+
