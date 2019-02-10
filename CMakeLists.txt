@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 	serial 
 	hardware_interface 
 	controller_manager
+	diagnostic_updater
 	dynamic_reconfigure)
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS
