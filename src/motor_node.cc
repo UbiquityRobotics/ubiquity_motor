@@ -109,6 +109,7 @@ int main(int argc, char* argv[]) {
 
     // Make sure firmware is listening
     {
+        robot->diag_updater.broadcast(0, "Establishing communication with motors");
         // Start times counter at 1 to prevent false error print (0 % n = 0)
         int times = 1;
         while (ros::ok() && robot->firmware_version == 0) {
@@ -153,6 +154,7 @@ int main(int argc, char* argv[]) {
         robot->sendParams();
         robot->writeSpeeds();
 
+        robot->diag_updater.update();
         r.sleep();
     }
 
