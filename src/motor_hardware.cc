@@ -84,8 +84,11 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_pid_params.max_pwm = -1;
     prev_pid_params.deadman_timer = -1;
     prev_pid_params.controller_board_version = -1;
-    prev_pid_params.estop_pid_threshold = -1;
     prev_pid_params.estop_enable = -1;
+    prev_pid_params.estop_pid_threshold = -1;
+    prev_pid_params.max_speed_fwd = -1;
+    prev_pid_params.max_speed_rev = -1;
+    prev_pid_params.max_pwm = -1;
 
     hardware_version = 0;
     firmware_version = 0;
@@ -224,7 +227,7 @@ void MotorHardware::setHardwareVersion(int32_t hardware_version) {
 
 // Setup the controller board threshold to put into force estop protection on boards prior to rev 5.0 with hardware support
 void MotorHardware::setEstopPidThreshold(int32_t estop_pid_threshold) {
-    ROS_ERROR("setting Estop PID threshold to %x", (int)estop_pid_threshold);
+    ROS_ERROR("setting Estop PID threshold to %d", (int)estop_pid_threshold);
     MotorMessage mm;
     mm.setRegister(MotorMessage::REG_PID_MAX_ERROR);
     mm.setType(MotorMessage::TYPE_WRITE);
@@ -232,7 +235,29 @@ void MotorHardware::setEstopPidThreshold(int32_t estop_pid_threshold) {
     motor_serial_->transmitCommand(mm);
 }
 
+// Setup the controller board maximum settable motor speed values in message from host
+void MotorHardware::setMaxSpeeds(int32_t max_speed_fwd, int32_t max_speed_rev) {
+    ROS_ERROR("setting max motor speeds to forward %d and reverse %d", (int)max_speed_fwd, (int)max_speed_rev);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_MAX_SPEED_FWD);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(max_speed_fwd);
+    motor_serial_->transmitCommand(mm);
+    mm.setRegister(MotorMessage::REG_MAX_SPEED_REV);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(max_speed_rev);
+    motor_serial_->transmitCommand(mm);
+}
 
+// Setup the controller board maximum PWM level allowed for a motor
+void MotorHardware::setMaxPwm(int32_t max_pwm) {
+    ROS_ERROR("setting max motor PWM to %x", (int)max_pwm);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_MAX_PWM);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(max_pwm);
+    motor_serial_->transmitCommand(mm);
+}
 
 void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
     ROS_ERROR("setting deadman to %d", (int)deadman_timer);
@@ -319,7 +344,7 @@ void MotorHardware::sendParams() {
         commands.push_back(winsize);
     }
 
-    if (cycle == 5 && pid_params.max_pwm != prev_pid_params.max_pwm) {
+    if (cycle == 5 && (pid_params.max_pwm != prev_pid_params.max_pwm)) {
         ROS_WARN("Setting max firmware PWM to %d", pid_params.max_pwm);
         prev_pid_params.max_pwm = pid_params.max_pwm;
         MotorMessage setFwParamMessage;
@@ -329,7 +354,7 @@ void MotorHardware::sendParams() {
         commands.push_back(setFwParamMessage);
     }
 
-    if (cycle == 6 && pid_params.max_speed_fwd != prev_pid_params.max_speed_fwd) {
+    if (cycle == 6 && (pid_params.max_speed_fwd != prev_pid_params.max_speed_fwd)) {
         ROS_WARN("Setting max firmware forward speed to %d", pid_params.max_speed_fwd);
         prev_pid_params.max_speed_fwd = pid_params.max_speed_fwd;
         MotorMessage setFwParamMessage;
@@ -339,7 +364,7 @@ void MotorHardware::sendParams() {
         commands.push_back(setFwParamMessage);
     }
 
-    if (cycle == 7 && pid_params.max_speed_rev != prev_pid_params.max_speed_rev) {
+    if (cycle == 7 && (pid_params.max_speed_rev != prev_pid_params.max_speed_rev)) {
         ROS_WARN("Setting max firmware reverse speed to %d", pid_params.max_speed_rev);
         prev_pid_params.max_speed_rev = pid_params.max_speed_rev;
         MotorMessage setFwParamMessage;
@@ -349,7 +374,7 @@ void MotorHardware::sendParams() {
         commands.push_back(setFwParamMessage);
     }
 
-    if (cycle == 8 && pid_params.estop_pid_threshold != prev_pid_params.estop_pid_threshold) {
+    if (cycle == 8 && (pid_params.estop_pid_threshold != prev_pid_params.estop_pid_threshold)) {
         ROS_WARN("Setting estop pid threshold to %d", pid_params.estop_pid_threshold);
         prev_pid_params.estop_pid_threshold = pid_params.estop_pid_threshold;
         MotorMessage setFwParamMessage;
@@ -360,7 +385,7 @@ void MotorHardware::sendParams() {
     }
 
     if (cycle == 9 &&
-        pid_params.estop_enable != prev_pid_params.estop_enable) {
+        (pid_params.estop_enable != prev_pid_params.estop_enable)) {
         ROS_WARN("Setting estop enable to %d", pid_params.estop_enable);
         prev_pid_params.estop_enable = pid_params.estop_enable;
         MotorMessage setFwParamMessage;
