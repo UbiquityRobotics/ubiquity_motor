@@ -126,7 +126,7 @@ public:
 
         REG_MAX_SPEED_FWD  = 0x35,  // Max forward speed cap in a speed message 
         REG_MAX_SPEED_REV  = 0x36,  // Max reverse speed cap in a speed message  (This is negative)
-        REG_MAX_PWM        = 0x37,  // A value that when non-zero enables motor firmware to limit harsh restarts in position after ESTOP release
+        REG_MAX_PWM        = 0x37,  // The maximum wheel driver PWM value that will be used on the motor driver
 
         DEBUG_50 = 0x50,
         DEBUG_51 = 0x51,

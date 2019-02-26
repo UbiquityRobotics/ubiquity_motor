@@ -80,8 +80,8 @@ private:
     hardware_interface::JointStateInterface joint_state_interface_;
     hardware_interface::VelocityJointInterface velocity_joint_interface_;
 
-    FirmwareParams pid_params;
-    FirmwareParams prev_pid_params;
+    FirmwareParams fw_params;
+    FirmwareParams prev_fw_params;
 
     int32_t deadman_timer;
 
