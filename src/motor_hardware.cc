@@ -235,14 +235,30 @@ void MotorHardware::setEstopPidThreshold(int32_t estop_pid_threshold) {
     motor_serial_->transmitCommand(mm);
 }
 
-// Setup the controller board maximum settable motor speed values in message from host
-void MotorHardware::setMaxSpeeds(int32_t max_speed_fwd, int32_t max_speed_rev) {
-    ROS_INFO("setting max motor speeds to forward %d and reverse %d", (int)max_speed_fwd, (int)max_speed_rev);
+// Setup the controller board to have estop feature enabled or not
+void MotorHardware::setEstopEnable(int32_t estop_enable) {
+    ROS_INFO("setting estop enable to %x", (int)max_pwm);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_ESTOP_ENABLE);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(estop_enable);
+    motor_serial_->transmitCommand(mm);
+}
+
+// Setup the controller board maximum settable motor forward speed 
+void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
+    ROS_INFO("setting max motor forward speed to %d", (int)max_speed_fwd);
     MotorMessage mm;
     mm.setRegister(MotorMessage::REG_MAX_SPEED_FWD);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(max_speed_fwd);
     motor_serial_->transmitCommand(mm);
+}
+
+// Setup the controller board maximum settable motor reverse speed
+void MotorHardware::setMaxRevSpeed(int32_t max_speed_rev) {
+    ROS_INFO("setting max motor reverse speed to %d", (int)max_speed_rev);
+    MotorMessage mm;
     mm.setRegister(MotorMessage::REG_MAX_SPEED_REV);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(max_speed_rev);
