@@ -84,7 +84,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.max_pwm = -1;
     prev_fw_params.deadman_timer = -1;
     prev_fw_params.controller_board_version = -1;
-    prev_fw_params.estop_enable = -1;
+    prev_fw_params.estop_detection = -1;
     prev_fw_params.estop_pid_threshold = -1;
     prev_fw_params.max_speed_fwd = -1;
     prev_fw_params.max_speed_rev = -1;
@@ -235,13 +235,13 @@ void MotorHardware::setEstopPidThreshold(int32_t estop_pid_threshold) {
     motor_serial_->transmitCommand(mm);
 }
 
-// Setup the controller board to have estop feature enabled or not
-void MotorHardware::setEstopEnable(int32_t estop_enable) {
-    ROS_INFO("setting estop enable to %x", (int)max_pwm);
+// Setup the controller board to have estop button state detection feature enabled or not
+void MotorHardware::setEstopDetection(int32_t estop_detection) {
+    ROS_INFO("setting estop button detection to %x", (int)estop_detection);
     MotorMessage mm;
     mm.setRegister(MotorMessage::REG_ESTOP_ENABLE);
     mm.setType(MotorMessage::TYPE_WRITE);
-    mm.setData(estop_enable);
+    mm.setData(estop_detection);
     motor_serial_->transmitCommand(mm);
 }
 

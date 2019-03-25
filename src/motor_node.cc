@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
     // Setup other firmware parameters that could come from ROS parameters
     robot->setEstopPidThreshold(firmware_params.estop_pid_threshold);
     ctrlLoopDelay.sleep();        // Allow controller to process command
-    robot->setEstopEnable(firmware_params.estop_enable);
+    robot->setEstopDetection(firmware_params.estop_detection);
     ctrlLoopDelay.sleep();        // Allow controller to process command
     robot->setMaxFwdSpeed(firmware_params.max_speed_fwd);
     ctrlLoopDelay.sleep();        // Allow controller to process command
@@ -147,7 +147,6 @@ int main(int argc, char* argv[]) {
     ros::Time last_time;
     ros::Time current_time;
     ros::Duration elapsed;
-    last_time = ros::Time::now();
 
     for (int i = 0; i < 5; i++) {
         ctrlLoopDelay.sleep();        // Allow controller to process command
@@ -156,6 +155,12 @@ int main(int argc, char* argv[]) {
     float expectedCycleTime = ctrlLoopDelay.expectedCycleTime().toSec();
     float minCycleTime = 0.75 * expectedCycleTime;
     float maxCycleTime = 1.25 * expectedCycleTime;
+
+    // Clear any commands the robot has at this time
+    robot->clearCommands();
+
+    last_time = ros::Time::now();
+    ROS_WARN("Starting motor control node now");
 
     while (ros::ok()) {
         current_time = ros::Time::now();

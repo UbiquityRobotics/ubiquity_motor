@@ -61,7 +61,7 @@ public:
     void setDebugLeds(bool led1, bool led2);
     void setHardwareVersion(int32_t hardware_version);
     void setEstopPidThreshold(int32_t estop_pid_threshold);
-    void setEstopEnable(int32_t estop_enable);
+    void setEstopDetection(int32_t estop_detection);
     void setMaxFwdSpeed(int32_t max_speed_fwd);
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);

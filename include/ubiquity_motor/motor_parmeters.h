@@ -50,7 +50,7 @@ struct FirmwareParams {
     int32_t pid_denominator;
     int32_t pid_moving_buffer_size;
     int32_t controller_board_version;
-    int32_t estop_enable;
+    int32_t estop_detection;
     int32_t estop_pid_threshold;
     int32_t max_speed_fwd;
     int32_t max_speed_rev;
@@ -66,7 +66,7 @@ struct FirmwareParams {
           pid_denominator(1000),
           pid_moving_buffer_size(10),
           controller_board_version(49),
-          estop_enable(1),
+          estop_detection(1),
           estop_pid_threshold(1500),
           max_speed_fwd(80),
           max_speed_rev(-80),
@@ -82,7 +82,7 @@ struct FirmwareParams {
           pid_denominator(1000),
           pid_moving_buffer_size(10),
           controller_board_version(49),
-          estop_enable(1),
+          estop_detection(1),
           estop_pid_threshold(1500),
           max_speed_fwd(80),
           max_speed_rev(-80),
@@ -104,8 +104,8 @@ struct FirmwareParams {
             nh, "ubiquity_motor/window_size", pid_moving_buffer_size);
         controller_board_version = getParamOrDefault(
             nh, "ubiquity_motor/controller_board_version", controller_board_version);
-        estop_enable = getParamOrDefault(
-            nh, "ubiquity_motor/fw_estop_enable", estop_enable);
+        estop_detection = getParamOrDefault(
+            nh, "ubiquity_motor/fw_estop_detection", estop_detection);
         estop_pid_threshold = getParamOrDefault(
             nh, "ubiquity_motor/fw_estop_pid_threshold", estop_pid_threshold);
         max_speed_fwd = getParamOrDefault(
