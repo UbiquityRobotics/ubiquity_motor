@@ -24,18 +24,24 @@ if (subprocess.call(['fuser','-v', '/dev/ttyAMA0'], stdout=None) == 0):
 
 email = raw_input("Please enter your email address: ").strip()
 
-r = requests.post('https://api.ubiquityrobotics.com/token/', json = {'email': email}) 
+if email != "":
+    r = requests.post('https://api.ubiquityrobotics.com/token/', json = {'email': email}) 
 
-if r.status_code != 200:
-	print "Error with requesting a token %d" % r.status_code
-	sys.exit(1)
+    if r.status_code != 200:
+            print "Error with requesting a token %d" % r.status_code
+            sys.exit(1)
 
 print "An access token was sent to your email address"
 
 token = raw_input("Please enter your access token: ").strip()
 
+version = raw_input("What version would you like (press enter for latest): ").strip()
+
+if version == "":
+    version = "latest"
+
 auth_headers = {"Authorization": "Bearer %s" % token}
-r = requests.get('https://api.ubiquityrobotics.com/firmware/latest', headers=auth_headers)
+r = requests.get('https://api.ubiquityrobotics.com/firmware/%s' % version, headers=auth_headers)
 
 if r.status_code != 200:
 	print "Error downloading firmware %d" % r.status_code
