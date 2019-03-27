@@ -37,6 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef boost::array<uint8_t, 8> RawMotorMessage;
 
+
+// It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
+// In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose
+//
 class MotorMessage {
 public:
     // Using default constructor and destructor
@@ -96,7 +100,7 @@ public:
         REG_LED_1 = 0x1F,
         REG_LED_2 = 0x20,
 
-        REG_HARDWARE_VERSION = 0x21,
+        REG_HARDWARE_VERSION = 0x21,    // The hardware revision time 10. This must be read from motor controler to initialize
         REG_FIRMWARE_VERSION = 0x22,
 
         REG_BATTERY_VOLTAGE = 0x23,
@@ -114,7 +118,15 @@ public:
         REG_LIMIT_REACHED = 0x2C,
         REG_BOTH_ERROR = 0x2D,
         REG_BOTH_ODOM = 0x30,
-        REG_ROBOT_ID = 0x31,
+        REG_ROBOT_ID = 0x31,	    // Indicates 0 for Magni controller or 1 for Loki robot controller as of late 2018
+
+        REG_MOT_PWR_ACTIVE = 0x32,  // Readback register for host to know if motor controller thinks motor power is active
+        REG_ESTOP_ENABLE   = 0x33,  // An override that may be set to 0 to force motor controller firmware to NOT use some ESTOP logic
+        REG_PID_MAX_ERROR  = 0x34,  // A value that when non-zero enables motor firmware to limit harsh restarts in position after ESTOP release
+
+        REG_MAX_SPEED_FWD  = 0x35,  // Max forward speed cap in a speed message 
+        REG_MAX_SPEED_REV  = 0x36,  // Max reverse speed cap in a speed message  (This is negative)
+        REG_MAX_PWM        = 0x37,  // The maximum wheel driver PWM value that will be used on the motor driver
 
         DEBUG_50 = 0x50,
         DEBUG_51 = 0x51,

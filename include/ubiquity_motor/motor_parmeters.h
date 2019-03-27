@@ -49,6 +49,12 @@ struct FirmwareParams {
     int32_t pid_derivative;
     int32_t pid_denominator;
     int32_t pid_moving_buffer_size;
+    int32_t controller_board_version;
+    int32_t estop_detection;
+    int32_t estop_pid_threshold;
+    int32_t max_speed_fwd;
+    int32_t max_speed_rev;
+    int32_t max_pwm;
     int32_t deadman_timer;
     float battery_voltage_multiplier;
     float battery_voltage_offset;
@@ -59,6 +65,12 @@ struct FirmwareParams {
           pid_derivative(1),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
+          controller_board_version(49),
+          estop_detection(1),
+          estop_pid_threshold(1500),
+          max_speed_fwd(80),
+          max_speed_rev(-80),
+          max_pwm(250),
           deadman_timer(2400000),
           battery_voltage_multiplier(0.05185),
           battery_voltage_offset(0.40948){};
@@ -69,9 +81,16 @@ struct FirmwareParams {
           pid_derivative(1),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
+          controller_board_version(49),
+          estop_detection(1),
+          estop_pid_threshold(1500),
+          max_speed_fwd(80),
+          max_speed_rev(-80),
+          max_pwm(250),
           deadman_timer(2400000),
           battery_voltage_multiplier(0.05185),
-          battery_voltage_offset(0.40948){
+          battery_voltage_offset(0.40948) 
+        {
         // clang-format off
         pid_proportional = getParamOrDefault(
             nh, "ubiquity_motor/pid_proportional", pid_proportional);
@@ -83,6 +102,18 @@ struct FirmwareParams {
             nh, "ubiquity_motor/pid_denominator", pid_denominator);
         pid_moving_buffer_size = getParamOrDefault(
             nh, "ubiquity_motor/window_size", pid_moving_buffer_size);
+        controller_board_version = getParamOrDefault(
+            nh, "ubiquity_motor/controller_board_version", controller_board_version);
+        estop_detection = getParamOrDefault(
+            nh, "ubiquity_motor/fw_estop_detection", estop_detection);
+        estop_pid_threshold = getParamOrDefault(
+            nh, "ubiquity_motor/fw_estop_pid_threshold", estop_pid_threshold);
+        max_speed_fwd = getParamOrDefault(
+            nh, "ubiquity_motor/fw_max_speed_fwd", max_speed_fwd);
+        max_speed_rev = getParamOrDefault(
+            nh, "ubiquity_motor/fw_max_speed_rev", max_speed_rev);
+        max_pwm = getParamOrDefault(
+            nh, "ubiquity_motor/fw_max_pwm", max_pwm);
         deadman_timer = getParamOrDefault(
             nh, "ubiquity_motor/deadman_timer", deadman_timer);
         battery_voltage_offset = getParamOrDefault(

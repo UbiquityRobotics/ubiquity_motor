@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
     serial_params = CommsParams(nh);
     node_params = NodeParams(nh);
 
-    ros::Rate r(node_params.controller_loop_rate);
+    ros::Rate ctrlLoopDelay(node_params.controller_loop_rate);
 
     std::unique_ptr<MotorHardware> robot = nullptr;
     // Keep trying to open serial
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
                 if (times % 30 == 0)
                     ROS_FATAL("Error opening serial port %s, trying again", serial_params.serial_port.c_str());
             }
-            r.sleep();
+            ctrlLoopDelay.sleep();
             times++;
         }
     }
@@ -114,26 +114,54 @@ int main(int argc, char* argv[]) {
         int times = 1;
         while (ros::ok() && robot->firmware_version == 0) {
             if (times % 30 == 0)
-                ROS_ERROR("Firmware not reporting its version");
+                ROS_ERROR("The Firmware not reporting its version");
                 robot->requestVersion();
             robot->readInputs();
-            r.sleep();
+            ctrlLoopDelay.sleep();    // Allow controller to process command
             times++;
         }
     }
 
+    // Tell the controller board firmware what version the hardware is at this time.
+    // TODO: Read from I2C.   At this time we only allow setting the version from ros parameters
+    if (robot->firmware_version >= 32) {
+        ROS_DEBUG("Firmware is version %d. Setting Controller board version to %d", 
+            robot->firmware_version, firmware_params.controller_board_version);
+        robot->setHardwareVersion(firmware_params.controller_board_version);
+        ROS_DEBUG("Controller board version has been set to %d", 
+            firmware_params.controller_board_version);
+        ctrlLoopDelay.sleep();    // Allow controller to process command
+    }
+
+    // Setup other firmware parameters that could come from ROS parameters
+    robot->setEstopPidThreshold(firmware_params.estop_pid_threshold);
+    ctrlLoopDelay.sleep();        // Allow controller to process command
+    robot->setEstopDetection(firmware_params.estop_detection);
+    ctrlLoopDelay.sleep();        // Allow controller to process command
+    robot->setMaxFwdSpeed(firmware_params.max_speed_fwd);
+    ctrlLoopDelay.sleep();        // Allow controller to process command
+    robot->setMaxRevSpeed(firmware_params.max_speed_rev);
+    ctrlLoopDelay.sleep();        // Allow controller to process command
+    robot->setMaxPwm(firmware_params.max_pwm);
+    ctrlLoopDelay.sleep();        // Allow controller to process command
+
     ros::Time last_time;
     ros::Time current_time;
     ros::Duration elapsed;
-    last_time = ros::Time::now();
 
     for (int i = 0; i < 5; i++) {
-        r.sleep();
+        ctrlLoopDelay.sleep();        // Allow controller to process command
         robot->sendParams();
     }
-    float expectedCycleTime = r.expectedCycleTime().toSec();
+    float expectedCycleTime = ctrlLoopDelay.expectedCycleTime().toSec();
     float minCycleTime = 0.75 * expectedCycleTime;
     float maxCycleTime = 1.25 * expectedCycleTime;
+
+    // Clear any commands the robot has at this time
+    robot->clearCommands();
+
+    last_time = ros::Time::now();
+    ROS_WARN("Starting motor control node now");
 
     while (ros::ok()) {
         current_time = ros::Time::now();
@@ -147,7 +175,7 @@ int main(int argc, char* argv[]) {
         else {
             ROS_WARN("Resetting controller due to time jump %f seconds",
                      elapsedSecs);
-            cm.update(current_time, r.expectedCycleTime(), true);
+            cm.update(current_time, ctrlLoopDelay.expectedCycleTime(), true);
             robot->clearCommands();
         }
         robot->setParams(firmware_params);
@@ -155,7 +183,7 @@ int main(int argc, char* argv[]) {
         robot->writeSpeeds();
 
         robot->diag_updater.update();
-        r.sleep();
+        ctrlLoopDelay.sleep();        // Allow controller to process command
     }
 
     return 0;

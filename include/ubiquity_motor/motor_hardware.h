@@ -97,8 +97,18 @@ public:
     void sendParams();
     void setDeadmanTimer(int32_t deadman);
     void setDebugLeds(bool led1, bool led2);
-
+    void setHardwareVersion(int32_t hardware_version);
+    void setEstopPidThreshold(int32_t estop_pid_threshold);
+    void setEstopDetection(int32_t estop_detection);
+    void setMaxFwdSpeed(int32_t max_speed_fwd);
+    void setMaxRevSpeed(int32_t max_speed_rev);
+    void setMaxPwm(int32_t max_pwm);
     int firmware_version;
+    int hardware_version;
+    int estop_pid_threshold;
+    int max_speed_fwd;
+    int max_speed_rev;
+    int max_pwm;
 
     diagnostic_updater::Updater diag_updater;
 private:
@@ -111,8 +121,8 @@ private:
     hardware_interface::JointStateInterface joint_state_interface_;
     hardware_interface::VelocityJointInterface velocity_joint_interface_;
 
-    FirmwareParams pid_params;
-    FirmwareParams prev_pid_params;
+    FirmwareParams fw_params;
+    FirmwareParams prev_fw_params;
 
     int32_t deadman_timer;
 
