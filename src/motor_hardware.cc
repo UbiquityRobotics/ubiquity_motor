@@ -92,6 +92,11 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
     hardware_version = 0;
     firmware_version = 0;
+
+    diag_updater.setHardwareID("Motor Controller");
+    diag_updater.add("Firmware", &motor_diag_, &MotorDiagnostics::firmware_status);
+    diag_updater.add("Limits", &motor_diag_, &MotorDiagnostics::limit_status);
+    diag_updater.add("Battery", &motor_diag_, &MotorDiagnostics::battery_status);
 }
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
@@ -116,6 +121,7 @@ void MotorHardware::readInputs() {
                     } else {
                         ROS_INFO("Firmware version %d", mm.getData());
                         firmware_version = mm.getData();
+			motor_diag_.firmware_version = firmware_version;
                     }
                     break;
 
@@ -128,6 +134,8 @@ void MotorHardware::readInputs() {
 
                     joints_[0].position += (odomLeft / TICS_PER_RADIAN);
                     joints_[1].position += (odomRight / TICS_PER_RADIAN);
+
+		    motor_diag_.odom_update_status.tick(); // Let diag know we got odom
                     break;
                 }
                 case MotorMessage::REG_BOTH_ERROR: {
@@ -148,15 +156,19 @@ void MotorHardware::readInputs() {
 
                     if (data & MotorMessage::LIM_M1_PWM) {
                         ROS_WARN("left PWM limit reached");
+		    	motor_diag_.left_pwm_limit = true; 
                     }
                     if (data & MotorMessage::LIM_M2_PWM) {
                         ROS_WARN("right PWM limit reached");
+		    	motor_diag_.right_pwm_limit = true; 
                     }
                     if (data & MotorMessage::LIM_M1_INTEGRAL) {
                         ROS_DEBUG("left Integral limit reached");
+		    	motor_diag_.left_integral_limit = true; 
                     }
                     if (data & MotorMessage::LIM_M2_INTEGRAL) {
                         ROS_DEBUG("right Integral limit reached");
+		    	motor_diag_.right_integral_limit = true; 
                     }
                     break;
                 }
@@ -174,6 +186,8 @@ void MotorHardware::readInputs() {
                     bstate.power_supply_health = sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
                     bstate.power_supply_technology = sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
                     battery_state.publish(bstate);
+
+		    motor_diag_.battery_voltage = bstate.voltage; 
                     break;
                 }
                 default:
@@ -401,3 +415,54 @@ int16_t MotorHardware::calculateTicsFromRadians(double radians) const {
 double MotorHardware::calculateRadiansFromTics(int16_t tics) const {
     return (tics * VELOCITY_READ_PER_SECOND / QTICS_PER_RADIAN);
 }
+
+// Diagnostics Status Updater Functions
+using diagnostic_updater::DiagnosticStatusWrapper;
+using diagnostic_msgs::DiagnosticStatus;
+
+void MotorDiagnostics::firmware_status(DiagnosticStatusWrapper &stat) {
+    stat.add("Firmware Version", firmware_version);
+    if (firmware_version == 0) {
+        stat.summary(DiagnosticStatus::ERROR, "No firmware version reported");
+    }
+    else if (firmware_version < 30) {
+        stat.summary(DiagnosticStatus::WARN, "Firmware is older than reccomended");
+    }
+    else {
+        stat.summary(DiagnosticStatus::OK, "Firmware version is OK");
+    }
+}
+
+void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
+    stat.summary(DiagnosticStatus::OK, "Limits reached:");
+    if (left_pwm_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::ERROR, " left pwm,");
+	left_pwm_limit = false;
+    }
+    if (right_pwm_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::ERROR, " right pwm,");
+	right_pwm_limit = false;
+    }
+    if (left_integral_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::WARN, " left integral,");
+	left_integral_limit = false;
+    }
+    if (right_integral_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::WARN, " right integral,");
+	right_integral_limit = false;
+    }
+}
+
+void MotorDiagnostics::battery_status(DiagnosticStatusWrapper &stat) {
+    stat.add("Battery Voltage", battery_voltage);
+    if (battery_voltage < 22.5) {
+        stat.summary(DiagnosticStatusWrapper::WARN, "Battery low");
+    } 
+    else if (battery_voltage < 21.0) {
+        stat.summary(DiagnosticStatusWrapper::ERROR, "Battery critical");
+    }
+    else {
+        stat.summary(DiagnosticStatusWrapper::OK, "Battery OK");
+    }
+}
+
