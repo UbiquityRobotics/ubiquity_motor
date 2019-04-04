@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.9.0 (2019-04-03)
+------------------
 * Allow selecting what firmware version to download
 * Adding max motor forward and reverse speeds and max pwm settings all the way from ROS parameters to being pushed to the controller board.
 * Analyze information to create diagnostics statuses
