@@ -2,6 +2,15 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Allow selecting what firmware version to download
+* Adding max motor forward and reverse speeds and max pwm settings all the way from ROS parameters to being pushed to the controller board.
+* Analyze information to create diagnostics statuses
+* Major update to test_motor_board.py that accepts greatly improved parameter read and set as well as ability to specify com port device to be used
+* Adds support for set of hw rev and for pre rev 5.0 estop threshold
+* Contributors: Mark Johnston, Rohan Agrawal
+
 0.8.0 (2019-01-01)
 ------------------
 * Added firmware loading tool
