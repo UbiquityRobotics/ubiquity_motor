@@ -5,7 +5,7 @@
 
 Here is where we list in reverse time order the important high level changes for Firmware and Hardware revisions.
 
-We will use the term MCB for Motor Controller Board
+We will use the term MCB for Master Controller Board (the main board containing the motor controller, power supplies, power management, safety systems, real time clock, etc.)
 
 ## Firmware Revisions
 
