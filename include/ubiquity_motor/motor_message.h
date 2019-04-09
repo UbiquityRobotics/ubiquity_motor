@@ -144,8 +144,13 @@ public:
         LIM_M1_PWM = 0x10,
         LIM_M2_PWM = 0x01,
         LIM_M1_INTEGRAL = 0x20,
-        LIM_M2_INTEGRAL = 0x02
+        LIM_M2_INTEGRAL = 0x02,
+        LIM_M1_MAX_SPD  = 0x40,
+        LIM_M2_MAX_SPD  = 0x4
     };
+
+    // State bits for motor power
+    const static int32_t MOT_POW_ACTIVE = 0x0001;
 
     void setType(MotorMessage::MessageTypes type);
     MotorMessage::MessageTypes getType() const;
@@ -159,6 +164,11 @@ public:
     RawMotorMessage serialize() const;
 
     int deserialize(const RawMotorMessage &serialized);
+    const static int ERR_DELIMITER        = 1; 
+    const static int ERR_WRONG_PROTOCOL   = 2; 
+    const static int ERR_BAD_CHECKSUM     = 3; 
+    const static int ERR_BAD_TYPE         = 4; 
+    const static int ERR_UNKNOWN_REGISTER = 5; 
 
     const static uint8_t delimeter = 0x7E;  // TODO: parameterize
 

@@ -170,6 +170,14 @@ void MotorHardware::readInputs() {
                         ROS_DEBUG("right Integral limit reached");
 		    	motor_diag_.right_integral_limit = true; 
                     }
+                    if (data & MotorMessage::LIM_M1_MAX_SPD) {
+                        ROS_WARN("left Maximum speed reached");
+		    	motor_diag_.left_max_speed_limit = true; 
+                    }
+                    if (data & MotorMessage::LIM_M2_MAX_SPD) {
+                        ROS_WARN("right Maximum speed reached");
+		    	motor_diag_.right_max_speed_limit = true; 
+                    }
                     break;
                 }
                 case MotorMessage::REG_BATTERY_VOLTAGE: {
@@ -189,6 +197,21 @@ void MotorHardware::readInputs() {
 
 		    motor_diag_.battery_voltage = bstate.voltage; 
                     break;
+                }
+                case MotorMessage::REG_MOT_PWR_ACTIVE: {   // Starting with rev 5.0 board we can see power state
+                    int32_t data = mm.getData();
+
+                    if (data & MotorMessage::MOT_POW_ACTIVE) {
+		    	if (motor_diag_.estop_motor_power_off == true) { 
+                            ROS_WARN("Motor power has gone from inactive to active. Most likely from ESTOP switch");
+                        }
+		    	motor_diag_.estop_motor_power_off = false; 
+                    } else {
+		    	if (motor_diag_.estop_motor_power_off == false) { 
+                            ROS_WARN("Motor power has gone inactive. Most likely from ESTOP switch");
+                        }
+		    	motor_diag_.estop_motor_power_off = true; 
+                    }
                 }
                 default:
                     break;
@@ -423,9 +446,9 @@ using diagnostic_msgs::DiagnosticStatus;
 void MotorDiagnostics::firmware_status(DiagnosticStatusWrapper &stat) {
     stat.add("Firmware Version", firmware_version);
     if (firmware_version == 0) {
-        stat.summary(DiagnosticStatus::ERROR, "No firmware version reported");
+        stat.summary(DiagnosticStatus::ERROR, "No firmware version reported. Power may be off.");
     }
-    else if (firmware_version < 30) {
+    else if (firmware_version < 32) {
         stat.summary(DiagnosticStatus::WARN, "Firmware is older than reccomended");
     }
     else {

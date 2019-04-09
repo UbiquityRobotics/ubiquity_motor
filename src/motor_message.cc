@@ -155,19 +155,20 @@ int MotorMessage::deserialize(const RawMotorMessage &serialized) {
                                   serialized.begin() + 7, data.begin());
                         return 0;
                     } else
-                        return 5;
+                        return MotorMessage::UNKNOWN_REGISTER;
                 } else
-                    return 4;
+                    return MotorMessage::ERR_BAD_TYPE;;
             } else
-                return 3;
+                return MotorMessage::ERR_BAD_CHECKSUM;
         } else
-            return 2;
+            return MotorMessage::ERR_WRONG_PROTOCOL;
     } else
-        return 1;
+        return MotorMessage::ERR_DELIMITER;
 
-    // TODO use exceptions instead of cryptic error codes
+    // TODO use exceptions instead of error codes
 
-    // ERROR codes returned:
+    // ERROR codes returned are defined in MotorMessage class
+    // I leave these here for convienience so double check in the class defines
     // 1 First char not delimiter
     // 2 wrong protocol version
     // 3 bad checksum

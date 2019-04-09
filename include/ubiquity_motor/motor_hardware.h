@@ -65,6 +65,11 @@ struct MotorDiagnostics {
     bool right_pwm_limit = false;
     bool left_integral_limit = false;
     bool right_integral_limit = false;
+    bool left_max_speed_limit = false;
+    bool right_max_speed_limit = false;
+
+    // Motor power is inactive, most likely from ESTOP switch
+    bool estop_motor_power_off = false;
 
     // Power supply statuses
     float battery_voltage = 0.0;
