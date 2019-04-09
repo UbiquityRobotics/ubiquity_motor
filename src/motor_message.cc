@@ -155,7 +155,7 @@ int MotorMessage::deserialize(const RawMotorMessage &serialized) {
                                   serialized.begin() + 7, data.begin());
                         return 0;
                     } else
-                        return MotorMessage::UNKNOWN_REGISTER;
+                        return MotorMessage::ERR_UNKNOWN_REGISTER;
                 } else
                     return MotorMessage::ERR_BAD_TYPE;;
             } else
