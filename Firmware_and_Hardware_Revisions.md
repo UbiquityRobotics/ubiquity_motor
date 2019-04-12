@@ -1,7 +1,7 @@
 # ubiquity_motor
 [![Build Status](https://travis-ci.org/UbiquityRobotics/ubiquity_motor.svg?branch=indigo-devel)](https://travis-ci.org/UbiquityRobotics/ubiquity_motor)
 
-## Motor Controller Board Firmware and Hardware Revision History 
+## Master Controller Board Firmware and Hardware Revision History 
 
 Here is where we list in reverse time order the important high level changes for Firmware and Hardware revisions.
 
