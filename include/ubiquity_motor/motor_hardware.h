@@ -68,9 +68,6 @@ struct MotorDiagnostics {
     bool left_max_speed_limit = false;
     bool right_max_speed_limit = false;
 
-    // Motor power is inactive, most likely from ESTOP switch
-    bool estop_motor_power_off = false;
-
     // Power supply statuses
     float battery_voltage = 0.0;
     /* For later implementation (firmware support)
@@ -84,9 +81,12 @@ struct MotorDiagnostics {
     bool  aux_12V_ol = false;
     */
 
+    bool  estop_motor_power_off = false;  // for Diagnostic reporting of ESTOP switch
+
     void firmware_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void limit_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void battery_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_power_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
 };
 
 class MotorHardware : public hardware_interface::RobotHW {
@@ -96,7 +96,7 @@ public:
     virtual ~MotorHardware();
     void clearCommands();
     void readInputs();
-    void writeSpeeds();
+    void writeSpeeds(bool zeroSpeeds);
     void requestVersion();
     void setParams(FirmwareParams firmware_params);
     void sendParams();
@@ -105,6 +105,7 @@ public:
     void setHardwareVersion(int32_t hardware_version);
     void setEstopPidThreshold(int32_t estop_pid_threshold);
     void setEstopDetection(int32_t estop_detection);
+    bool getEstopState(void);
     void setMaxFwdSpeed(int32_t max_speed_fwd);
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
@@ -132,6 +133,8 @@ private:
     int32_t deadman_timer;
 
     int32_t sendPid_count;
+
+    bool estop_motor_power_off;    // Motor power inactive, most likely from ESTOP switch
 
     struct Joint {
         double position;

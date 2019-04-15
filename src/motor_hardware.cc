@@ -72,6 +72,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
     sendPid_count = 0;
 
+    estop_motor_power_off = false;  // Keeps state of ESTOP switch where true is in ESTOP state
+
     fw_params = firmware_params;
 
     prev_fw_params.pid_proportional = -1;
@@ -97,6 +99,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     diag_updater.add("Firmware", &motor_diag_, &MotorDiagnostics::firmware_status);
     diag_updater.add("Limits", &motor_diag_, &MotorDiagnostics::limit_status);
     diag_updater.add("Battery", &motor_diag_, &MotorDiagnostics::battery_status);
+    diag_updater.add("MotorPower", &motor_diag_, &MotorDiagnostics::motor_power_status);
 }
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
@@ -107,6 +110,11 @@ void MotorHardware::clearCommands() {
     }
 }
 
+// readInputs() will receive serial and act on the response from motor controller
+//
+// The motor controller sends unsolicited messages periodically so we must read the
+// messages to update status in near realtime
+//
 void MotorHardware::readInputs() {
     while (motor_serial_->commandAvailable()) {
         MotorMessage mm;
@@ -202,16 +210,17 @@ void MotorHardware::readInputs() {
                     int32_t data = mm.getData();
 
                     if (data & MotorMessage::MOT_POW_ACTIVE) {
-		    	if (motor_diag_.estop_motor_power_off == true) { 
+		    	if (estop_motor_power_off == true) { 
                             ROS_WARN("Motor power has gone from inactive to active. Most likely from ESTOP switch");
                         }
-		    	motor_diag_.estop_motor_power_off = false; 
+		    	estop_motor_power_off = false; 
                     } else {
-		    	if (motor_diag_.estop_motor_power_off == false) { 
-                            ROS_WARN("Motor power has gone inactive. Most likely from ESTOP switch");
+		    	if (estop_motor_power_off == false) { 
+                            ROS_WARN("Motor power has gone inactive. Most likely from ESTOP switch active");
                         }
-		    	motor_diag_.estop_motor_power_off = true; 
+		    	estop_motor_power_off = true; 
                     }
+                    motor_diag_.estop_motor_power_off = estop_motor_power_off;  // A copy for diagnostics topic
                 }
                 default:
                     break;
@@ -220,12 +229,24 @@ void MotorHardware::readInputs() {
     }
 }
 
-void MotorHardware::writeSpeeds() {
+// writeSpeeds()  Take in radians per sec for wheels and send in message to controller
+//
+// If zeroSpeeds is true we simply set zero without impacting local state settings
+//
+void MotorHardware::writeSpeeds(bool zeroSpeeds) {
     MotorMessage both;
     both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
     both.setType(MotorMessage::TYPE_WRITE);
-    int16_t left_tics = calculateTicsFromRadians(joints_[0].velocity_command);
-    int16_t right_tics = calculateTicsFromRadians(joints_[1].velocity_command);
+    double  left_radians = joints_[0].velocity_command;
+    double  right_radians = joints_[1].velocity_command;
+
+    if (zeroSpeeds) {    // Force sending of zero speeds as an override
+        left_radians  = (double)(0.0);
+        right_radians = (double)(0.0);
+    }
+
+    int16_t left_tics = calculateTicsFromRadians(left_radians);
+    int16_t right_tics = calculateTicsFromRadians(right_radians);
 
     // The masking with 0x0000ffff is necessary for handling -ve numbers
     int32_t data = (left_tics << 16) | (right_tics & 0x0000ffff);
@@ -280,6 +301,11 @@ void MotorHardware::setEstopDetection(int32_t estop_detection) {
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(estop_detection);
     motor_serial_->transmitCommand(mm);
+}
+
+// Returns true if estop switch is active OR if motor power is off somehow off
+bool MotorHardware::getEstopState(void) {
+    return estop_motor_power_off;
 }
 
 // Setup the controller board maximum settable motor forward speed 
@@ -486,6 +512,15 @@ void MotorDiagnostics::battery_status(DiagnosticStatusWrapper &stat) {
     }
     else {
         stat.summary(DiagnosticStatusWrapper::OK, "Battery OK");
+    }
+}
+void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
+    stat.add("Motor Power", !estop_motor_power_off);
+    if (estop_motor_power_off == false) {
+        stat.summary(DiagnosticStatusWrapper::ERROR, "Motor power on");
+    } 
+    else {
+        stat.summary(DiagnosticStatusWrapper::WARN, "Motor power off");
     }
 }
 
