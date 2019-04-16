@@ -97,7 +97,7 @@ public:
     void clearCommands();
     void readInputs();
     void writeSpeeds();
-    void writeSpeedsWithDisable(bool disableSpeeds);
+    void writeSpeedsInRadians(double  left_radians, double  right_radians);
     void requestVersion();
     void setParams(FirmwareParams firmware_params);
     void sendParams();
