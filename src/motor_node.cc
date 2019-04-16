@@ -186,15 +186,15 @@ int main(int argc, char* argv[]) {
 
         // Update motor controller speeds.
         if (robot->getEstopState()) {
-            robot->writeSpeeds(true);    // We send zero velocity when estop is active
+            robot->writeSpeedsWithDisable(true);    // We send zero velocity when estop is active
             estopReleaseDelay = estopReleaseDeadtime;
         } else {
             if (estopReleaseDelay > (double)(0.0)) {
                 // Implement a delay after estop release where velocity remains zero
                 estopReleaseDelay -= ((double)(1.0)/node_params.controller_loop_rate);
-                robot->writeSpeeds(true);
+                robot->writeSpeedsWithDisable(true);
             } else {
-                robot->writeSpeeds(false);   // Normal operation
+                robot->writeSpeeds();   // Normal operation
             }
         }
 

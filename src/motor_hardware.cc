@@ -229,18 +229,20 @@ void MotorHardware::readInputs() {
     }
 }
 
-// writeSpeeds()  Take in radians per sec for wheels and send in message to controller
+// writeSpeedsWithDisable()  Take in radians per sec for wheels and send in message to controller
 //
 // If zeroSpeeds is true we simply set zero without impacting local state settings
+// This interface allows maintaining of system speed in state but override to zero
+// which is of value for such a case as ESTOP implementation
 //
-void MotorHardware::writeSpeeds(bool zeroSpeeds) {
+void MotorHardware::writeSpeedsWithDisable(bool disableSpeeds) {
     MotorMessage both;
     both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
     both.setType(MotorMessage::TYPE_WRITE);
     double  left_radians = joints_[0].velocity_command;
     double  right_radians = joints_[1].velocity_command;
 
-    if (zeroSpeeds) {    // Force sending of zero speeds as an override
+    if (disableSpeeds) {    // Force sending of zero speeds as an override
         left_radians  = (double)(0.0);
         right_radians = (double)(0.0);
     }
@@ -260,6 +262,14 @@ void MotorHardware::writeSpeeds(bool zeroSpeeds) {
     // ROS_ERROR("velocity_command %f rad/s %f rad/s",
     // joints_[0].velocity_command, joints_[1].velocity_command);
     // ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
+}
+
+// writeSpeeds()  Take in radians per sec for wheels and send in message to controller
+//
+// Legacy interface where no override to zero speeds is supported
+//
+void MotorHardware::writeSpeeds() {
+    writeSpeedsWithDisable(false);
 }
 
 void MotorHardware::requestVersion() {

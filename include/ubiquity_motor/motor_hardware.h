@@ -96,7 +96,8 @@ public:
     virtual ~MotorHardware();
     void clearCommands();
     void readInputs();
-    void writeSpeeds(bool zeroSpeeds);
+    void writeSpeeds();
+    void writeSpeedsWithDisable(bool disableSpeeds);
     void requestVersion();
     void setParams(FirmwareParams firmware_params);
     void sendParams();
