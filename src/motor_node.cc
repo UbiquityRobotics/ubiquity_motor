@@ -163,6 +163,9 @@ int main(int argc, char* argv[]) {
     last_time = ros::Time::now();
     ROS_WARN("Starting motor control node now");
 
+    // Implement a speed reset while ESTOP is active and a delay after release
+    double estopReleaseDeadtime = 0.8;
+    double estopReleaseDelay    = 0.0;
     while (ros::ok()) {
         current_time = ros::Time::now();
         elapsed = current_time - last_time;
@@ -180,7 +183,20 @@ int main(int argc, char* argv[]) {
         }
         robot->setParams(firmware_params);
         robot->sendParams();
-        robot->writeSpeeds();
+
+        // Update motor controller speeds.
+        if (robot->getEstopState()) {
+            robot->writeSpeedsInRadians(0.0, 0.0);    // We send zero velocity when estop is active
+            estopReleaseDelay = estopReleaseDeadtime;
+        } else {
+            if (estopReleaseDelay > 0.0) {
+                // Implement a delay after estop release where velocity remains zero
+                estopReleaseDelay -= (1.0/node_params.controller_loop_rate);
+                robot->writeSpeedsInRadians(0.0, 0.0);
+            } else {
+                robot->writeSpeeds();   // Normal operation using current system speeds
+            }
+        }
 
         robot->diag_updater.update();
         ctrlLoopDelay.sleep();        // Allow controller to process command

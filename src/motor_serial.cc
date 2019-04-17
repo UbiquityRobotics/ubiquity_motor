@@ -110,7 +110,11 @@ void MotorSerial::SerialThread() {
                     }
                 } else {
                     if (++serial_errors > error_threshold) {
-                        ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
+                        if (error_code == MotorMessage::ERR_UNKNOWN_REGISTER) {
+                            ROS_WARN("Message deserialize found an unrecognized firmware register");
+                        } else {
+                            ROS_ERROR("DESERIALIZATION ERROR! - %d", error_code);
+                        }
                     }
                 }
             }

@@ -143,7 +143,7 @@ RawMotorMessage MotorMessage::serialize() const {
     return out;
 }
 
-int MotorMessage::deserialize(const RawMotorMessage &serialized) {
+MotorMessage::ErrorCodes MotorMessage::deserialize(const RawMotorMessage &serialized) {
     if (serialized[0] == delimeter) {
         if ((serialized[1] & 0xF0) == (protocol_version << 4)) {
             if (generateChecksum(serialized) == serialized[7]) {
@@ -153,26 +153,24 @@ int MotorMessage::deserialize(const RawMotorMessage &serialized) {
                         this->register_addr = serialized[2];
                         std::copy(serialized.begin() + 3,
                                   serialized.begin() + 7, data.begin());
-                        return 0;
+                        return MotorMessage::ERR_NONE;
                     } else
-                        return 5;
+                        return MotorMessage::ERR_UNKNOWN_REGISTER;
                 } else
-                    return 4;
+                    return MotorMessage::ERR_BAD_TYPE;;
             } else
-                return 3;
+                return MotorMessage::ERR_BAD_CHECKSUM;
         } else
-            return 2;
+            return MotorMessage::ERR_WRONG_PROTOCOL;
     } else
-        return 1;
+        return MotorMessage::ERR_DELIMITER;
 
-    // TODO use exceptions instead of cryptic error codes
-
-    // ERROR codes returned:
-    // 1 First char not delimiter
-    // 2 wrong protocol version
-    // 3 bad checksum
-    // 4 bad type
-    // 5 bad register
+    // ERROR codes returned are defined in MotorMessage class
+    // First char not delimiter
+    // wrong protocol version
+    // bad checksum
+    // bad type
+    // bad register
 }
 
 int MotorMessage::verifyType(uint8_t t) {
