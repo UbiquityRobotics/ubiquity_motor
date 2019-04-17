@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD 14) # use C++14
 find_package(catkin REQUIRED COMPONENTS 
 	roscpp 
 	geometry_msgs  
+	std_msgs  
 	nav_msgs 
 	serial 
 	hardware_interface 
