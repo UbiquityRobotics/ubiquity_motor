@@ -508,6 +508,14 @@ void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " right integral,");
 	right_integral_limit = false;
     }
+    if (left_max_speed_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::WARN, " left speed,");
+	left_max_speed_limit = false;
+    }
+    if (right_max_speed_limit) {
+        stat.mergeSummary(DiagnosticStatusWrapper::WARN, " right speed,");
+	right_max_speed_limit = false;
+    }
 }
 
 void MotorDiagnostics::battery_status(DiagnosticStatusWrapper &stat) {
