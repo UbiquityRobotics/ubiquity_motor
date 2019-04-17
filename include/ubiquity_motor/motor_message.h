@@ -163,14 +163,20 @@ public:
 
     RawMotorMessage serialize() const;
 
-    int deserialize(const RawMotorMessage &serialized);
-    const static int ERR_DELIMITER        = 1; 
-    const static int ERR_WRONG_PROTOCOL   = 2; 
-    const static int ERR_BAD_CHECKSUM     = 3; 
-    const static int ERR_BAD_TYPE         = 4; 
-    const static int ERR_UNKNOWN_REGISTER = 5; 
 
-    const static uint8_t delimeter = 0x7E;  // TODO: parameterize
+    // Error Codes that can be returned by deserializaion
+    enum ErrorCodes {
+        ERR_NONE             = 0, // Success code 
+        ERR_DELIMITER        = 1, 
+        ERR_WRONG_PROTOCOL   = 2, 
+        ERR_BAD_CHECKSUM     = 3, 
+        ERR_BAD_TYPE         = 4, 
+        ERR_UNKNOWN_REGISTER = 5 
+    };
+
+    MotorMessage::ErrorCodes deserialize(const RawMotorMessage &serialized);
+
+    const static uint8_t delimeter = 0x7E;
 
 private:
     // Type of message should be in MotorMessage::MessageTypes
