@@ -224,7 +224,7 @@ void MotorHardware::readInputs() {
                     motor_diag_.estop_motor_power_off = estop_motor_power_off;  // A copy for diagnostics topic
 
 		    std_msgs::Bool estop_message;
-		    estop_message.data = estop_motor_power_off;
+		    estop_message.data = !estop_motor_power_off;
 		    motor_power_active.publish(estop_message);
                 }
                 default:
