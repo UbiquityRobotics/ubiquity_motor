@@ -13,6 +13,10 @@ Here is a history of what was included or fixed for each firmware revision that 
 
 Firmware Revision History
 
+* `Rev 33`  NOT YET RELEASED
+    * Improved ESTOP so that if wheels move when ESTOP switch is disabling the Magni we do NOT jump upon ESTOP release
+    * Improved PID loop reset on detection of no motor power (ESTOP activated) so we are at a fully PID loop reset state on ESTOP release
+
 * `Rev 32`  2019-03-25
     * Many improvements to ESTOP behavior to prevent large movements upon ESTOP release on rev 5.0 boards
     * Support to enable the improved ESTOP behavior if high level ROS enables the feature
