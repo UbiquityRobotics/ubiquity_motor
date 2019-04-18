@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "std_msgs/Int32.h"
 #include "std_msgs/UInt32.h"
+#include "std_msgs/Bool.h"
 #include "sensor_msgs/BatteryState.h"
 
 #include <diagnostic_updater/update_functions.h>
@@ -150,6 +151,7 @@ private:
     ros::Publisher rightError;
 
     ros::Publisher battery_state;
+    ros::Publisher motor_power_active;
 
     MotorSerial* motor_serial_;
 

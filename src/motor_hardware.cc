@@ -69,6 +69,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
 
     battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
+    motor_power_active = nh.advertise<std_msgs::Bool>("motor_power_active", 1);
 
     sendPid_count = 0;
 
@@ -221,6 +222,10 @@ void MotorHardware::readInputs() {
 		    	estop_motor_power_off = true; 
                     }
                     motor_diag_.estop_motor_power_off = estop_motor_power_off;  // A copy for diagnostics topic
+
+		    std_msgs::Bool estop_message;
+		    estop_message.data = !estop_motor_power_off;
+		    motor_power_active.publish(estop_message);
                 }
                 default:
                     break;
