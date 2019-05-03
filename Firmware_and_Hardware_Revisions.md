@@ -13,11 +13,12 @@ Here is a history of what was included or fixed for each firmware revision that 
 
 Firmware Revision History
 
-* `Rev 33`  Available as version v33 but not yet fully released as our stable release
+* `Rev 33`  BETA Firmware. Available as version v33 using upgrade_firmware tool and is not our default. Not recommended for general use yet.
     * If the wheels move when ESTOP switch is activated the Magni we do NOT jump upon ESTOP release
     * Improved PID loop reset on detection of no motor power (ESTOP activated) so we are at a fully PID loop reset state on ESTOP release.
+    * DEFECT: On startup prior to first movement we can see a state sometimes where the motors are not in a 'breaking' state and we are looking into this.    This is reported so far if you don't fully reset the linux software but have power cycled the motor controller board which is possible when not using the Raspberry Pi as the CPU.
 
-* `Rev 32`  2019-03-25
+* `Rev 32`  2019-03-25  This is our default latest stable firmware
     * Many improvements to ESTOP behavior to prevent large movements upon ESTOP release on rev 5.0 boards
     * Support to enable the improved ESTOP behavior if high level ROS enables the feature
     * A worse-case default ESTOP detect logic that will work on boards prior to rev 5.0 but is very crude and still moves
