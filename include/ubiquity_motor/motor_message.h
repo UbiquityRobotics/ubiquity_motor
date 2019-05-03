@@ -128,6 +128,8 @@ public:
         REG_MAX_SPEED_REV  = 0x36,  // Max reverse speed cap in a speed message  (This is negative)
         REG_MAX_PWM        = 0x37,  // The maximum wheel driver PWM value that will be used on the motor driver
 
+        REG_HW_OPTIONS     = 0x38,  // Bitfield with options the firmware has been setup to use
+
         DEBUG_50 = 0x50,
         DEBUG_51 = 0x51,
         DEBUG_52 = 0x52,
@@ -137,6 +139,11 @@ public:
         DEBUG_56 = 0x56,
         DEBUG_57 = 0x57,
         DEBUG_58 = 0x58
+    };
+
+    // Bitfield values for hardware options enabled in the firmware
+    enum HwOptions {
+        OPT_ENC_6_STATE = 0x01,
     };
 
     // Bitfield indicating which limits have been reached

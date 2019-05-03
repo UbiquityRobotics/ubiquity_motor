@@ -134,6 +134,9 @@ private:
 
     int32_t deadman_timer;
 
+    double  tics_per_radian;
+    double  qtics_per_radian;
+
     int32_t sendPid_count;
 
     bool estop_motor_power_off;    // Motor power inactive, most likely from ESTOP switch
