@@ -5,6 +5,8 @@ import time
 import serial
 import os, sys, subprocess
 
+import argparse
+
 print """-------------------------------------------------------------
 Welcome to the Ubiquity Robotics Firmware Updater!
 
@@ -15,7 +17,13 @@ Note: Updating the firmware requires access to the internet.
 -------------------------------------------------------------
 """
 
-if (subprocess.call(['fuser','-v', '/dev/ttyAMA0'], stdout=None) == 0):
+parser = argparse.ArgumentParser(description='Ubiquity Robotics Firmware Updater')
+parser.add_argument('--device', help='Serial port to use (eg /dev/ttyAMA0)', default='/dev/ttyAMA0')
+args = parser.parse_args()
+
+serial_port = args.device
+
+if (subprocess.call(['fuser','-v', serial_port], stdout=None) == 0):
     print ""
     print "Another process is using the serial port, cannot upgrade firmware"
     print "Make sure you stopped any running ROS nodes. To stop default nodes:"
@@ -394,7 +402,7 @@ except InvalidFileException:
     print "File is not of the correct format"
 print("Encryption:", hex_stream.is_encrypted())
 
-ser = serial.Serial('/dev/ttyAMA0', 38400, timeout=1, bytesize=8,
+ser = serial.Serial(serial_port, 38400, timeout=1, bytesize=8,
                     parity=serial.PARITY_NONE, stopbits=1, xonxoff=0, rtscts=0)
 
 # Write to request the bootloader to the correct state.
