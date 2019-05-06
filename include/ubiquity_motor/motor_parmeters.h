@@ -119,8 +119,6 @@ struct FirmwareParams {
             nh, "ubiquity_motor/fw_max_pwm", max_pwm);
         deadman_timer = getParamOrDefault(
             nh, "ubiquity_motor/deadman_timer", deadman_timer);
-        hw_options = getParamOrDefault(
-            nh, "ubiquity_motor/fw_hw_options", hw_options);
         battery_voltage_offset = getParamOrDefault(
             nh, "ubiquity_motor/battery_voltage_offset", battery_voltage_offset);
         battery_voltage_multiplier = getParamOrDefault(

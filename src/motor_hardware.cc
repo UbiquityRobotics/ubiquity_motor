@@ -35,14 +35,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define SENSOR_DISTANCE 0.002478
 
+// For experimental purposes users will see that the wheel encoders are three phases 
+// of very neaar 43 pulses per revolution or about 43*3 edges so we see very neaarly 129 tics per rev
+// This leads to 129/(2*Pi)  or about 20.53 tics per radian experimentally. 
+// Below we will go with the exact ratio from gearbox specs 
 // 60 tics per revolution of the motor (pre gearbox)
-// 17.2328767123
-// gear ratio of 4.29411764706:1
-#define TICS_PER_RADIAN_ENC_3_STATE (41.0058030317/2)
-#define QTICS_PER_RADIAN_ENC_3_STATE (tics_per_radian*4)
+// 17.2328767123 and  gear ratio of 4.29411764706:1
+#define TICS_PER_RADIAN_ENC_3_STATE (20.50251516)   // used to read more misleading value of (41.0058030317/2)
+#define QTICS_PER_RADIAN   (tics_per_radian*4)      // Quadrature tics makes code more readable later
+
 #define VELOCITY_READ_PER_SECOND \
     10.0  // read = ticks / (100 ms), so we have scale of 10 for ticks/second
 #define LOWEST_FIRMWARE_VERSION 28
+
+// Debug verification use only
+int32_t  g_odomLeft  = 0;
+int32_t  g_odomRight = 0;
+int32_t  g_odomEvent = 0;
 
 MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
                              FirmwareParams firmware_params) {
@@ -77,7 +86,6 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
     // Save hardware encoder specifics for tics in one radian of rotation of main wheel
     tics_per_radian  = TICS_PER_RADIAN_ENC_3_STATE;
-    qtics_per_radian = QTICS_PER_RADIAN_ENC_3_STATE;
 
     fw_params = firmware_params;
 
@@ -146,7 +154,12 @@ void MotorHardware::readInputs() {
                     // ROS_ERROR("odom signed %d", odom);
                     int16_t odomLeft = (odom >> 16) & 0xffff;
                     int16_t odomRight = odom & 0xffff;
-                    // ROS_ERROR("left %d right %d", odomLeft, odomRight);
+
+                    // Debug code to be used for verification
+                    g_odomLeft  += odomLeft;
+                    g_odomRight += odomRight;
+                    g_odomEvent += 1;
+                    //if ((g_odomEvent % 50) == 1) { ROS_ERROR("leftOdom %d rightOdom %d", g_odomLeft, g_odomRight); }
 
                     // Add or subtract from position using the incremental odom value
                     joints_[0].position += (odomLeft / tics_per_radian);
@@ -493,12 +506,12 @@ void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
 }
 
 int16_t MotorHardware::calculateTicsFromRadians(double radians) const {
-    return boost::math::iround(radians * qtics_per_radian /
+    return boost::math::iround(radians * QTICS_PER_RADIAN /
                                VELOCITY_READ_PER_SECOND);
 }
 
 double MotorHardware::calculateRadiansFromTics(int16_t tics) const {
-    return (tics * VELOCITY_READ_PER_SECOND / qtics_per_radian);
+    return (tics * VELOCITY_READ_PER_SECOND / QTICS_PER_RADIAN);
 }
 
 // Diagnostics Status Updater Functions

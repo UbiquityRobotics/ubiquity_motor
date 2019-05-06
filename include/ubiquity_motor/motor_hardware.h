@@ -134,8 +134,7 @@ private:
 
     int32_t deadman_timer;
 
-    double  tics_per_radian;
-    double  qtics_per_radian;
+    double  tics_per_radian;       // Odom tics per radian for wheel encoders in use
 
     int32_t sendPid_count;
 
