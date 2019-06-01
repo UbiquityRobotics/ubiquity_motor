@@ -39,9 +39,10 @@ import time
 import serial
 import string
 import thread
+import smbus
 
 # simple version string
-g_version = "20190201"
+g_version = "20190525"
 
 # default serial device.  An  adapter in USB is often  '/dev/ttyUSB0'
 g_serialDev = '/dev/ttyAMA0' 
@@ -249,6 +250,7 @@ def showHelp():
     logAlways("ONLY RUN WHEN MAGNI IS STOPPED!. Use  sudo systemctl stop magni-base.service")
     logAlways("Commands: h or ? for help.  v for versions of firmware and hardware. Use Control-C to quit or E")
     logAlways("Speeds:   Enter 0 - 9 fwd speed. n,N slow/fast reverse. s for 'any speed' or c cycle last fwd/reverse")
+    logAlways("  v  - Query firmware and hw version setting      o - Query 8-bit hardware option port with real board rev")
     logAlways("  q  - Query a word value from any register. Register value entered as 2 char hex digit")
     logAlways("  S  - Set a word value from for any register.   Enter reg as hex and value as decimal")
     logAlways("  21 = Hardware Rev (50 = 5.0)                   22 = Firmware version")
@@ -344,7 +346,7 @@ class serCommander():
 
             if input == '2':
                 logAlways("Run at 0.2 MPs till a key is pressed")
-                lastSpeed = 16
+                lastSpeed = 10
                 nextInput = setSpeedTillKeypress(ser, lastSpeed, lastSpeed)
 
             if input == '3':
@@ -389,7 +391,7 @@ class serCommander():
 
             if input == 'n':
                 logAlways("Run reverse using slow negative speed")
-                lastNegativeSpeed = -16
+                lastNegativeSpeed = -10
                 nextInput = setSpeedTillKeypress(ser, lastNegativeSpeed, lastNegativeSpeed)
 
             if input == 'N':
@@ -509,6 +511,37 @@ class serCommander():
                 cmdPacket = formMagniSpeedMessage(0, 0)
                 ser.write(cmdPacket)
                 exit()
+
+            if input == 'o':          # Read the option bits and board rev and if motor power is on or not
+                # i2c address of PCF8574 on the motor controller board
+                PCF8574 = 0x20
+
+                logAlways("Query hardware version from I2C interface on motor controller board")
+                i2cbus = smbus.SMBus(1)
+                print ("Setup 8-bit I2C port to set as inputs. Also detect if port is present")
+                portPresent = 0
+                try:
+                    i2cbus.write_byte(PCF8574,0xff) 
+                    portPresent = 1
+                    time.sleep(0.2)
+                except Exception:
+                    print ("Did not detect 8-bit port which is only on rev 5.0 and later boards OR I2C failure")
+
+                if (portPresent == 1):
+                    inputPortBits = i2cbus.read_byte(PCF8574)
+                    # print ("Port returned: ", inputPortBits, " decimal")
+                    if ((inputPortBits & 0x80) == 0):
+                        print ("Motor power is OFF")
+                    else:
+                        print ("Motor power is ON")
+                    # The 4 board revision bits are negative logic.
+                    # They are 0x0E for binary 1 which is board revision 5.0
+                    # We will only change the revision when hardware capabilities are different
+                    boardRev = 49 + (15 - (inputPortBits & 0x0f))
+                    print ("Motor Controller Board Revision is: ", boardRev)
+                    optionBits = (inputPortBits & 0x70) >> 4
+                    print ("Option jumper block is set to: (install a jumper sets a bit to 0)", optionBits)
+
 
             if input == 'v':
                 logAlways("Fetch software and hardware version information")
