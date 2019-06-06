@@ -56,6 +56,7 @@ struct FirmwareParams {
     int32_t max_speed_rev;
     int32_t max_pwm;
     int32_t deadman_timer;
+    int32_t hw_options;
     float battery_voltage_multiplier;
     float battery_voltage_offset;
 
@@ -72,7 +73,8 @@ struct FirmwareParams {
           max_speed_rev(-80),
           max_pwm(250),
           deadman_timer(2400000),
-          battery_voltage_multiplier(0.05185),
+          hw_options(0),
+          battery_voltage_multiplier(0.05057),
           battery_voltage_offset(0.40948){};
 
     FirmwareParams(ros::NodeHandle nh)
@@ -88,7 +90,8 @@ struct FirmwareParams {
           max_speed_rev(-80),
           max_pwm(250),
           deadman_timer(2400000),
-          battery_voltage_multiplier(0.05185),
+          hw_options(0),
+          battery_voltage_multiplier(0.05057),
           battery_voltage_offset(0.40948) 
         {
         // clang-format off

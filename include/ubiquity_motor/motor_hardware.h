@@ -123,8 +123,8 @@ private:
     void _addOdometryRequest(std::vector<MotorMessage>& commands) const;
     void _addVelocityRequest(std::vector<MotorMessage>& commands) const;
 
-    int16_t calculateTicsFromRadians(double radians) const;
-    double calculateRadiansFromTics(int16_t tics) const;
+    int16_t calculateTicksFromRadians(double radians) const;
+    double calculateRadiansFromTicks(int16_t ticks) const;
 
     hardware_interface::JointStateInterface joint_state_interface_;
     hardware_interface::VelocityJointInterface velocity_joint_interface_;
@@ -133,6 +133,8 @@ private:
     FirmwareParams prev_fw_params;
 
     int32_t deadman_timer;
+
+    double  ticks_per_radian;       // Odom ticks per radian for wheel encoders in use
 
     int32_t sendPid_count;
 

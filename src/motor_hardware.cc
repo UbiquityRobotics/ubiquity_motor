@@ -35,14 +35,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define SENSOR_DISTANCE 0.002478
 
-// 60 tics per revolution of the motor (pre gearbox)
-// 17.2328767123
-// gear ratio of 4.29411764706:1
-#define TICS_PER_RADIAN (41.0058030317 / 2)
-#define QTICS_PER_RADIAN (TICS_PER_RADIAN * 4)
+// For experimental purposes users will see that the wheel encoders are three phases 
+// of very neaar 43 pulses per revolution or about 43*3 edges so we see very about 129 ticks per rev
+// This leads to 129/(2*Pi)  or about 20.53 ticks per radian experimentally. 
+// Below we will go with the exact ratio from gearbox specs 
+// 60 ticks per revolution of the motor (pre gearbox)
+// 17.2328767123 and  gear ratio of 4.29411764706:1
+#define TICKS_PER_RADIAN_ENC_3_STATE (20.50251516)   // used to read more misleading value of (41.0058030317/2)
+#define QTICKS_PER_RADIAN   (ticks_per_radian*4)      // Quadrature ticks makes code more readable later
+
 #define VELOCITY_READ_PER_SECOND \
     10.0  // read = ticks / (100 ms), so we have scale of 10 for ticks/second
-#define CURRENT_FIRMWARE_VERSION 24
+#define LOWEST_FIRMWARE_VERSION 28
+
+// Debug verification use only
+int32_t  g_odomLeft  = 0;
+int32_t  g_odomRight = 0;
+int32_t  g_odomEvent = 0;
 
 MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
                              FirmwareParams firmware_params) {
@@ -75,6 +84,9 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
     estop_motor_power_off = false;  // Keeps state of ESTOP switch where true is in ESTOP state
 
+    // Save hardware encoder specifics for ticks in one radian of rotation of main wheel
+    ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE;
+
     fw_params = firmware_params;
 
     prev_fw_params.pid_proportional = -1;
@@ -86,6 +98,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.max_speed_rev = -1;
     prev_fw_params.max_pwm = -1;
     prev_fw_params.deadman_timer = -1;
+    prev_fw_params.hw_options = -1;
     prev_fw_params.controller_board_version = -1;
     prev_fw_params.estop_detection = -1;
     prev_fw_params.estop_pid_threshold = -1;
@@ -123,9 +136,9 @@ void MotorHardware::readInputs() {
         if (mm.getType() == MotorMessage::TYPE_RESPONSE) {
             switch (mm.getRegister()) {
                 case MotorMessage::REG_FIRMWARE_VERSION:
-                    if (mm.getData() < CURRENT_FIRMWARE_VERSION) {
+                    if (mm.getData() < LOWEST_FIRMWARE_VERSION) {
                         ROS_FATAL("Firmware version %d, expect %d or above",
-                                  mm.getData(), CURRENT_FIRMWARE_VERSION);
+                                  mm.getData(), LOWEST_FIRMWARE_VERSION);
                         throw std::runtime_error("Firmware version too low");
                     } else {
                         ROS_INFO("Firmware version %d", mm.getData());
@@ -135,14 +148,22 @@ void MotorHardware::readInputs() {
                     break;
 
                 case MotorMessage::REG_BOTH_ODOM: {
+                    // These counts are the incremental number of ticks since last report
+                    // WARNING: IF WE LOOSE A MESSAGE WE DRIFT FROM REAL POSITION
                     int32_t odom = mm.getData();
                     // ROS_ERROR("odom signed %d", odom);
                     int16_t odomLeft = (odom >> 16) & 0xffff;
                     int16_t odomRight = odom & 0xffff;
-                    // ROS_ERROR("left %d right %d", odomLeft, odomRight);
 
-                    joints_[0].position += (odomLeft / TICS_PER_RADIAN);
-                    joints_[1].position += (odomRight / TICS_PER_RADIAN);
+                    // Debug code to be used for verification
+                    g_odomLeft  += odomLeft;
+                    g_odomRight += odomRight;
+                    g_odomEvent += 1;
+                    //if ((g_odomEvent % 50) == 1) { ROS_ERROR("leftOdom %d rightOdom %d", g_odomLeft, g_odomRight); }
+
+                    // Add or subtract from position using the incremental odom value
+                    joints_[0].position += (odomLeft / ticks_per_radian);
+                    joints_[1].position += (odomRight / ticks_per_radian);
 
 		    motor_diag_.odom_update_status.tick(); // Let diag know we got odom
                     break;
@@ -158,6 +179,21 @@ void MotorHardware::readInputs() {
                     right.data = rightSpeed;
                     leftError.publish(left);
                     rightError.publish(right);
+                    break;
+                }
+                case MotorMessage::REG_HW_OPTIONS: {
+                    int32_t data = mm.getData();
+
+                    // Enable or disable hardware options reported from firmware
+
+                    // Set radians per encoder tic
+                    if (data & MotorMessage::OPT_ENC_6_STATE) {
+		    	fw_params.hw_options |= MotorMessage::OPT_ENC_6_STATE; 
+                        ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE * 2;
+                    } else {
+		    	fw_params.hw_options &= ~MotorMessage::OPT_ENC_6_STATE; 
+                        ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE;
+                    }
                     break;
                 }
                 case MotorMessage::REG_LIMIT_REACHED: {
@@ -245,15 +281,15 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
     both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
     both.setType(MotorMessage::TYPE_WRITE);
 
-    int16_t left_tics = calculateTicsFromRadians(left_radians);
-    int16_t right_tics = calculateTicsFromRadians(right_radians);
+    int16_t left_ticks = calculateTicksFromRadians(left_radians);
+    int16_t right_ticks = calculateTicksFromRadians(right_radians);
 
     // The masking with 0x0000ffff is necessary for handling -ve numbers
-    int32_t data = (left_tics << 16) | (right_tics & 0x0000ffff);
+    int32_t data = (left_ticks << 16) | (right_ticks & 0x0000ffff);
     both.setData(data);
 
     std_msgs::Int32 smsg;
-    smsg.data = left_tics;
+    smsg.data = left_ticks;
 
     motor_serial_->transmitCommand(both);
 
@@ -469,13 +505,13 @@ void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
     motor_serial_->transmitCommands(commands);
 }
 
-int16_t MotorHardware::calculateTicsFromRadians(double radians) const {
-    return boost::math::iround(radians * QTICS_PER_RADIAN /
+int16_t MotorHardware::calculateTicksFromRadians(double radians) const {
+    return boost::math::iround(radians * QTICKS_PER_RADIAN /
                                VELOCITY_READ_PER_SECOND);
 }
 
-double MotorHardware::calculateRadiansFromTics(int16_t tics) const {
-    return (tics * VELOCITY_READ_PER_SECOND / QTICS_PER_RADIAN);
+double MotorHardware::calculateRadiansFromTicks(int16_t ticks) const {
+    return (ticks * VELOCITY_READ_PER_SECOND / QTICKS_PER_RADIAN);
 }
 
 // Diagnostics Status Updater Functions
