@@ -98,6 +98,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.max_speed_rev = -1;
     prev_fw_params.max_pwm = -1;
     prev_fw_params.deadman_timer = -1;
+    prev_fw_params.deadzone_enable = -1;
     prev_fw_params.hw_options = -1;
     prev_fw_params.controller_board_version = -1;
     prev_fw_params.estop_detection = -1;
@@ -108,6 +109,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
     hardware_version = 0;
     firmware_version = 0;
+    firmware_date    = 0;
 
     diag_updater.setHardwareID("Motor Controller");
     diag_updater.add("Firmware", &motor_diag_, &MotorDiagnostics::firmware_status);
@@ -145,6 +147,13 @@ void MotorHardware::readInputs() {
                         firmware_version = mm.getData();
 			motor_diag_.firmware_version = firmware_version;
                     }
+                    break;
+
+                case MotorMessage::REG_FIRMWARE_DATE:
+                    // Firmware date is only supported as of fw version MIN_FW_FIRMWARE_DATE
+                    ROS_INFO("Firmware date 0x%x (format 0xYYYYMMDD)", mm.getData());
+                    firmware_date = mm.getData();
+		    motor_diag_.firmware_date = firmware_date;
                     break;
 
                 case MotorMessage::REG_BOTH_ODOM: {
@@ -222,6 +231,10 @@ void MotorHardware::readInputs() {
                     if (data & MotorMessage::LIM_M2_MAX_SPD) {
                         ROS_WARN("right Maximum speed reached");
 		    	motor_diag_.right_max_speed_limit = true; 
+                    }
+                    if (data & MotorMessage::LIM_PARAM_LIMIT) {
+                        ROS_WARN_ONCE("parameter limit in firmware");
+		    	motor_diag_.param_limit_in_firmware = true; 
                     }
                     break;
                 }
@@ -311,12 +324,21 @@ void MotorHardware::writeSpeeds() {
     writeSpeedsInRadians(left_radians, right_radians);
 }
 
-void MotorHardware::requestVersion() {
-    MotorMessage version;
-    version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
-    version.setType(MotorMessage::TYPE_READ);
-    version.setData(0);
-    motor_serial_->transmitCommand(version);
+void MotorHardware::requestFirmwareVersion() {
+    MotorMessage fw_version_msg;
+    fw_version_msg.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
+    fw_version_msg.setType(MotorMessage::TYPE_READ);
+    fw_version_msg.setData(0);
+    motor_serial_->transmitCommand(fw_version_msg);
+}
+
+// Firmware date register implemented as of MIN_FW_FIRMWARE_DATE
+void MotorHardware::requestFirmwareDate() {
+    MotorMessage fw_date_msg;
+    fw_date_msg.setRegister(MotorMessage::REG_FIRMWARE_DATE);
+    fw_date_msg.setType(MotorMessage::TYPE_READ);
+    fw_date_msg.setData(0);
+    motor_serial_->transmitCommand(fw_date_msg);
 }
 
 
@@ -391,6 +413,15 @@ void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
     ROS_ERROR("setting deadman to %d", (int)deadman_timer);
     MotorMessage mm;
     mm.setRegister(MotorMessage::REG_DEADMAN);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(deadman_timer);
+    motor_serial_->transmitCommand(mm);
+}
+
+void MotorHardware::setDeadzoneEnable(int32_t deadzone_enable) {
+    ROS_ERROR("setting deadzone enable to %d", (int)deadzone_enable);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_DEADZONE);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(deadman_timer);
     motor_serial_->transmitCommand(mm);
@@ -531,6 +562,8 @@ void MotorDiagnostics::firmware_status(DiagnosticStatusWrapper &stat) {
     }
 }
 
+// When a firmware limit condition is reported the diagnostic topic reports it.
+// Once the report is made the condition is cleared till next time firmware reports that limit
 void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
     stat.summary(DiagnosticStatus::OK, "Limits reached:");
     if (left_pwm_limit) {
@@ -556,6 +589,11 @@ void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
     if (right_max_speed_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " right speed,");
 	right_max_speed_limit = false;
+    }
+    if (param_limit_in_firmware) {
+        // A parameter was sent to firmware that was out of limits for the firmware register
+        stat.mergeSummary(DiagnosticStatusWrapper::WARN, " firmware limit,");
+	param_limit_in_firmware = false;
     }
 }
 

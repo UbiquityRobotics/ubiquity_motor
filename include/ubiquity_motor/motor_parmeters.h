@@ -56,6 +56,7 @@ struct FirmwareParams {
     int32_t max_speed_rev;
     int32_t max_pwm;
     int32_t deadman_timer;
+    int32_t deadzone_enable;
     int32_t hw_options;
     float battery_voltage_multiplier;
     float battery_voltage_offset;
@@ -73,6 +74,7 @@ struct FirmwareParams {
           max_speed_rev(-80),
           max_pwm(250),
           deadman_timer(2400000),
+          deadzone_enable(1),
           hw_options(0),
           battery_voltage_multiplier(0.05057),
           battery_voltage_offset(0.40948){};
@@ -90,6 +92,7 @@ struct FirmwareParams {
           max_speed_rev(-80),
           max_pwm(250),
           deadman_timer(2400000),
+          deadzone_enable(1),
           hw_options(0),
           battery_voltage_multiplier(0.05057),
           battery_voltage_offset(0.40948) 
@@ -119,6 +122,8 @@ struct FirmwareParams {
             nh, "ubiquity_motor/fw_max_pwm", max_pwm);
         deadman_timer = getParamOrDefault(
             nh, "ubiquity_motor/deadman_timer", deadman_timer);
+        deadzone_enable = getParamOrDefault(
+            nh, "ubiquity_motor/deadzone_enable", deadzone_enable);
         battery_voltage_offset = getParamOrDefault(
             nh, "ubiquity_motor/battery_voltage_offset", battery_voltage_offset);
         battery_voltage_multiplier = getParamOrDefault(
