@@ -47,6 +47,7 @@ struct FirmwareParams {
     int32_t pid_proportional;
     int32_t pid_integral;
     int32_t pid_derivative;
+    int32_t pid_velocity;
     int32_t pid_denominator;
     int32_t pid_moving_buffer_size;
     int32_t controller_board_version;
@@ -62,9 +63,10 @@ struct FirmwareParams {
     float battery_voltage_offset;
 
     FirmwareParams()
-        : pid_proportional(5000),
-          pid_integral(10),
-          pid_derivative(1),
+        : pid_proportional(4000),
+          pid_integral(5),
+          pid_derivative(-200),
+          pid_velocity(0),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
           controller_board_version(49),
@@ -80,9 +82,10 @@ struct FirmwareParams {
           battery_voltage_offset(0.40948){};
 
     FirmwareParams(ros::NodeHandle nh)
-        : pid_proportional(5000),
-          pid_integral(10),
-          pid_derivative(1),
+        : pid_proportional(4000),
+          pid_integral(5),
+          pid_derivative(-200),
+          pid_velocity(0),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
           controller_board_version(49),
@@ -104,6 +107,8 @@ struct FirmwareParams {
             nh, "ubiquity_motor/pid_integral", pid_integral);
         pid_derivative = getParamOrDefault(
             nh, "ubiquity_motor/pid_derivative", pid_derivative);
+        pid_velocity = getParamOrDefault(
+            nh, "ubiquity_motor/pid_velocity", pid_velocity);
         pid_denominator = getParamOrDefault(
             nh, "ubiquity_motor/pid_denominator", pid_denominator);
         pid_moving_buffer_size = getParamOrDefault(

@@ -92,6 +92,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.pid_proportional = -1;
     prev_fw_params.pid_integral = -1;
     prev_fw_params.pid_derivative = -1;
+    prev_fw_params.pid_velocity = -1;
     prev_fw_params.pid_denominator = -1;
     prev_fw_params.pid_moving_buffer_size = -1;
     prev_fw_params.max_speed_fwd = -1;
@@ -431,6 +432,7 @@ void MotorHardware::setParams(FirmwareParams fp) {
     fw_params.pid_proportional = fp.pid_proportional;
     fw_params.pid_integral = fp.pid_integral;
     fw_params.pid_derivative = fp.pid_derivative;
+    fw_params.pid_velocity = fp.pid_velocity;
     fw_params.pid_denominator = fp.pid_denominator;
     fw_params.pid_moving_buffer_size = fp.pid_moving_buffer_size;
     fw_params.pid_denominator = fp.pid_denominator;
@@ -444,8 +446,9 @@ void MotorHardware::sendParams() {
     //(int)p_value, (int)i_value, (int)d_value, (int)denominator_value);
 
     // Only send one register at a time to avoid overwhelming serial comms
-    // SUPPORT NOTE!  Adjust modulo for cycle and be sure no duplicate modulos are used!
-    int cycle = (sendPid_count++) % 5;
+    // SUPPORT NOTE!  Adjust modulo for total parameters in the cycle
+    //                and be sure no duplicate modulos are used!
+    int cycle = (sendPid_count++) % 6;     // MUST BE THE TOTAL NUMBER IN THIS HANDLING
 
     if (cycle == 0 &&
         fw_params.pid_proportional != prev_fw_params.pid_proportional) {
@@ -479,7 +482,18 @@ void MotorHardware::sendParams() {
         commands.push_back(d);
     }
 
-    if (cycle == 3 &&
+    if (cycle == 3 && (motor_diag_.firmware_version >= MIN_FW_PID_V_TERM) &&
+        fw_params.pid_velocity != prev_fw_params.pid_velocity) {
+        ROS_WARN("Setting V to %d", fw_params.pid_velocity);
+        prev_fw_params.pid_velocity = fw_params.pid_velocity;
+        MotorMessage v;
+        v.setRegister(MotorMessage::REG_PARAM_V);
+        v.setType(MotorMessage::TYPE_WRITE);
+        v.setData(fw_params.pid_velocity);
+        commands.push_back(v);
+    }
+
+    if (cycle == 4 &&
         fw_params.pid_denominator != prev_fw_params.pid_denominator) {
         ROS_WARN("Setting Denominator to %d", fw_params.pid_denominator);
         prev_fw_params.pid_denominator = fw_params.pid_denominator;
@@ -490,7 +504,7 @@ void MotorHardware::sendParams() {
         commands.push_back(denominator);
     }
 
-    if (cycle == 4 &&
+    if (cycle == 5 &&
         fw_params.pid_moving_buffer_size !=
             prev_fw_params.pid_moving_buffer_size) {
         ROS_WARN("Setting D window to %d", fw_params.pid_moving_buffer_size);
@@ -503,7 +517,7 @@ void MotorHardware::sendParams() {
         commands.push_back(winsize);
     }
 
-    // SUPPORT NOTE!  Adjust modulo for cycle and be sure no duplicate modulos are used!
+    // SUPPORT NOTE!  Adjust max modulo for total parameters in the cycle, be sure no duplicates used!
 
     if (commands.size() != 0) {
         motor_serial_->transmitCommands(commands);
@@ -554,8 +568,8 @@ void MotorDiagnostics::firmware_status(DiagnosticStatusWrapper &stat) {
     if (firmware_version == 0) {
         stat.summary(DiagnosticStatus::ERROR, "No firmware version reported. Power may be off.");
     }
-    else if (firmware_version < 32) {
-        stat.summary(DiagnosticStatus::WARN, "Firmware is older than reccomended");
+    else if (firmware_version < MIN_FW_RECOMMENDED) {
+        stat.summary(DiagnosticStatus::WARN, "Firmware is older than recommended! You must update firmware!");
     }
     else {
         stat.summary(DiagnosticStatus::OK, "Firmware version is OK");

@@ -39,6 +39,7 @@ typedef boost::array<uint8_t, 8> RawMotorMessage;
 
 // To support enhanced firmware we identify the fw version for new registers 
 // The idea is we do not want to make firmware message requests till a feature is supported
+#define MIN_FW_RECOMMENDED        32
 #define MIN_FW_MOT_POW_ACTIVE     32  
 #define MIN_FW_ESTOP_SUPPORT      32  
 #define MIN_FW_HW_VERSION_SET     32  
@@ -46,6 +47,7 @@ typedef boost::array<uint8_t, 8> RawMotorMessage;
 #define MIN_FW_ENC_6_STATE        35
 #define MIN_FW_FIRMWARE_DATE      35
 #define MIN_FW_DEADZONE           35
+#define MIN_FW_PID_V_TERM         35
 
 // It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
 // In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose
@@ -98,9 +100,9 @@ public:
         REG_5V_AUX_OL = 0x16,
         REG_12V_MAIN_OL = 0x17,
         REG_12V_AUX_OL = 0x18,
-        REG_LEFT_MOTOR_ERROR = 0x19,
-        REG_RIGHT_MOTOR_ERROR = 0x1A,
+        REG_UNUSED_19 = 0x19,
 
+        REG_PARAM_V = 0x1A,            // New in final v35 firmware and was an obsolite value before then
         REG_PARAM_P = 0x1B,
         REG_PARAM_I = 0x1C,
         REG_PARAM_D = 0x1D,

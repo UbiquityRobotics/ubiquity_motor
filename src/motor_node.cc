@@ -45,6 +45,7 @@ static FirmwareParams firmware_params;
 static CommsParams serial_params;
 static NodeParams node_params;
 
+// Dynamic reconfiguration callback for setting ROS parameters dynamically
 void PID_update_callback(const ubiquity_motor::PIDConfig& config,
                          uint32_t level) {
     if (level == 0xFFFFFFFF) {
@@ -61,6 +62,8 @@ void PID_update_callback(const ubiquity_motor::PIDConfig& config,
         firmware_params.pid_denominator = config.PID_C;
     } else if (level == 16) {
         firmware_params.pid_moving_buffer_size = config.PID_W;
+    } else if (level == 32) {
+        firmware_params.pid_velocity = config.PID_V;
     } else {
         ROS_ERROR("Unsupported dynamic_reconfigure level %u", level);
     }
