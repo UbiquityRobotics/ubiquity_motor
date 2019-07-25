@@ -57,6 +57,7 @@ struct MotorDiagnostics {
     // Communication Statuses
     int firmware_version = 0;
     int firmware_date    = 0;
+    int firmware_options = 0;
    
     double odom_max_freq = 1000;
     double odom_min_freq = 50;
@@ -90,6 +91,8 @@ struct MotorDiagnostics {
     void limit_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void battery_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void motor_power_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void firmware_options_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void firmware_date_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
 };
 
 class MotorHardware : public hardware_interface::RobotHW {
@@ -117,6 +120,7 @@ public:
     void setMaxPwm(int32_t max_pwm);
     int firmware_version;
     int firmware_date;
+    int firmware_options;
     int hardware_version;
     int estop_pid_threshold;
     int max_speed_fwd;
@@ -129,7 +133,7 @@ private:
     void _addOdometryRequest(std::vector<MotorMessage>& commands) const;
     void _addVelocityRequest(std::vector<MotorMessage>& commands) const;
 
-    int16_t calculateTicksFromRadians(double radians) const;
+    int16_t calculateSpeedFromRadians(double radians) const;
     double calculateRadiansFromTicks(int16_t ticks) const;
 
     hardware_interface::JointStateInterface joint_state_interface_;

@@ -117,6 +117,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     diag_updater.add("Limits", &motor_diag_, &MotorDiagnostics::limit_status);
     diag_updater.add("Battery", &motor_diag_, &MotorDiagnostics::battery_status);
     diag_updater.add("MotorPower", &motor_diag_, &MotorDiagnostics::motor_power_status);
+    diag_updater.add("FirmwareOptions", &motor_diag_, &MotorDiagnostics::firmware_options_status);
+    diag_updater.add("FirmwareDate", &motor_diag_, &MotorDiagnostics::firmware_date_status);
 }
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
@@ -195,10 +197,11 @@ void MotorHardware::readInputs() {
                     int32_t data = mm.getData();
 
                     // Enable or disable hardware options reported from firmware
+                    motor_diag_.firmware_options = data;
 
                     // Set radians per encoder tic
                     if (data & MotorMessage::OPT_ENC_6_STATE) {
-		    	fw_params.hw_options |= MotorMessage::OPT_ENC_6_STATE; 
+		     	fw_params.hw_options |= MotorMessage::OPT_ENC_6_STATE; 
                         ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE * 2;
                     } else {
 		    	fw_params.hw_options &= ~MotorMessage::OPT_ENC_6_STATE; 
@@ -295,15 +298,15 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
     both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
     both.setType(MotorMessage::TYPE_WRITE);
 
-    int16_t left_ticks = calculateTicksFromRadians(left_radians);
-    int16_t right_ticks = calculateTicksFromRadians(right_radians);
+    int16_t left_speed  = calculateSpeedFromRadians(left_radians);
+    int16_t right_speed = calculateSpeedFromRadians(right_radians);
 
     // The masking with 0x0000ffff is necessary for handling -ve numbers
-    int32_t data = (left_ticks << 16) | (right_ticks & 0x0000ffff);
+    int32_t data = (left_speed << 16) | (right_speed & 0x0000ffff);
     both.setData(data);
 
     std_msgs::Int32 smsg;
-    smsg.data = left_ticks;
+    smsg.data = left_speed;
 
     motor_serial_->transmitCommand(both);
 
@@ -550,9 +553,22 @@ void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
     motor_serial_->transmitCommands(commands);
 }
 
-int16_t MotorHardware::calculateTicksFromRadians(double radians) const {
-    return boost::math::iround(radians * QTICKS_PER_RADIAN /
-                               VELOCITY_READ_PER_SECOND);
+// calculate the binary speed value sent to motor controller board
+// using an input expressed in radians.
+// The firmware uses the same speed value no matter what type of encoder is used
+int16_t MotorHardware::calculateSpeedFromRadians(double radians) const {
+    int16_t speed;
+    double  encoderFactor = 1.0;
+
+    // The firmware accepts same units for speed value
+    // and will deal with it properly depending on encoder handling in use
+    if (fw_params.hw_options & MotorMessage::OPT_ENC_6_STATE) {
+        encoderFactor = 0.5;
+    }
+
+    speed =  boost::math::iround(encoderFactor * (radians * QTICKS_PER_RADIAN /
+                               VELOCITY_READ_PER_SECOND));
+    return speed;
 }
 
 double MotorHardware::calculateRadiansFromTicks(int16_t ticks) const {
@@ -573,6 +589,19 @@ void MotorDiagnostics::firmware_status(DiagnosticStatusWrapper &stat) {
     }
     else {
         stat.summary(DiagnosticStatus::OK, "Firmware version is OK");
+    }
+}
+
+void MotorDiagnostics::firmware_date_status(DiagnosticStatusWrapper &stat) {
+
+    // Only output status if the firmware daycode is supported
+    if (firmware_version >= MIN_FW_FIRMWARE_DATE) {
+        std::stringstream stream;
+        stream << std::hex << firmware_date;
+        std::string daycode(stream.str());
+
+        stat.add("Firmware Date", daycode);
+        stat.summary(DiagnosticStatus::OK, "Firmware daycode format is YYYYMMDD");
     }
 }
 
@@ -632,4 +661,15 @@ void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
         stat.summary(DiagnosticStatusWrapper::WARN, "Motor power off");
     }
 }
+// motor_encoder_mode returns 0 for legacy encoders and 1 for 6-state firmware
+void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
+    stat.add("Firmware Options", firmware_options);
+    if (firmware_options & MotorMessage::OPT_ENC_6_STATE) {
+        stat.summary(DiagnosticStatusWrapper::OK, "High resolution encoders");
+    } 
+    else {
+        stat.summary(DiagnosticStatusWrapper::OK, "Standard resolution encoders");
+    }
+}
+
 

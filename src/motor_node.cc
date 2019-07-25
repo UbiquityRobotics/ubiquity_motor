@@ -110,6 +110,14 @@ int main(int argc, char* argv[]) {
     robot->setParams(firmware_params);
     robot->requestFirmwareVersion();
 
+    // wait for reply then we know firmware version
+    ctrlLoopDelay.sleep();    // Allow controller to process command
+
+    if (robot->firmware_version >= MIN_FW_FIRMWARE_DATE) {
+        ROS_INFO("Request the firmware daycode");
+        robot->requestFirmwareDate();
+    }
+
     // Make sure firmware is listening
     {
         robot->diag_updater.broadcast(0, "Establishing communication with motors");
@@ -142,7 +150,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Setup other firmware parameters that could come from ROS parameters
-    if (robot->firmware_version >= MIN_FW_FIRMWARE_DATE) {
+    if (robot->firmware_version >= MIN_FW_ESTOP_SUPPORT) {
         robot->setEstopPidThreshold(firmware_params.estop_pid_threshold);
         ctrlLoopDelay.sleep();        // Allow controller to process command
         robot->setEstopDetection(firmware_params.estop_detection);
