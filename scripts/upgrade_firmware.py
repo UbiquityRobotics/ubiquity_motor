@@ -5,6 +5,8 @@ import time
 import serial
 import os, sys, subprocess
 
+import argparse
+
 print """-------------------------------------------------------------
 Welcome to the Ubiquity Robotics Firmware Updater!
 
@@ -15,41 +17,57 @@ Note: Updating the firmware requires access to the internet.
 -------------------------------------------------------------
 """
 
-if (subprocess.call(['fuser','-v', '/dev/ttyAMA0'], stdout=None) == 0):
+TMP_FILE_PATH = '/tmp/firmware'
+
+
+parser = argparse.ArgumentParser(description='Ubiquity Robotics Firmware Updater')
+parser.add_argument('--device', help='Serial port to use (eg /dev/ttyAMA0)', default='/dev/ttyAMA0')
+parser.add_argument('--file', help='Path to a firmware file', default='')
+args = parser.parse_args()
+
+serial_port = args.device
+
+if (subprocess.call(['fuser','-v', serial_port], stdout=None) == 0):
     print ""
     print "Another process is using the serial port, cannot upgrade firmware"
     print "Make sure you stopped any running ROS nodes. To stop default nodes:"
     print "sudo systemctl stop magni-base"
     sys.exit(1)
 
-email = raw_input("Please enter your email address: ").strip()
+if args.file:
+    path_to_file = args.file
 
-if email != "":
-    r = requests.post('https://api.ubiquityrobotics.com/token/', json = {'email': email}) 
+else:
+    path_to_file = TMP_FILE_PATH
+
+    email = raw_input("Please enter your email address: ").strip()
+
+    if email != "":
+        r = requests.post('https://api.ubiquityrobotics.com/token/', json = {'email': email}) 
+
+        if r.status_code != 200:
+                print "Error with requesting a token %d" % r.status_code
+                sys.exit(1)
+
+    print "An access token was sent to your email address"
+
+    token = raw_input("Please enter your access token: ").strip()
+
+    version = raw_input("What version would you like (press enter for latest): ").strip()
+
+    if version == "":
+        version = "latest"
+
+    auth_headers = {"Authorization": "Bearer %s" % token}
+    r = requests.get('https://api.ubiquityrobotics.com/firmware/%s' % version, headers=auth_headers)
 
     if r.status_code != 200:
-            print "Error with requesting a token %d" % r.status_code
-            sys.exit(1)
+	    print "Error downloading firmware %d" % r.status_code
+	    sys.exit(1)
 
-print "An access token was sent to your email address"
-
-token = raw_input("Please enter your access token: ").strip()
-
-version = raw_input("What version would you like (press enter for latest): ").strip()
-
-if version == "":
-    version = "latest"
-
-auth_headers = {"Authorization": "Bearer %s" % token}
-r = requests.get('https://api.ubiquityrobotics.com/firmware/%s' % version, headers=auth_headers)
-
-if r.status_code != 200:
-	print "Error downloading firmware %d" % r.status_code
-	sys.exit(1)
-
-with open('/tmp/firmware', 'w+b') as fd:
-    for chunk in r.iter_content(chunk_size=128):
-        fd.write(chunk)
+    with open(path_to_file, 'w+b') as fd:
+        for chunk in r.iter_content(chunk_size=128):
+            fd.write(chunk)
 
 print "\nUpdating firmware now. Do not power off the robot. This is expected to take less than a minute."
 
@@ -387,14 +405,14 @@ def convert_checksum(checksum, flash_id, row_number, row_size):
 
 hex_stream = None
 try:
-    hex_stream = load_hex("/tmp/firmware")
+    hex_stream = load_hex(path_to_file)
 except IOError:
-    print "Unable to open file: ", "/tmp/firmware"
+    print "Unable to open file: ", path_to_file
 except InvalidFileException:
     print "File is not of the correct format"
 print("Encryption:", hex_stream.is_encrypted())
 
-ser = serial.Serial('/dev/ttyAMA0', 38400, timeout=1, bytesize=8,
+ser = serial.Serial(serial_port, 38400, timeout=1, bytesize=8,
                     parity=serial.PARITY_NONE, stopbits=1, xonxoff=0, rtscts=0)
 
 # Write to request the bootloader to the correct state.
