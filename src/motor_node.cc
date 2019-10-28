@@ -45,6 +45,7 @@ static FirmwareParams firmware_params;
 static CommsParams serial_params;
 static NodeParams node_params;
 
+// Dynamic reconfiguration callback for setting ROS parameters dynamically
 void PID_update_callback(const ubiquity_motor::PIDConfig& config,
                          uint32_t level) {
     if (level == 0xFFFFFFFF) {
@@ -61,6 +62,8 @@ void PID_update_callback(const ubiquity_motor::PIDConfig& config,
         firmware_params.pid_denominator = config.PID_C;
     } else if (level == 16) {
         firmware_params.pid_moving_buffer_size = config.PID_W;
+    } else if (level == 32) {
+        firmware_params.pid_velocity = config.PID_V;
     } else {
         ROS_ERROR("Unsupported dynamic_reconfigure level %u", level);
     }
@@ -105,7 +108,15 @@ int main(int argc, char* argv[]) {
     server.setCallback(f);
 
     robot->setParams(firmware_params);
-    robot->requestVersion();
+    robot->requestFirmwareVersion();
+
+    // wait for reply then we know firmware version
+    ctrlLoopDelay.sleep();    // Allow controller to process command
+
+    if (robot->firmware_version >= MIN_FW_FIRMWARE_DATE) {
+        ROS_INFO("Request the firmware daycode");
+        robot->requestFirmwareDate();
+    }
 
     // Make sure firmware is listening
     {
@@ -115,16 +126,21 @@ int main(int argc, char* argv[]) {
         while (ros::ok() && robot->firmware_version == 0) {
             if (times % 30 == 0)
                 ROS_ERROR("The Firmware not reporting its version");
-                robot->requestVersion();
+                robot->requestFirmwareVersion();
             robot->readInputs();
             ctrlLoopDelay.sleep();    // Allow controller to process command
             times++;
         }
     }
 
+    if (robot->firmware_version >= MIN_FW_FIRMWARE_DATE) {
+        // If supported by firmware also request date code for this version
+        robot->requestFirmwareDate();
+    }
+
     // Tell the controller board firmware what version the hardware is at this time.
     // TODO: Read from I2C.   At this time we only allow setting the version from ros parameters
-    if (robot->firmware_version >= 32) {
+    if (robot->firmware_version >= MIN_FW_HW_VERSION_SET) {
         ROS_DEBUG("Firmware is version %d. Setting Controller board version to %d", 
             robot->firmware_version, firmware_params.controller_board_version);
         robot->setHardwareVersion(firmware_params.controller_board_version);
@@ -134,16 +150,26 @@ int main(int argc, char* argv[]) {
     }
 
     // Setup other firmware parameters that could come from ROS parameters
-    robot->setEstopPidThreshold(firmware_params.estop_pid_threshold);
-    ctrlLoopDelay.sleep();        // Allow controller to process command
-    robot->setEstopDetection(firmware_params.estop_detection);
-    ctrlLoopDelay.sleep();        // Allow controller to process command
-    robot->setMaxFwdSpeed(firmware_params.max_speed_fwd);
-    ctrlLoopDelay.sleep();        // Allow controller to process command
-    robot->setMaxRevSpeed(firmware_params.max_speed_rev);
-    ctrlLoopDelay.sleep();        // Allow controller to process command
-    robot->setMaxPwm(firmware_params.max_pwm);
-    ctrlLoopDelay.sleep();        // Allow controller to process command
+    if (robot->firmware_version >= MIN_FW_ESTOP_SUPPORT) {
+        robot->setEstopPidThreshold(firmware_params.estop_pid_threshold);
+        ctrlLoopDelay.sleep();        // Allow controller to process command
+        robot->setEstopDetection(firmware_params.estop_detection);
+        ctrlLoopDelay.sleep();        // Allow controller to process command
+    }
+
+    if (robot->firmware_version >= MIN_FW_MAX_SPEED_AND_PWM) {
+        robot->setMaxFwdSpeed(firmware_params.max_speed_fwd);
+        ctrlLoopDelay.sleep();        // Allow controller to process command
+        robot->setMaxRevSpeed(firmware_params.max_speed_rev);
+        ctrlLoopDelay.sleep();        // Allow controller to process command
+        robot->setMaxPwm(firmware_params.max_pwm);
+        ctrlLoopDelay.sleep();        // Allow controller to process command
+    }
+
+    if (robot->firmware_version >= MIN_FW_DEADZONE) {
+        robot->setDeadzoneEnable(firmware_params.deadzone_enable);
+        ctrlLoopDelay.sleep();        // Allow controller to process command
+    }
 
     ros::Time last_time;
     ros::Time current_time;

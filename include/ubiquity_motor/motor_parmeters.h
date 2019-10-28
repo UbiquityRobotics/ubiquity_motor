@@ -47,6 +47,7 @@ struct FirmwareParams {
     int32_t pid_proportional;
     int32_t pid_integral;
     int32_t pid_derivative;
+    int32_t pid_velocity;
     int32_t pid_denominator;
     int32_t pid_moving_buffer_size;
     int32_t controller_board_version;
@@ -56,14 +57,16 @@ struct FirmwareParams {
     int32_t max_speed_rev;
     int32_t max_pwm;
     int32_t deadman_timer;
+    int32_t deadzone_enable;
     int32_t hw_options;
     float battery_voltage_multiplier;
     float battery_voltage_offset;
 
     FirmwareParams()
-        : pid_proportional(5000),
-          pid_integral(10),
-          pid_derivative(1),
+        : pid_proportional(4000),
+          pid_integral(5),
+          pid_derivative(-200),
+          pid_velocity(0),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
           controller_board_version(49),
@@ -73,14 +76,16 @@ struct FirmwareParams {
           max_speed_rev(-80),
           max_pwm(250),
           deadman_timer(2400000),
+          deadzone_enable(1),
           hw_options(0),
           battery_voltage_multiplier(0.05057),
           battery_voltage_offset(0.40948){};
 
     FirmwareParams(ros::NodeHandle nh)
-        : pid_proportional(5000),
-          pid_integral(10),
-          pid_derivative(1),
+        : pid_proportional(4000),
+          pid_integral(5),
+          pid_derivative(-200),
+          pid_velocity(0),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
           controller_board_version(49),
@@ -90,6 +95,7 @@ struct FirmwareParams {
           max_speed_rev(-80),
           max_pwm(250),
           deadman_timer(2400000),
+          deadzone_enable(1),
           hw_options(0),
           battery_voltage_multiplier(0.05057),
           battery_voltage_offset(0.40948) 
@@ -101,6 +107,8 @@ struct FirmwareParams {
             nh, "ubiquity_motor/pid_integral", pid_integral);
         pid_derivative = getParamOrDefault(
             nh, "ubiquity_motor/pid_derivative", pid_derivative);
+        pid_velocity = getParamOrDefault(
+            nh, "ubiquity_motor/pid_velocity", pid_velocity);
         pid_denominator = getParamOrDefault(
             nh, "ubiquity_motor/pid_denominator", pid_denominator);
         pid_moving_buffer_size = getParamOrDefault(
@@ -119,6 +127,8 @@ struct FirmwareParams {
             nh, "ubiquity_motor/fw_max_pwm", max_pwm);
         deadman_timer = getParamOrDefault(
             nh, "ubiquity_motor/deadman_timer", deadman_timer);
+        deadzone_enable = getParamOrDefault(
+            nh, "ubiquity_motor/deadzone_enable", deadzone_enable);
         battery_voltage_offset = getParamOrDefault(
             nh, "ubiquity_motor/battery_voltage_offset", battery_voltage_offset);
         battery_voltage_multiplier = getParamOrDefault(

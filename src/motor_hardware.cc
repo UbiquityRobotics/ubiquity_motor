@@ -92,12 +92,14 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.pid_proportional = -1;
     prev_fw_params.pid_integral = -1;
     prev_fw_params.pid_derivative = -1;
+    prev_fw_params.pid_velocity = -1;
     prev_fw_params.pid_denominator = -1;
     prev_fw_params.pid_moving_buffer_size = -1;
     prev_fw_params.max_speed_fwd = -1;
     prev_fw_params.max_speed_rev = -1;
     prev_fw_params.max_pwm = -1;
     prev_fw_params.deadman_timer = -1;
+    prev_fw_params.deadzone_enable = -1;
     prev_fw_params.hw_options = -1;
     prev_fw_params.controller_board_version = -1;
     prev_fw_params.estop_detection = -1;
@@ -108,12 +110,15 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
     hardware_version = 0;
     firmware_version = 0;
+    firmware_date    = 0;
 
     diag_updater.setHardwareID("Motor Controller");
     diag_updater.add("Firmware", &motor_diag_, &MotorDiagnostics::firmware_status);
     diag_updater.add("Limits", &motor_diag_, &MotorDiagnostics::limit_status);
     diag_updater.add("Battery", &motor_diag_, &MotorDiagnostics::battery_status);
     diag_updater.add("MotorPower", &motor_diag_, &MotorDiagnostics::motor_power_status);
+    diag_updater.add("FirmwareOptions", &motor_diag_, &MotorDiagnostics::firmware_options_status);
+    diag_updater.add("FirmwareDate", &motor_diag_, &MotorDiagnostics::firmware_date_status);
 }
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
@@ -145,6 +150,13 @@ void MotorHardware::readInputs() {
                         firmware_version = mm.getData();
 			motor_diag_.firmware_version = firmware_version;
                     }
+                    break;
+
+                case MotorMessage::REG_FIRMWARE_DATE:
+                    // Firmware date is only supported as of fw version MIN_FW_FIRMWARE_DATE
+                    ROS_INFO("Firmware date 0x%x (format 0xYYYYMMDD)", mm.getData());
+                    firmware_date = mm.getData();
+		    motor_diag_.firmware_date = firmware_date;
                     break;
 
                 case MotorMessage::REG_BOTH_ODOM: {
@@ -185,10 +197,11 @@ void MotorHardware::readInputs() {
                     int32_t data = mm.getData();
 
                     // Enable or disable hardware options reported from firmware
+                    motor_diag_.firmware_options = data;
 
                     // Set radians per encoder tic
                     if (data & MotorMessage::OPT_ENC_6_STATE) {
-		    	fw_params.hw_options |= MotorMessage::OPT_ENC_6_STATE; 
+		     	fw_params.hw_options |= MotorMessage::OPT_ENC_6_STATE; 
                         ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE * 2;
                     } else {
 		    	fw_params.hw_options &= ~MotorMessage::OPT_ENC_6_STATE; 
@@ -222,6 +235,10 @@ void MotorHardware::readInputs() {
                     if (data & MotorMessage::LIM_M2_MAX_SPD) {
                         ROS_WARN("right Maximum speed reached");
 		    	motor_diag_.right_max_speed_limit = true; 
+                    }
+                    if (data & MotorMessage::LIM_PARAM_LIMIT) {
+                        ROS_WARN_ONCE("parameter limit in firmware");
+		    	motor_diag_.param_limit_in_firmware = true; 
                     }
                     break;
                 }
@@ -281,15 +298,15 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
     both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
     both.setType(MotorMessage::TYPE_WRITE);
 
-    int16_t left_ticks = calculateTicksFromRadians(left_radians);
-    int16_t right_ticks = calculateTicksFromRadians(right_radians);
+    int16_t left_speed  = calculateSpeedFromRadians(left_radians);
+    int16_t right_speed = calculateSpeedFromRadians(right_radians);
 
     // The masking with 0x0000ffff is necessary for handling -ve numbers
-    int32_t data = (left_ticks << 16) | (right_ticks & 0x0000ffff);
+    int32_t data = (left_speed << 16) | (right_speed & 0x0000ffff);
     both.setData(data);
 
     std_msgs::Int32 smsg;
-    smsg.data = left_ticks;
+    smsg.data = left_speed;
 
     motor_serial_->transmitCommand(both);
 
@@ -311,12 +328,21 @@ void MotorHardware::writeSpeeds() {
     writeSpeedsInRadians(left_radians, right_radians);
 }
 
-void MotorHardware::requestVersion() {
-    MotorMessage version;
-    version.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
-    version.setType(MotorMessage::TYPE_READ);
-    version.setData(0);
-    motor_serial_->transmitCommand(version);
+void MotorHardware::requestFirmwareVersion() {
+    MotorMessage fw_version_msg;
+    fw_version_msg.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
+    fw_version_msg.setType(MotorMessage::TYPE_READ);
+    fw_version_msg.setData(0);
+    motor_serial_->transmitCommand(fw_version_msg);
+}
+
+// Firmware date register implemented as of MIN_FW_FIRMWARE_DATE
+void MotorHardware::requestFirmwareDate() {
+    MotorMessage fw_date_msg;
+    fw_date_msg.setRegister(MotorMessage::REG_FIRMWARE_DATE);
+    fw_date_msg.setType(MotorMessage::TYPE_READ);
+    fw_date_msg.setData(0);
+    motor_serial_->transmitCommand(fw_date_msg);
 }
 
 
@@ -396,10 +422,20 @@ void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
     motor_serial_->transmitCommand(mm);
 }
 
+void MotorHardware::setDeadzoneEnable(int32_t deadzone_enable) {
+    ROS_ERROR("setting deadzone enable to %d", (int)deadzone_enable);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_DEADZONE);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(deadman_timer);
+    motor_serial_->transmitCommand(mm);
+}
+
 void MotorHardware::setParams(FirmwareParams fp) {
     fw_params.pid_proportional = fp.pid_proportional;
     fw_params.pid_integral = fp.pid_integral;
     fw_params.pid_derivative = fp.pid_derivative;
+    fw_params.pid_velocity = fp.pid_velocity;
     fw_params.pid_denominator = fp.pid_denominator;
     fw_params.pid_moving_buffer_size = fp.pid_moving_buffer_size;
     fw_params.pid_denominator = fp.pid_denominator;
@@ -413,8 +449,9 @@ void MotorHardware::sendParams() {
     //(int)p_value, (int)i_value, (int)d_value, (int)denominator_value);
 
     // Only send one register at a time to avoid overwhelming serial comms
-    // SUPPORT NOTE!  Adjust modulo for cycle and be sure no duplicate modulos are used!
-    int cycle = (sendPid_count++) % 5;
+    // SUPPORT NOTE!  Adjust modulo for total parameters in the cycle
+    //                and be sure no duplicate modulos are used!
+    int cycle = (sendPid_count++) % 6;     // MUST BE THE TOTAL NUMBER IN THIS HANDLING
 
     if (cycle == 0 &&
         fw_params.pid_proportional != prev_fw_params.pid_proportional) {
@@ -448,7 +485,18 @@ void MotorHardware::sendParams() {
         commands.push_back(d);
     }
 
-    if (cycle == 3 &&
+    if (cycle == 3 && (motor_diag_.firmware_version >= MIN_FW_PID_V_TERM) &&
+        fw_params.pid_velocity != prev_fw_params.pid_velocity) {
+        ROS_WARN("Setting V to %d", fw_params.pid_velocity);
+        prev_fw_params.pid_velocity = fw_params.pid_velocity;
+        MotorMessage v;
+        v.setRegister(MotorMessage::REG_PARAM_V);
+        v.setType(MotorMessage::TYPE_WRITE);
+        v.setData(fw_params.pid_velocity);
+        commands.push_back(v);
+    }
+
+    if (cycle == 4 &&
         fw_params.pid_denominator != prev_fw_params.pid_denominator) {
         ROS_WARN("Setting Denominator to %d", fw_params.pid_denominator);
         prev_fw_params.pid_denominator = fw_params.pid_denominator;
@@ -459,7 +507,7 @@ void MotorHardware::sendParams() {
         commands.push_back(denominator);
     }
 
-    if (cycle == 4 &&
+    if (cycle == 5 &&
         fw_params.pid_moving_buffer_size !=
             prev_fw_params.pid_moving_buffer_size) {
         ROS_WARN("Setting D window to %d", fw_params.pid_moving_buffer_size);
@@ -472,7 +520,7 @@ void MotorHardware::sendParams() {
         commands.push_back(winsize);
     }
 
-    // SUPPORT NOTE!  Adjust modulo for cycle and be sure no duplicate modulos are used!
+    // SUPPORT NOTE!  Adjust max modulo for total parameters in the cycle, be sure no duplicates used!
 
     if (commands.size() != 0) {
         motor_serial_->transmitCommands(commands);
@@ -505,9 +553,22 @@ void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
     motor_serial_->transmitCommands(commands);
 }
 
-int16_t MotorHardware::calculateTicksFromRadians(double radians) const {
-    return boost::math::iround(radians * QTICKS_PER_RADIAN /
-                               VELOCITY_READ_PER_SECOND);
+// calculate the binary speed value sent to motor controller board
+// using an input expressed in radians.
+// The firmware uses the same speed value no matter what type of encoder is used
+int16_t MotorHardware::calculateSpeedFromRadians(double radians) const {
+    int16_t speed;
+    double  encoderFactor = 1.0;
+
+    // The firmware accepts same units for speed value
+    // and will deal with it properly depending on encoder handling in use
+    if (fw_params.hw_options & MotorMessage::OPT_ENC_6_STATE) {
+        encoderFactor = 0.5;
+    }
+
+    speed =  boost::math::iround(encoderFactor * (radians * QTICKS_PER_RADIAN /
+                               VELOCITY_READ_PER_SECOND));
+    return speed;
 }
 
 double MotorHardware::calculateRadiansFromTicks(int16_t ticks) const {
@@ -523,14 +584,29 @@ void MotorDiagnostics::firmware_status(DiagnosticStatusWrapper &stat) {
     if (firmware_version == 0) {
         stat.summary(DiagnosticStatus::ERROR, "No firmware version reported. Power may be off.");
     }
-    else if (firmware_version < 32) {
-        stat.summary(DiagnosticStatus::WARN, "Firmware is older than reccomended");
+    else if (firmware_version < MIN_FW_RECOMMENDED) {
+        stat.summary(DiagnosticStatus::WARN, "Firmware is older than recommended! You must update firmware!");
     }
     else {
         stat.summary(DiagnosticStatus::OK, "Firmware version is OK");
     }
 }
 
+void MotorDiagnostics::firmware_date_status(DiagnosticStatusWrapper &stat) {
+
+    // Only output status if the firmware daycode is supported
+    if (firmware_version >= MIN_FW_FIRMWARE_DATE) {
+        std::stringstream stream;
+        stream << std::hex << firmware_date;
+        std::string daycode(stream.str());
+
+        stat.add("Firmware Date", daycode);
+        stat.summary(DiagnosticStatus::OK, "Firmware daycode format is YYYYMMDD");
+    }
+}
+
+// When a firmware limit condition is reported the diagnostic topic reports it.
+// Once the report is made the condition is cleared till next time firmware reports that limit
 void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
     stat.summary(DiagnosticStatus::OK, "Limits reached:");
     if (left_pwm_limit) {
@@ -557,6 +633,11 @@ void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " right speed,");
 	right_max_speed_limit = false;
     }
+    if (param_limit_in_firmware) {
+        // A parameter was sent to firmware that was out of limits for the firmware register
+        stat.mergeSummary(DiagnosticStatusWrapper::WARN, " firmware limit,");
+	param_limit_in_firmware = false;
+    }
 }
 
 void MotorDiagnostics::battery_status(DiagnosticStatusWrapper &stat) {
@@ -580,4 +661,15 @@ void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
         stat.summary(DiagnosticStatusWrapper::WARN, "Motor power off");
     }
 }
+// motor_encoder_mode returns 0 for legacy encoders and 1 for 6-state firmware
+void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
+    stat.add("Firmware Options", firmware_options);
+    if (firmware_options & MotorMessage::OPT_ENC_6_STATE) {
+        stat.summary(DiagnosticStatusWrapper::OK, "High resolution encoders");
+    } 
+    else {
+        stat.summary(DiagnosticStatusWrapper::OK, "Standard resolution encoders");
+    }
+}
+
 

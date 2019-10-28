@@ -42,7 +42,7 @@ import thread
 import smbus
 
 # simple version string
-g_version = "20190525"
+g_version = "20190703"
 
 # default serial device.  An  adapter in USB is often  '/dev/ttyUSB0'
 g_serialDev = '/dev/ttyAMA0' 
@@ -231,6 +231,55 @@ def fetchReplyWord(ser, cmdHex, regHex):
     return replyWord
 
 
+# Fetch a 32 bit value from the fixed length reply for a parameter fetch of a given type
+def fetchReplyLongWord(ser, cmdHex, regHex):
+    # get each byte of the reply and wait for the reply we need (totally nasty! why all the junk?)
+    # The Magni controller 'spews' forth loads of status all the time.  VERY MESSY!
+    # We just read it all and search for the packet we need that starts with hex  7e 3c 22
+    time.sleep(0.02)
+    charsRead = 0
+    charState = 0
+    reply24  = '00'
+    reply16  = '00'
+    reply08  = '00'
+    replyLongWord = '0000'
+    read_byte = ser.read()
+    while read_byte is not None:
+        charsRead += 1
+        if (charsRead > 80):
+            print("fetchReplyWord: Too many reply chars ")
+            break
+        hexData = read_byte.encode('hex')
+        # print("char: ",hexData)
+        if (charState == 6):
+            replyLongWord = reply24 + reply16 + reply08 + hexData
+            break
+        if (charState == 5):
+            reply08 = hexData
+            charState += 1
+        if (charState == 4):
+            reply16 = hexData
+            charState += 1
+        if (charState == 3):
+            reply24 = hexData
+            charState += 1
+        if (charState == 2):
+            # if (hexData ==  int(regDec,16)):
+            if (hexData ==  regHex):
+                charState += 1
+            else:
+                charState = 0     # if we are not on the packet we want reset the state
+        if (charState == 1):
+            if (hexData ==  cmdHex):
+                charState += 1
+            else:
+                charState = 0     # if we are not on the packet we want reset the state
+        if (charState == 0) and (hexData == '7e'):
+            charState += 1
+        read_byte = ser.read()
+    return replyLongWord
+
+
 # utility to set right and left wheel speeds then exit when key is hit
 def setSpeedTillKeypress(ser, speed1, speed2):
     intKeys = []
@@ -251,7 +300,7 @@ def showHelp():
     logAlways("Commands: h or ? for help.  v for versions of firmware and hardware. Use Control-C to quit or E")
     logAlways("Speeds:   Enter 0 - 9 fwd speed. n,N slow/fast reverse. s for 'any speed' or c cycle last fwd/reverse")
     logAlways("  v  - Query firmware and hw version setting      o - Query 8-bit hardware option port with real board rev")
-    logAlways("  q  - Query a word value from any register. Register value entered as 2 char hex digit")
+    logAlways("  q  - Query a 16 bit word value from register.   Q - Query 32 bit register value")
     logAlways("  S  - Set a word value from for any register.   Enter reg as hex and value as decimal")
     logAlways("  21 = Hardware Rev (50 = 5.0)                   22 = Firmware version")
     logAlways("  32 = Query if firmware thinks motors active    33 = Set to 1 to enable any exit of ESTOP feature")
@@ -496,6 +545,20 @@ class serCommander():
                 print("Register was set to  ", int(registerValue,16), " decimal", registerValue, " hex")
                 time.sleep(0.02)
 
+            if input == 'Q':          # query any register for a Long (32 bit value)
+                logAlways("Query any control register to any value up to one long word size")
+                cmdRegAsHex = raw_input("Enter control register number in hex: ")
+                cmdRegNumber = int(cmdRegAsHex,16)
+                queryBytes = [ 0x7e, 0x3a, 0x34, 0, 0, 0, 0 ]
+                queryBytes[2] = cmdRegNumber
+                pktCksum = calcPacketCksum(queryBytes)
+                queryBytes.append(pktCksum)
+                ser.flushInput()
+                ser.write(queryBytes)
+                registerValue = fetchReplyLongWord(ser, '3c', cmdRegAsHex)
+                print("Register was set to  ", int(registerValue,16), " decimal", registerValue, " hex")
+                time.sleep(0.02)
+
             if input == 'S':          # Set any register to any value
                 logAlways("Set any control register to any value up to one word size")
                 cmdRegAsHex  = raw_input("Enter control register number in as hex digits:  ")
@@ -552,7 +615,17 @@ class serCommander():
                 ser.flushInput()
                 ser.write(queryVersion)
                 fwRev = fetchReplyByte(ser, '3c', '22')
-                print("fw rev query returned hex ", fwRev , ", decimal version " , int(fwRev,16))
+                fwRevInt = int(fwRev,16)
+                print("fw revision ", fwRevInt)
+                if fwRevInt >= 35:
+                    # return daycode register if firmware version supports it
+                    queryVersion = [ 0x7e, 0x3a, 0x3a, 0, 0, 0, 0 ]
+                    pktCksum = calcPacketCksum(queryVersion)
+                    queryVersion.append(pktCksum)
+                    ser.flushInput()
+                    ser.write(queryVersion)
+                    registerValue = fetchReplyLongWord(ser, '3c', '3a')
+                    print("fw daycode  ", registerValue)
                 time.sleep(0.02)
                 # send query for the controller board hardware version
                 queryVersion = [ 0x7e, 0x3a, 0x21, 0, 0, 0, 0 ]
@@ -562,7 +635,7 @@ class serCommander():
                 ser.write(queryVersion)
                 fwRev = fetchReplyByte(ser, '3c', '21')
                 boardRev = int(fwRev,16) / 10.0
-                print("hw rev query returned hex ", fwRev , " or board rev of ", boardRev)
+                print("hw revision ", boardRev)
                 time.sleep(0.02)
 
         except RuntimeError,e: 
@@ -579,13 +652,13 @@ class serCommander():
 
 
 if __name__ == '__main__':
-    print("Running with version: " + g_version)
+    print("Running with script version: " + g_version)
    
     if str(len(sys.argv)) == "3":
         if str(sys.argv[1]) == "--dev":
             g_serialDev = str(sys.argv[2])
-            print("Using serial device file: " + g_serialDev)
- 
+    print("Using serial device file: " + g_serialDev)
+
     try:
         serCommander()
     except RuntimeError,e: 
