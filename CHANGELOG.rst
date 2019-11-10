@@ -2,6 +2,21 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Support for higher resolution odometry (firmware v35+ required)
+* Tool to verify odometry consistency
+* Support for target velocity term in the PID (firmware v35+ required)
+* Firmware update script now supports local firmware files
+* Firmware update script can use different serial port
+* Support for reading motor controller version from I2C
+* Safer E-STOP behavior (MCB 5.0+)
+* Publishing the state of the estop switch
+* Improved documentation 
+* Improvements to the testing scripts
+
+* Contributors: Alexander Sergeenko, David Crawley, Mark Johnston, Rohan Agrawal
+
 0.9.0 (2019-04-03)
 ------------------
 * Allow selecting what firmware version to download
