@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.10.0 (2019-11-10)
+-------------------
 * Support for higher resolution odometry (firmware v35+ required)
 * Tool to verify odometry consistency
 * Support for target velocity term in the PID (firmware v35+ required)
