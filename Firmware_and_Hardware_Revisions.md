@@ -9,9 +9,15 @@ We will use the term MCB for Master Controller Board (the main board containing 
 
 ## Firmware Revisions
 
-Here is a history of what was included or fixed for each firmware revision that was considered stable
+Below is presented a history of what was included or fixed for each firmware revision that was considered stable.
+To do a firmware upgrade for the motor controller board please see our instructions [HERE](https://learn.ubiquityrobotics.com/firmware-upgrade)
 
 Firmware Revision History
+
+* `v35`  2019-08-15. Available as version v35 using upgrade_firmware tool and is not our default as of mid November 2019.
+    * THIS VERSION REQUIRES HOST SIDE CODE UPDATE TO Nov 15, 2019 apt upgrade or later to function properly!
+    * Doubles the wheel encoder resolution.
+    * Improves motor PID speed controller for added responsiveness as well as options for setting certain limits.
 
 * `Rev 33`  BETA Firmware. Available as version v33 using upgrade_firmware tool and is not our default. Not recommended for general use yet.
     * If the wheels move when ESTOP switch is activated the Magni we do NOT jump upon ESTOP release
@@ -40,6 +46,7 @@ Firmware Revision History
 
 The MCB hardware revisions start with those board revisions that may have ended up at sites outside of Ubiquity Robotics.   Below is a list in reverse time order of the boards and approximate time of first availability.
 
+To identify the motor controller board you have you can try to read the version very low on the top left side of the board or you can visit our website [HERE](https://learn.ubiquityrobotics.com/PC_Board_RevId)
 
 * `5.1` A minor but important revision was first produced April 2019.  
     * A major reliability fix to prevent failures of the motor ECB power switch/protection circuit. A re-design of the Motor Power ECB circuit that . Many value changes are involved as is the change of the M903_ECB_MOT MosFet to a much more powerful MosFet.
