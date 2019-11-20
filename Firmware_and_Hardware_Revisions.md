@@ -19,12 +19,12 @@ Firmware Revision History
     * Doubles the wheel encoder resolution.
     * Improves motor PID speed controller for added responsiveness as well as options for setting certain limits.
 
-* `Rev 33`  BETA Firmware. Available as version v33 using upgrade_firmware tool and is not our default. Not recommended for general use yet.
+* `v33`  BETA Firmware. DO NOT USE THIS version.  Available as version v33 using upgrade_firmware tool and is not our default. Not to be used due to some defects.
     * If the wheels move when ESTOP switch is activated the Magni we do NOT jump upon ESTOP release
     * Improved PID loop reset on detection of no motor power (ESTOP activated) so we are at a fully PID loop reset state on ESTOP release.
     * DEFECT: On startup prior to first movement we can see a state sometimes where the motors are not in a 'breaking' state and we are looking into this.    This is reported so far if you don't fully reset the linux software but have power cycled the motor controller board which is possible when not using the Raspberry Pi as the CPU.
 
-* `Rev 32`  2019-03-25  This is our default latest stable firmware
+* `v32`  2019-03-25  This is our default latest stable firmware
     * Many improvements to ESTOP behavior to prevent large movements upon ESTOP release on rev 5.0 boards
     * Support to enable the improved ESTOP behavior if high level ROS enables the feature
     * A worse-case default ESTOP detect logic that will work on boards prior to rev 5.0 but is very crude and still moves
@@ -34,13 +34,13 @@ Firmware Revision History
     * Parameter to set maximum PWM setting the motors can be set to so bad PID cooeficients cannot lead to dangerous movements of the Magni unit.
     * Build environment cleanup of unused files (not a 'fix' but needs to be mentioned to be complete
 
-* `Rev 30`  2018-07-21
+* `v30`  2018-07-21
     * Motor encoder inputs use double sync to prevent false readings that gave bad encoder readings
     * Improvements to the bootloader and firmware download mechanisms to be ready for production
 
-* `Rev 29`  A near ready for production release used on pre-production units with rev 4.7 boards. 
+* `v29`  A near ready for production release used on pre-production units with rev 4.7 boards. 
 
-* `Rev 28`  A production test firmware revision that is not intended to be sent to customers.
+* `v28`  A production test firmware revision that is not intended to be sent to customers.
 
 ## Hardware Revisions
 
