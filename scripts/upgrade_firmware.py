@@ -45,7 +45,9 @@ else:
     if email != "":
         r = requests.post('https://api.ubiquityrobotics.com/token/', json = {'email': email}) 
 
-        if r.status_code != 200:
+        if r.status_code == 500:
+            print "Error: 500 Internal Server Error. Something went wrong, try again in a few minutes. If the error persists, contact support."
+        elif r.status_code != 200:
                 print "Error with requesting a token %d" % r.status_code
                 sys.exit(1)
 
@@ -61,9 +63,16 @@ else:
     auth_headers = {"Authorization": "Bearer %s" % token}
     r = requests.get('https://api.ubiquityrobotics.com/firmware/%s' % version, headers=auth_headers)
 
-    if r.status_code != 200:
-	    print "Error downloading firmware %d" % r.status_code
-	    sys.exit(1)
+    if r.status_code == 401:
+        print "Error: 401 Unauthorized. Please make sure that your token is valid and entered correctly."
+        sys.exit(1)
+    elif r.status_code == 404:
+        print "Error: 404 Not Found. The firmware version that you requested was not found."
+    elif r.status_code == 500:
+        print "Error: 500 Internal Server Error. Something went wrong, try again in a few minutes. If the error persists, contact support."
+    elif r.status_code != 200:
+        print "Error downloading firmware %d" % r.status_code
+        sys.exit(1)
 
     with open(path_to_file, 'w+b') as fd:
         for chunk in r.iter_content(chunk_size=128):
