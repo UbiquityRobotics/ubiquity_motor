@@ -1,7 +1,7 @@
 # ubiquity_motor
 [![Build Status](https://travis-ci.org/UbiquityRobotics/ubiquity_motor.svg?branch=indigo-devel)](https://travis-ci.org/UbiquityRobotics/ubiquity_motor)
 
-## Master Controller Board Firmware and Hardware Revision History 
+## Master Controller Board Firmware and Hardware Revision History
 
 Here is where we list in reverse time order the important high level changes for Firmware and Hardware revisions.
 
@@ -14,17 +14,24 @@ To do a firmware upgrade for the motor controller board please see our instructi
 
 Firmware Revision History
 
-* `v35`  2019-08-15. Available as version v35 using upgrade_firmware tool and is not our default as of mid November 2019.
+* `v36`  2020-04-12. Planned for release to production in mid 2020
+    * Contains built in selftest ability including a wheel test.
+    * Contains runtime checks for power supply and main battery levels
+
+* `v35`  2019-08-15. Available as version v35 using upgrade_firmware tool.
+    * This is a major release with first support for double resolution wheels
     * THIS VERSION REQUIRES HOST SIDE CODE UPDATE TO Nov 15, 2019 apt upgrade or later to function properly!
     * Doubles the wheel encoder resolution.
     * Improves motor PID speed controller for added responsiveness as well as options for setting certain limits.
+
+ALL REVISIONS FROM HERE ON REQUIRE HOST SIDE UPDATE TO Nov 15, 2019 or later
 
 * `v33`  BETA Firmware. DO NOT USE THIS version.  Available as version v33 using upgrade_firmware tool and is not our default. Not to be used due to some defects.
     * If the wheels move when ESTOP switch is activated the Magni we do NOT jump upon ESTOP release
     * Improved PID loop reset on detection of no motor power (ESTOP activated) so we are at a fully PID loop reset state on ESTOP release.
     * DEFECT: On startup prior to first movement we can see a state sometimes where the motors are not in a 'breaking' state and we are looking into this.    This is reported so far if you don't fully reset the linux software but have power cycled the motor controller board which is possible when not using the Raspberry Pi as the CPU.
 
-* `v32`  2019-03-25  This is our default latest stable firmware
+* `v32`  2019-03-25  This was our default firmware for much of 2019
     * Many improvements to ESTOP behavior to prevent large movements upon ESTOP release on rev 5.0 boards
     * Support to enable the improved ESTOP behavior if high level ROS enables the feature
     * A worse-case default ESTOP detect logic that will work on boards prior to rev 5.0 but is very crude and still moves
@@ -38,7 +45,7 @@ Firmware Revision History
     * Motor encoder inputs use double sync to prevent false readings that gave bad encoder readings
     * Improvements to the bootloader and firmware download mechanisms to be ready for production
 
-* `v29`  A near ready for production release used on pre-production units with rev 4.7 boards. 
+* `v29`  A near ready for production release used on pre-production units with rev 4.7 boards.
 
 * `v28`  A production test firmware revision that is not intended to be sent to customers.
 
@@ -48,7 +55,22 @@ The MCB hardware revisions start with those board revisions that may have ended 
 
 To identify the motor controller board you have you can try to read the version very low on the top left side of the board or you can visit our website [HERE](https://learn.ubiquityrobotics.com/PC_Board_RevId)
 
-* `5.1` A minor but important revision was first produced April 2019.  
+* `5.2` A major revision placed into production in early April 2020.
+    * The CAD system was changed to be a full KiCAD based design.  This was a huge change that required renumbering of most all of the part reference designators and of course the goal was after it was done to have an identical board.
+    * An onboard 3.3V regulator supplies the onboard 3.3V for some parts.  This means that we no longer put the Raspberry Pi 3.3 at risk that can destroy a Raspberry Pi. This also means we have more current locally on 3.3V.
+    * Two leds now indicate serial traffic has made it through the level converters. This is a huge debug assist as we can tell if the host raspberry Pi is actively talking and can detect failures in level converters.
+    * A WiFi led has been added so for users who do not use a sonar board they can see the state of the WiFi for Hotspot or user wifi connect debug.
+    * Added optional 2-pin connectors for wheel breaks. Normally not loaded.
+    * Two of the Analog pins now are fed with multiple resistors to allow verification that the 4 power supplies are ok AND to set power-on options.
+    * Test points available to force full selftest on powerup if one is grounded
+    * There are now 4 locations for power MosFets for ability to improve our current handling ability for both main and motor power.
+    * The direct battery power that we used to supply to the large 50 pin jack now comes from after the main power ECB circuit so we can prevent direct shorts.
+    * A great many silkscreen improvements have been made.
+    * Added 3-pin 12V jack for user to have a place to hook in a fan.
+    * Added a couple holes in lower right of board to be useful for mounting plate for different processors than the Raspberry Pi series.
+
+
+* `5.1` Minor layout change but important. First produced April 2019.  
     * A major reliability fix to prevent failures of the motor ECB power switch/protection circuit. A re-design of the Motor Power ECB circuit that . Many value changes are involved as is the change of the M903_ECB_MOT MosFet to a much more powerful MosFet.
 
 * `5.0` This major revision was first produced December 2018.  Quite a few changes for reliability, production and safety issues.
@@ -65,7 +87,7 @@ To identify the motor controller board you have you can try to read the version 
     * A LOT of silkscreen changes to better show PIN 1 placements and better label jacks like the two 4-pin white power jacks on top.
     * Several of the 0.1" connector strips were set to NO-LOAD or moved to the back to prevent shorts on never used jacks and to allow USB plugs to be easier to plug in and not risk shorting out these 0.1" long pinned jacks.
     * Some resistors moved to not be under the large 3-pin green motor 3-phase terminal strips.
-    * REWORK:  C312_5M mistake required a mod for this large capacitor. 
+    * REWORK:  C312_5M mistake required a mod for this large capacitor.
 
 * `4.9` The first production run boards that had undergone qualification tests required for shipment to end users.  A great many things changed from rev 4.7 and they will not all be listed because this is technically the first official board version for customer shipments.  A few key things are listed.
     * Addition of many ground plane and EMC emission suppression fixes so we pass required tests to ship the product.
@@ -75,3 +97,4 @@ To identify the motor controller board you have you can try to read the version 
 
 * `4.7` A pre-release board revision prior to the first production release.  Alpha and Beta sites and users who needed to try things in a lab only environment were sent this board for a small number of early evaluation units.
 
+* `4.6` An extremely early pre-release board long before first official shipments.  This was only sent to Alpha and Beta test sites. Not very many units.
