@@ -101,6 +101,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.deadman_timer = -1;
     prev_fw_params.deadzone_enable = -1;
     prev_fw_params.hw_options = -1;
+    prev_fw_params.option_switch = -1;
+    prev_fw_params.system_events = -1;
     prev_fw_params.controller_board_version = -1;
     prev_fw_params.estop_detection = -1;
     prev_fw_params.estop_pid_threshold = -1;
@@ -140,6 +142,13 @@ void MotorHardware::readInputs() {
         mm = motor_serial_->receiveCommand();
         if (mm.getType() == MotorMessage::TYPE_RESPONSE) {
             switch (mm.getRegister()) {
+
+                case MotorMessage::REG_SYSTEM_EVENTS:
+                    if ((mm.getData() & MotorMessage::SYS_EVENT_POWERON) != 0) {
+                        ROS_WARN("Firmware System Event for PowerOn transition");
+                        // !!! TODO:  RE-PUSH PARAMS TO FIRMWARE
+                    }
+                    break;
                 case MotorMessage::REG_FIRMWARE_VERSION:
                     if (mm.getData() < LOWEST_FIRMWARE_VERSION) {
                         ROS_FATAL("Firmware version %d, expect %d or above",
@@ -193,13 +202,14 @@ void MotorHardware::readInputs() {
                     rightError.publish(right);
                     break;
                 }
+
                 case MotorMessage::REG_HW_OPTIONS: {
                     int32_t data = mm.getData();
 
                     // Enable or disable hardware options reported from firmware
                     motor_diag_.firmware_options = data;
 
-                    // Set radians per encoder tic
+                    // Set radians per encoder tic based on encoder specifics
                     if (data & MotorMessage::OPT_ENC_6_STATE) {
 		     	fw_params.hw_options |= MotorMessage::OPT_ENC_6_STATE; 
                         ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE * 2;
@@ -207,8 +217,15 @@ void MotorHardware::readInputs() {
 		    	fw_params.hw_options &= ~MotorMessage::OPT_ENC_6_STATE; 
                         ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE;
                     }
+
+                    if (data & MotorMessage::OPT_WHEEL_TYPE_THIN) {
+                        ROS_WARN_ONCE("Wheel type is:  THIN");
+                    } else {
+                        ROS_WARN_ONCE("Wheel type is:  ORIGINAL");
+                    }
                     break;
                 }
+
                 case MotorMessage::REG_LIMIT_REACHED: {
                     int32_t data = mm.getData();
 
@@ -258,6 +275,8 @@ void MotorHardware::readInputs() {
                     battery_state.publish(bstate);
 
 		    motor_diag_.battery_voltage = bstate.voltage; 
+		    motor_diag_.battery_voltage_low_level = MotorHardware::fw_params.battery_voltage_low_level; 
+		    motor_diag_.battery_voltage_critical = MotorHardware::fw_params.battery_voltage_critical; 
                     break;
                 }
                 case MotorMessage::REG_MOT_PWR_ACTIVE: {   // Starting with rev 5.0 board we can see power state
@@ -642,10 +661,10 @@ void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
 
 void MotorDiagnostics::battery_status(DiagnosticStatusWrapper &stat) {
     stat.add("Battery Voltage", battery_voltage);
-    if (battery_voltage < 22.5) {
+    if (battery_voltage < battery_voltage_low_level) {
         stat.summary(DiagnosticStatusWrapper::WARN, "Battery low");
     } 
-    else if (battery_voltage < 21.0) {
+    else if (battery_voltage < battery_voltage_critical) {
         stat.summary(DiagnosticStatusWrapper::ERROR, "Battery critical");
     }
     else {

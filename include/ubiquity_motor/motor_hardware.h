@@ -74,6 +74,9 @@ struct MotorDiagnostics {
 
     // Power supply statuses
     float battery_voltage = 0.0;
+    float battery_voltage_low_level = 22.5;
+    float battery_voltage_critical = 21.0;
+
     /* For later implementation (firmware support)
     bool  main_5V_error = false;
     bool  main_5V_ol = false;
