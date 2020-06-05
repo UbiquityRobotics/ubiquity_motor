@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <diagnostic_updater/update_functions.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 
-#include <ubiquity_motor/motor_parmeters.h>
+#include <ubiquity_motor/motor_parameters.h>
 #include <ubiquity_motor/motor_serial.h>
 
 #include <gtest/gtest_prod.h>

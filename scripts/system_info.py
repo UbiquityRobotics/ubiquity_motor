@@ -107,20 +107,26 @@ def run():
 if __name__ == "__main__":
 
     # We are going to do very simple option checks for help or for periodic mode 
-    argcount = len(sys.argv) -1
+    argcount = len(sys.argv) - 1
     if argcount > 1:
         print("Only -h for help or -p for periodic are allowed as arguments!")
         exit()
 
-    if sys.argv[1] == '-h':
-        print("Inspect key system parameters and exit by default")
-        print("use -p for remaining active and monitoring some system parameters")
-        exit()
-
-    # set periodicStatus to non-zero for remaining in status update mode
+    # simple and swift checking for only two possible options
     periodicStatus = 0
-    if sys.argv[1] == '-p':
-        periodicStatus = 1
+    if argcount == 1:
+        if sys.argv[1] == '-h' or sys.argv[1] == '--help':
+            print("Inspect key system parameters and exit by default")
+            print("use -p for remaining active and monitoring some system parameters")
+            exit()
+        elif sys.argv[1] == '-p' or sys.argv[1] == '--periodic':
+            # set periodicStatus to non-zero for remaining in status update mode
+            if sys.argv[1] == '-p':
+                periodicStatus = 1
+        else:
+            print("Unrecognized option! we support -h or -p")
+            print("Use -p for remaining active and monitoring some system parameters")
+            exit()
 
 
     rospy.init_node('system_monitor')
@@ -184,13 +190,13 @@ if __name__ == "__main__":
     cmd = 'rosnode list | grep pi_sonar'
     os.system(cmd)
     print "Diagnostic Topic Info:   ----------------------------------------"
-    cmd = 'rostopic echo -n 2 /diagnostics > diagTopic.txt'
+    cmd = 'rostopic echo -n 8 /diagnostics > diagTopic.txt'
     os.system(cmd)
-    cmd = 'grep -A 1 "Battery Voltage" diagTopic.txt'
+    cmd = 'grep -A 1 "Battery Voltage" diagTopic.txt | head -2'
     os.system(cmd)
-    cmd = 'grep -A 1 "Firmware Version" diagTopic.txt'
+    cmd = 'grep -A 1 "Firmware Version" diagTopic.txt | head -2'
     os.system(cmd)
-    cmd = 'grep -A 1 "Firmware Date" diagTopic.txt'
+    cmd = 'grep -A 1 "Firmware Date" diagTopic.txt | head -2'
     os.system(cmd)
     print "Sonar Ranges:         ----------------------------------------------------------------"
     print(sonar_ranges)
@@ -199,6 +205,7 @@ if __name__ == "__main__":
         print "Periodic monitoring of the robot has been requested. Use Ctrl C to exit "
 
         # While our node is running
+        print "-------------------------------------------------------------------------------------"
         while not rospy.is_shutdown():
             print " "
             print "Cpu and Memory Stats: ----------------------------------------------------------------"
@@ -208,10 +215,8 @@ if __name__ == "__main__":
             print "Sonar Ranges:         ----------------------------------------------------------------"
             print(sonar_ranges)
             print "Other System Stats:   ----------------------------------------------------------------"
-            cmd = 'rostopic echo -n 2 /diagnostics | grep -A 1 "Battery Voltage"'
+            cmd = 'rostopic echo -n 8 /diagnostics | grep -A 1 "Battery Voltage" | head -2'
             os.system(cmd)
-
             rate.sleep()
-            rospy.spin()
 
     print "Script Done"

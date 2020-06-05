@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/PIDConfig.h>
 #include <ubiquity_motor/motor_hardware.h>
 #include <ubiquity_motor/motor_message.h>
-#include <ubiquity_motor/motor_parmeters.h>
+#include <ubiquity_motor/motor_parameters.h>
 #include <boost/thread.hpp>
 #include <string>
 #include "controller_manager/controller_manager.h"
@@ -64,6 +64,8 @@ void PID_update_callback(const ubiquity_motor::PIDConfig& config,
         firmware_params.pid_moving_buffer_size = config.PID_W;
     } else if (level == 32) {
         firmware_params.pid_velocity = config.PID_V;
+    } else if (level == 64) {
+        firmware_params.max_pwm = config.MAX_PWM;
     } else {
         ROS_ERROR("Unsupported dynamic_reconfigure level %u", level);
     }

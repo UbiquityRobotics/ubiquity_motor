@@ -458,6 +458,7 @@ void MotorHardware::setParams(FirmwareParams fp) {
     fw_params.pid_denominator = fp.pid_denominator;
     fw_params.pid_moving_buffer_size = fp.pid_moving_buffer_size;
     fw_params.pid_denominator = fp.pid_denominator;
+    fw_params.max_pwm = fp.max_pwm;
     fw_params.estop_pid_threshold = fp.estop_pid_threshold;
 }
 
@@ -470,7 +471,7 @@ void MotorHardware::sendParams() {
     // Only send one register at a time to avoid overwhelming serial comms
     // SUPPORT NOTE!  Adjust modulo for total parameters in the cycle
     //                and be sure no duplicate modulos are used!
-    int cycle = (sendPid_count++) % 6;     // MUST BE THE TOTAL NUMBER IN THIS HANDLING
+    int cycle = (sendPid_count++) % 7;     // MUST BE THE TOTAL NUMBER IN THIS HANDLING
 
     if (cycle == 0 &&
         fw_params.pid_proportional != prev_fw_params.pid_proportional) {
@@ -538,6 +539,18 @@ void MotorHardware::sendParams() {
         winsize.setData(fw_params.pid_moving_buffer_size);
         commands.push_back(winsize);
     }
+
+    if (cycle == 6 &&
+        fw_params.max_pwm != prev_fw_params.max_pwm) {
+        ROS_WARN("Setting max_pwm to %d", fw_params.max_pwm);
+        prev_fw_params.max_pwm = fw_params.max_pwm;
+        MotorMessage maxpwm;
+        maxpwm.setRegister(MotorMessage::REG_MAX_PWM);
+        maxpwm.setType(MotorMessage::TYPE_WRITE);
+        maxpwm.setData(fw_params.max_pwm);
+        commands.push_back(maxpwm);
+    }
+
 
     // SUPPORT NOTE!  Adjust max modulo for total parameters in the cycle, be sure no duplicates used!
 
