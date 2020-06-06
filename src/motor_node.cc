@@ -143,12 +143,21 @@ int main(int argc, char* argv[]) {
     // Tell the controller board firmware what version the hardware is at this time.
     // TODO: Read from I2C.   At this time we only allow setting the version from ros parameters
     if (robot->firmware_version >= MIN_FW_HW_VERSION_SET) {
-        ROS_DEBUG("Firmware is version %d. Setting Controller board version to %d", 
+        ROS_INFO_ONCE("Firmware is version %d. Setting Controller board version to %d", 
             robot->firmware_version, firmware_params.controller_board_version);
         robot->setHardwareVersion(firmware_params.controller_board_version);
         ROS_DEBUG("Controller board version has been set to %d", 
             firmware_params.controller_board_version);
         ctrlLoopDelay.sleep();    // Allow controller to process command
+    }
+
+    // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
+    if (robot->firmware_version >= MIN_FW_OPTION_SWITCH) {
+        // TODO: Read from I2C.   Need to read once on startup option switch and use it here
+        firmware_params.option_switch = 0x4A;   // !!! OVERRIDE TEST Just a test value
+        ROS_INFO_ONCE("Setting firmware option register to 0x%x.", firmware_params.option_switch);
+        robot->setOptionSwitchReg(firmware_params.option_switch);
+        ctrlLoopDelay.sleep();        // Allow controller to process command
     }
 
     // Setup other firmware parameters that could come from ROS parameters
@@ -163,8 +172,6 @@ int main(int argc, char* argv[]) {
         robot->setMaxFwdSpeed(firmware_params.max_speed_fwd);
         ctrlLoopDelay.sleep();        // Allow controller to process command
         robot->setMaxRevSpeed(firmware_params.max_speed_rev);
-        ctrlLoopDelay.sleep();        // Allow controller to process command
-        robot->setMaxPwm(firmware_params.max_pwm);
         ctrlLoopDelay.sleep();        // Allow controller to process command
     }
 

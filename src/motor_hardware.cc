@@ -97,7 +97,6 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.pid_moving_buffer_size = -1;
     prev_fw_params.max_speed_fwd = -1;
     prev_fw_params.max_speed_rev = -1;
-    prev_fw_params.max_pwm = -1;
     prev_fw_params.deadman_timer = -1;
     prev_fw_params.deadzone_enable = -1;
     prev_fw_params.hw_options = -1;
@@ -155,7 +154,7 @@ void MotorHardware::readInputs() {
                                   mm.getData(), LOWEST_FIRMWARE_VERSION);
                         throw std::runtime_error("Firmware version too low");
                     } else {
-                        ROS_INFO("Firmware version %d", mm.getData());
+                        ROS_INFO_ONCE("Firmware version %d", mm.getData());
                         firmware_version = mm.getData();
 			motor_diag_.firmware_version = firmware_version;
                     }
@@ -163,7 +162,7 @@ void MotorHardware::readInputs() {
 
                 case MotorMessage::REG_FIRMWARE_DATE:
                     // Firmware date is only supported as of fw version MIN_FW_FIRMWARE_DATE
-                    ROS_INFO("Firmware date 0x%x (format 0xYYYYMMDD)", mm.getData());
+                    ROS_INFO_ONCE("Firmware date 0x%x (format 0xYYYYMMDD)", mm.getData());
                     firmware_date = mm.getData();
 		    motor_diag_.firmware_date = firmware_date;
                     break;
@@ -410,6 +409,38 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(max_speed_fwd);
     motor_serial_->transmitCommand(mm);
+}
+
+// Setup the controller board hardware options that are setable from host side
+// This MCB register has some read only bits but no worries, write the bits
+// that are required to be set from the host side such as THIN_WHEELS
+void MotorHardware::setHardwareOptions(int32_t hardware_option_bits) {
+    ROS_INFO("setting MCB hardware options to 0x%x", (int)hardware_option_bits);
+    MotorMessage ho;
+    ho.setRegister(MotorMessage::REG_HW_OPTIONS);
+    ho.setType(MotorMessage::TYPE_WRITE);
+    ho.setData(hardware_option_bits);
+    motor_serial_->transmitCommand(ho);
+}
+
+// Setup the controller board option switch register which comes from the I2C 8-bit IO chip on MCB
+void MotorHardware::setOptionSwitchReg(int32_t option_switch_bits) {
+    ROS_INFO("setting MCB option switch register to 0x%x", (int)option_switch_bits);
+    MotorMessage os;
+    os.setRegister(MotorMessage::REG_OPTION_SWITCH);
+    os.setType(MotorMessage::TYPE_WRITE);
+    os.setData(option_switch_bits);
+    motor_serial_->transmitCommand(os);
+}
+
+// Setup the controller board system event register or clear bits in the register
+void MotorHardware::setSystemEvents(int32_t system_events) {
+    ROS_INFO("setting MCB system event register to %d", (int)system_events);
+    MotorMessage se;
+    se.setRegister(MotorMessage::REG_SYSTEM_EVENTS);
+    se.setType(MotorMessage::TYPE_WRITE);
+    se.setData(system_events);
+    motor_serial_->transmitCommand(se);
 }
 
 // Setup the controller board maximum settable motor reverse speed

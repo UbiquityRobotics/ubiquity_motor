@@ -121,6 +121,9 @@ public:
     void setMaxFwdSpeed(int32_t max_speed_fwd);
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
+    void setHardwareOptions(int32_t hardware_options);
+    void setOptionSwitchReg(int32_t option_switch);
+    void setSystemEvents(int32_t system_events);
     int firmware_version;
     int firmware_date;
     int firmware_options;
