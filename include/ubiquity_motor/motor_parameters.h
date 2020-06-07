@@ -173,12 +173,15 @@ struct CommsParams {
 
 struct NodeParams {
     double controller_loop_rate;
+    std::string wheel_type;
 
-    NodeParams() : controller_loop_rate(10.0){};
-    NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0) {
+    NodeParams() : controller_loop_rate(10.0), wheel_type("firmware_default"){};
+    NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0), wheel_type("firmware_default") {
         // clang-format off
         controller_loop_rate = getParamOrDefault(
             nh, "ubiquity_motor/controller_loop_rate", controller_loop_rate);
+        wheel_type = getParamOrDefault(
+            nh, "ubiquity_motor/wheel_type", wheel_type);
         // clang-format on
     };
 };

@@ -176,7 +176,8 @@ public:
     // Bitfield values for hardware options enabled in the firmware
     enum HwOptions {
         OPT_ENC_6_STATE = 0x01,
-        OPT_WHEEL_TYPE_THIN = 0x02     // As of rev v37 we support a 'thin' wheel type, gearless
+        OPT_WHEEL_TYPE_THIN = 0x02,    // As of rev v37 we support a 'thin' wheel type, gearless
+        OPT_WHEEL_TYPE_STANDARD = 0    // Default original, standard wheels
     };
 
     // Bitfield values indicating selftest involved. Most are used in test request and results.  

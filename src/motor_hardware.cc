@@ -224,9 +224,9 @@ void MotorHardware::readInputs() {
                     }
 
                     if (data & MotorMessage::OPT_WHEEL_TYPE_THIN) {
-                        ROS_WARN_ONCE("Wheel type is:  THIN");
+                        ROS_WARN_ONCE("Wheel type is: 'thin'");
                     } else {
-                        ROS_WARN_ONCE("Wheel type is:  ORIGINAL");
+                        ROS_WARN_ONCE("Wheel type is: 'standard'");
                     }
                     break;
                 }
@@ -764,12 +764,18 @@ void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
 // motor_encoder_mode returns 0 for legacy encoders and 1 for 6-state firmware
 void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
     stat.add("Firmware Options", firmware_options);
+    std::string option_descriptions("");
     if (firmware_options & MotorMessage::OPT_ENC_6_STATE) {
-        stat.summary(DiagnosticStatusWrapper::OK, "High resolution encoders");
-    } 
-    else {
-        stat.summary(DiagnosticStatusWrapper::OK, "Standard resolution encoders");
+        option_descriptions = option_descriptions + "High resolution encoders";
+    } else {
+        option_descriptions = option_descriptions + "Standard resolution encoders";
     }
+    if (firmware_options & MotorMessage::OPT_WHEEL_TYPE_THIN) {
+        option_descriptions = option_descriptions + ", Wheel type of 'thin'";
+    } else {
+        option_descriptions = option_descriptions + ", Wheel type of 'standard'";
+    }
+    stat.summary(DiagnosticStatusWrapper::OK, option_descriptions);
 }
 
 // i2c_BufferRead()   A host OS system specific  utility to open, read, close from an I2C device

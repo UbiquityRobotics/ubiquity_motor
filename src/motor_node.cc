@@ -81,6 +81,7 @@ int main(int argc, char* argv[]) {
 
     ros::Rate ctrlLoopDelay(node_params.controller_loop_rate);
 
+
     std::unique_ptr<MotorHardware> robot = nullptr;
     // Keep trying to open serial
     {
@@ -139,6 +140,28 @@ int main(int argc, char* argv[]) {
         // If supported by firmware also request date code for this version
         robot->requestFirmwareDate();
     }
+
+    // Determine hardware options that can be set by the host to override firmware defaults
+    int32_t host_setable_hw_options = 0;
+    if (node_params.wheel_type.compare("standard") == 0) {
+        host_setable_hw_options |= MotorMessage::OPT_WHEEL_TYPE_STANDARD;
+        ROS_INFO("Host is specifying hardware wheel_type of '%s'", "standard");
+    } else if (node_params.wheel_type.compare("thin")  == 0){
+        host_setable_hw_options |= MotorMessage::OPT_WHEEL_TYPE_THIN;
+        ROS_INFO("Host is specifying hardware wheel_type of '%s'", "thin");
+    } else if (node_params.wheel_type.compare("firmware_default") == 0) {
+        // Here there is no specification so the firmware default will be used
+        ROS_INFO("Firmware default wheel_type will be used.");
+    } else {
+        ROS_WARN("Invalid wheel_type of '%s' specified! Using wheel type of standard", 
+            node_params.wheel_type.c_str());
+        node_params.wheel_type = "standard";
+        host_setable_hw_options |= MotorMessage::OPT_WHEEL_TYPE_STANDARD;
+    }
+
+    // Write out any host side setable option bits to the firmware
+    robot->setHardwareOptions(host_setable_hw_options);
+    ctrlLoopDelay.sleep();    // Allow controller to process command
 
     // Tell the controller board firmware what version the hardware is at this time.
     // TODO: Read from I2C.   At this time we only allow setting the version from ros parameters
