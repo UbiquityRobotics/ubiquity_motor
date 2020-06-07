@@ -152,9 +152,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
+    // We could re-read periodically but perhaps only every 5-10 sec but should do it from main loop
     if (robot->firmware_version >= MIN_FW_OPTION_SWITCH) {
-        // TODO: Read from I2C.   Need to read once on startup option switch and use it here
-        firmware_params.option_switch = 0x4A;   // !!! OVERRIDE TEST Just a test value
+        firmware_params.option_switch = robot->getOptionSwitch();
         ROS_INFO_ONCE("Setting firmware option register to 0x%x.", firmware_params.option_switch);
         robot->setOptionSwitchReg(firmware_params.option_switch);
         ctrlLoopDelay.sleep();        // Allow controller to process command
@@ -182,7 +182,9 @@ int main(int argc, char* argv[]) {
 
     ros::Time last_time;
     ros::Time current_time;
+    ros::Time last_sys_event_query_time;
     ros::Duration elapsed;
+    ros::Duration elapsed_since_sys_event_query;
 
     for (int i = 0; i < 5; i++) {
         ctrlLoopDelay.sleep();        // Allow controller to process command
@@ -192,10 +194,14 @@ int main(int argc, char* argv[]) {
     float minCycleTime = 0.75 * expectedCycleTime;
     float maxCycleTime = 1.25 * expectedCycleTime;
 
+    double sysEventQueryPeriod    = 5.0;
+
     // Clear any commands the robot has at this time
     robot->clearCommands();
 
     last_time = ros::Time::now();
+    last_sys_event_query_time = last_time;
+
     ROS_WARN("Starting motor control node now");
 
     // Implement a speed reset while ESTOP is active and a delay after release
@@ -218,6 +224,25 @@ int main(int argc, char* argv[]) {
         }
         robot->setParams(firmware_params);
         robot->sendParams();
+
+        // Periodically watch for MCB board having been reset which is an MCB system event
+        elapsed_since_sys_event_query = current_time - last_sys_event_query_time;
+        elapsedSecs = elapsed_since_sys_event_query.toSec();
+        if ((robot->firmware_version >= MIN_FW_SYSTEM_EVENTS) &&
+           (elapsedSecs > sysEventQueryPeriod)) {
+            robot->requestSystemEvents();
+            last_sys_event_query_time = ros::Time::now();
+            ctrlLoopDelay.sleep();        // Allow controller to process command
+            ROS_DEBUG("Motor controller system events now are 0x%x", robot->system_events);
+
+            // If we detect a power-on of MCB we should re-initialize MCB
+            if ((robot->system_events & MotorMessage::SYS_EVENT_POWERON) != 0) {
+                ROS_WARN("Motor controller has had a PowerOn event!");
+                robot->setSystemEvents(0);  // Clear entire system events register
+                robot->system_events = 0;
+                ctrlLoopDelay.sleep();        // Allow controller to process command
+            }
+        }
 
         // Update motor controller speeds.
         if (robot->getEstopState()) {

@@ -53,6 +53,12 @@ int32_t  g_odomLeft  = 0;
 int32_t  g_odomRight = 0;
 int32_t  g_odomEvent = 0;
 
+// This utility opens and reads 1 or more bytes from a device on an I2C bus
+// This method was taken on it's own from a big I2C class we may choose to use later
+static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2cAddr, 
+                          uint8_t* pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead);
+
+
 MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
                              FirmwareParams firmware_params) {
     ros::V_string joint_names =
@@ -145,7 +151,7 @@ void MotorHardware::readInputs() {
                 case MotorMessage::REG_SYSTEM_EVENTS:
                     if ((mm.getData() & MotorMessage::SYS_EVENT_POWERON) != 0) {
                         ROS_WARN("Firmware System Event for PowerOn transition");
-                        // !!! TODO:  RE-PUSH PARAMS TO FIRMWARE
+                        system_events = mm.getData();
                     }
                     break;
                 case MotorMessage::REG_FIRMWARE_VERSION:
@@ -363,6 +369,15 @@ void MotorHardware::requestFirmwareDate() {
     motor_serial_->transmitCommand(fw_date_msg);
 }
 
+// Request the MCB system event register
+void MotorHardware::requestSystemEvents() {
+    MotorMessage sys_event_msg;
+    sys_event_msg.setRegister(MotorMessage::REG_SYSTEM_EVENTS);
+    sys_event_msg.setType(MotorMessage::TYPE_READ);
+    sys_event_msg.setData(0);
+    motor_serial_->transmitCommand(sys_event_msg);
+}
+
 
 // Due to greatly limited pins on the firmware processor the host figures out the hardware rev and sends it to fw
 // The hardware version is 0x0000MMmm  where MM is major rev like 4 and mm is minor rev like 9 for first units.
@@ -421,6 +436,28 @@ void MotorHardware::setHardwareOptions(int32_t hardware_option_bits) {
     ho.setType(MotorMessage::TYPE_WRITE);
     ho.setData(hardware_option_bits);
     motor_serial_->transmitCommand(ho);
+}
+
+// Read the controller board option switch itself that resides on the I2C bus but is on the MCB
+// This call inverts the bits because a shorted option switch is a 0 where we want it as 1
+// If return is negative something went wrong
+int MotorHardware::getOptionSwitch(void) {
+    uint8_t buf[16];
+    int retBits = 0;
+    ROS_INFO("reading MCB option switch on the I2C bus");
+    int retCount = i2c_BufferRead(I2C_DEVICE, I2C_PCF8574_8BIT_ADDR, &buf[0], -1, 1);
+    if (retCount < 0) {
+        ROS_ERROR("Error %d in reading MCB option switch at 8bit Addr 0x%x", 
+            retCount, I2C_PCF8574_8BIT_ADDR);
+        retBits = retCount;
+    } else if (retCount != 1) {
+        ROS_ERROR("Cannot read byte from MCB option switch at 8bit Addr 0x%x", I2C_PCF8574_8BIT_ADDR);
+        retBits = -1;
+    } else {
+        retBits = (0xff) & ~buf[0];
+    }
+
+    return retBits;
 }
 
 // Setup the controller board option switch register which comes from the I2C 8-bit IO chip on MCB
@@ -734,5 +771,79 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
         stat.summary(DiagnosticStatusWrapper::OK, "Standard resolution encoders");
     }
 }
+
+// i2c_BufferRead()   A host OS system specific  utility to open, read, close from an I2C device
+//
+// The I2C address is the 8-bit address which is the 7-bit addr shifted left in some code
+// If chipRegAddr is greater than 1 we write this out for the internal chip address for the following read(s)
+//
+// Returns number of bytes read where 0 or less implies some form of failure
+//
+// NOTE: The i2c8bitAddr will be shifted right one bit to use as 7-bit I2C addr
+//
+static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr, 
+                          uint8_t *pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead)
+{
+   int bytesRead = 0;
+   int retCode   = 0;
+
+   // If your system requires a lock on the bus, it should be called here 
+   // if ((semId >= 0) && (ipc_sem_lock(semId) < 0)) {
+   //   // printf("i2c_BufferRead: Cannot obtain I2C lock!  ERROR: %s\n", strerror(errno));
+   //   return -1;
+   // }
+
+    // we are now free to access the I2C hardware
+    int fd;                                         // File descrition
+    int  address   = i2c8bitAddr >> 1;              // Address of the I2C device
+    unsigned char buf[8];                           // Buffer for data being written to the i2c device
+
+    if ((fd = open(i2cDevFile, O_RDWR)) < 0) {        // Open port for reading and writing
+      retCode = -2;
+      ROS_ERROR("Cannot open I2C def of %s with error %s", i2cDevFile, strerror(errno));
+      goto exitWithSemUnlock;
+    }
+
+    // The ioctl here will address the I2C slave device making it ready for 1 or more other bytes
+    if (ioctl(fd, I2C_SLAVE, address) < 0) {        // Set the port options and addr of the dev
+      retCode = -3;
+      ROS_ERROR("Failed to get bus access to I2C device %s!  ERROR: %s", i2cDevFile, strerror(errno));
+      goto exitWithFileCloseAndSemUnlock;
+    }
+
+    if (chipRegAddr < 0) {     // Suppress reg address if negative value was used
+      buf[0] = (uint8_t)(chipRegAddr);          // Internal chip register address
+      if ((write(fd, buf, 1)) != 1) {           // Write both bytes to the i2c port
+        retCode = -4;
+        goto exitWithFileCloseAndSemUnlock;
+      }
+    }
+
+    // Now we have to read from the chip as the register start address was just setup
+    // if (ioctl(fd, I2C_SLAVE, address) < 0) {        // Set the port options and addr of the dev
+    //   ROS_INFO("%s: Failed to get bus access to I2c port!  ERROR: %s\n", THIS_NODE_NAME,  strerror(errno));
+    //   goto exitWithFileCloseAndSemUnlock;
+    // }
+
+    bytesRead = read(fd, pBuffer, NumByteToRead);
+    if (bytesRead != NumByteToRead) {      // verify the number of bytes we requested were read
+      retCode = -9;
+      goto exitWithFileCloseAndSemUnlock;
+    }
+    retCode = bytesRead;
+
+  exitWithFileCloseAndSemUnlock:
+    close(fd);
+
+  exitWithSemUnlock:
+    // If your system requires a lock on the bus, it should be called here 
+    // if ((semId >= 0) && (ipc_sem_unlock(semId) < 0)) {
+    //   retCode = -8;
+    // }
+
+  return retCode;
+}
+
+
 
 

@@ -48,6 +48,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_parameters.h>
 #include <ubiquity_motor/motor_serial.h>
 
+// To access I2C we need some system includes
+#include <linux/i2c-dev.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#define  I2C_DEVICE  "/dev/i2c-1"     // This is specific to default Magni I2C port on host
+#define  I2C_PCF8574_8BIT_ADDR  (uint8_t)0x40  // I2C addresses are 7 bits but often shown as 8-bit
+
 #include <gtest/gtest_prod.h>
 
 struct MotorDiagnostics {
@@ -122,7 +129,9 @@ public:
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
     void setHardwareOptions(int32_t hardware_options);
+    int  getOptionSwitch(void);
     void setOptionSwitchReg(int32_t option_switch);
+    void requestSystemEvents();
     void setSystemEvents(int32_t system_events);
     int firmware_version;
     int firmware_date;
@@ -133,6 +142,7 @@ public:
     int max_speed_rev;
     int max_pwm;
     int deadman_enable;
+    int system_events;
 
     diagnostic_updater::Updater diag_updater;
 private:
