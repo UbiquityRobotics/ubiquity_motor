@@ -75,7 +75,7 @@ public:
 
     // Registers enum in class to avoid global namespace pollution
     enum Registers {
-        REG_STOP_START = 0x00,          // Depricated
+        REG_STOP_START = 0x00,          // Deprecated
         REG_BRAKE_STOP = 0x01,
         REG_SYSTEM_EVENTS = 0x02,	// This register can set event bits such as a power on has happened
 
@@ -84,22 +84,22 @@ public:
 
         // skip 0x05 and 0x06
 
-        REG_LEFT_SPEED_SET = 0x07,      // Depricated
-        REG_RIGHT_SPEED_SET = 0x08,     // Depricated
+        REG_LEFT_SPEED_SET = 0x07,      // Deprecated
+        REG_RIGHT_SPEED_SET = 0x08,     // Deprecated
 
-        REG_LEFT_RAMP = 0x09,           // Depricated
-        REG_RIGHT_RAMP = 0x0A,          // Depricated
+        REG_LEFT_RAMP = 0x09,           // Deprecated
+        REG_RIGHT_RAMP = 0x0A,          // Deprecated
 
-        REG_LEFT_ODOM = 0x0B,           // Depricated
-        REG_RIGHT_ODOM = 0x0C,          // Depricated
+        REG_LEFT_ODOM = 0x0B,           // Deprecated
+        REG_RIGHT_ODOM = 0x0C,          // Deprecated
 
         REG_DEADMAN = 0x0D,             // Deadman timer (VERY TRICKY VALUE, USE WITH CARE!)
 
         REG_LEFT_CURRENT = 0x0E,        // Electrical Current readback for M1 motor
         REG_RIGHT_CURRENT = 0x0F,       // Electrical Current readback for M2 motor
 
-        REG_ERROR_COUNT = 0x10,         // Depricated
-        REG_5V_MAIN_ERROR = 0x11,       // Depricated
+        REG_ERROR_COUNT = 0x10,         // Deprecated
+        REG_5V_MAIN_ERROR = 0x11,       // Deprecated
         REG_OPTION_SWITCH = 0x12,       // Setting of MCB option jumpers and rev
         REG_PWM_OVERRIDE = 0x13,
         REG_PID_CONTROL = 0x14,         // A write to this register controls Pid param setup and calculations
@@ -169,8 +169,7 @@ public:
     // PID Control values used in special register PID_CONTROL
     enum PidControlActions {
         PID_CTRL_RESET               = 1,
-        PID_CTRL_PWM_OVERRIDE        = 2,
-        PID_CTRL_P_ONLY_ON_0_VEL     = 4
+        PID_CTRL_PWM_OVERRIDE        = 2
     };
 
     // Bitfield values for hardware options enabled in the firmware

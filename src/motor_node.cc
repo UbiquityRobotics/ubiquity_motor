@@ -208,6 +208,7 @@ int main(int argc, char* argv[]) {
     ros::Time last_sys_event_query_time;
     ros::Duration elapsed;
     ros::Duration elapsed_since_sys_event_query;
+    ros::Duration sysEventQueryPeriod(5.0);
 
     for (int i = 0; i < 5; i++) {
         ctrlLoopDelay.sleep();        // Allow controller to process command
@@ -216,8 +217,6 @@ int main(int argc, char* argv[]) {
     float expectedCycleTime = ctrlLoopDelay.expectedCycleTime().toSec();
     float minCycleTime = 0.75 * expectedCycleTime;
     float maxCycleTime = 1.25 * expectedCycleTime;
-
-    double sysEventQueryPeriod    = 5.0;
 
     // Clear any commands the robot has at this time
     robot->clearCommands();
@@ -250,9 +249,8 @@ int main(int argc, char* argv[]) {
 
         // Periodically watch for MCB board having been reset which is an MCB system event
         elapsed_since_sys_event_query = current_time - last_sys_event_query_time;
-        elapsedSecs = elapsed_since_sys_event_query.toSec();
         if ((robot->firmware_version >= MIN_FW_SYSTEM_EVENTS) &&
-           (elapsedSecs > sysEventQueryPeriod)) {
+           (elapsed_since_sys_event_query > sysEventQueryPeriod)) {
             robot->requestSystemEvents();
             last_sys_event_query_time = ros::Time::now();
             ctrlLoopDelay.sleep();        // Allow controller to process command

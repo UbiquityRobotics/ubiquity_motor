@@ -48,13 +48,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_parameters.h>
 #include <ubiquity_motor/motor_serial.h>
 
-// To access I2C we need some system includes
-#include <linux/i2c-dev.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#define  I2C_DEVICE  "/dev/i2c-1"     // This is specific to default Magni I2C port on host
-#define  I2C_PCF8574_8BIT_ADDR  (uint8_t)0x40  // I2C addresses are 7 bits but often shown as 8-bit
-
 #include <gtest/gtest_prod.h>
 
 struct MotorDiagnostics {

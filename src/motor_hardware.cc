@@ -33,6 +33,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/math/special_functions/round.hpp>
 
+// To access I2C we need some system includes
+#include <linux/i2c-dev.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#define  I2C_DEVICE  "/dev/i2c-1"     // This is specific to default Magni I2C port on host
+const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits but often shown as 8-bit
+
 //#define SENSOR_DISTANCE 0.002478
 
 // For experimental purposes users will see that the wheel encoders are three phases 
@@ -766,14 +773,14 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
     stat.add("Firmware Options", firmware_options);
     std::string option_descriptions("");
     if (firmware_options & MotorMessage::OPT_ENC_6_STATE) {
-        option_descriptions = option_descriptions + "High resolution encoders";
+        option_descriptions += "High resolution encoders";
     } else {
-        option_descriptions = option_descriptions + "Standard resolution encoders";
+        option_descriptions += "Standard resolution encoders";
     }
     if (firmware_options & MotorMessage::OPT_WHEEL_TYPE_THIN) {
-        option_descriptions = option_descriptions + ", Wheel type of 'thin'";
+        option_descriptions +=  ", Wheel type of 'thin'";
     } else {
-        option_descriptions = option_descriptions + ", Wheel type of 'standard'";
+        option_descriptions +=  ", Wheel type of 'standard'";
     }
     stat.summary(DiagnosticStatusWrapper::OK, option_descriptions);
 }
@@ -793,59 +800,43 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
    int bytesRead = 0;
    int retCode   = 0;
 
-   // If your system requires a lock on the bus, it should be called here 
-   // if ((semId >= 0) && (ipc_sem_lock(semId) < 0)) {
-   //   // printf("i2c_BufferRead: Cannot obtain I2C lock!  ERROR: %s\n", strerror(errno));
-   //   return -1;
-   // }
-
     // we are now free to access the I2C hardware
     int fd;                                         // File descrition
     int  address   = i2c8bitAddr >> 1;              // Address of the I2C device
-    unsigned char buf[8];                           // Buffer for data being written to the i2c device
+    uint8_t buf[8];                                 // Buffer for data being written to the i2c device
 
-    if ((fd = open(i2cDevFile, O_RDWR)) < 0) {        // Open port for reading and writing
+    if ((fd = open(i2cDevFile, O_RDWR)) < 0) {      // Open port for reading and writing
       retCode = -2;
       ROS_ERROR("Cannot open I2C def of %s with error %s", i2cDevFile, strerror(errno));
-      goto exitWithSemUnlock;
+      goto exitWithNoClose;
     }
 
     // The ioctl here will address the I2C slave device making it ready for 1 or more other bytes
-    if (ioctl(fd, I2C_SLAVE, address) < 0) {        // Set the port options and addr of the dev
+    if (ioctl(fd, I2C_SLAVE, address) != 0) {        // Set the port options and addr of the dev
       retCode = -3;
       ROS_ERROR("Failed to get bus access to I2C device %s!  ERROR: %s", i2cDevFile, strerror(errno));
-      goto exitWithFileCloseAndSemUnlock;
+      goto exitWithFileClose;
     }
 
     if (chipRegAddr < 0) {     // Suppress reg address if negative value was used
       buf[0] = (uint8_t)(chipRegAddr);          // Internal chip register address
       if ((write(fd, buf, 1)) != 1) {           // Write both bytes to the i2c port
         retCode = -4;
-        goto exitWithFileCloseAndSemUnlock;
+        goto exitWithFileClose;
       }
     }
-
-    // Now we have to read from the chip as the register start address was just setup
-    // if (ioctl(fd, I2C_SLAVE, address) < 0) {        // Set the port options and addr of the dev
-    //   ROS_INFO("%s: Failed to get bus access to I2c port!  ERROR: %s\n", THIS_NODE_NAME,  strerror(errno));
-    //   goto exitWithFileCloseAndSemUnlock;
-    // }
 
     bytesRead = read(fd, pBuffer, NumByteToRead);
     if (bytesRead != NumByteToRead) {      // verify the number of bytes we requested were read
       retCode = -9;
-      goto exitWithFileCloseAndSemUnlock;
+      goto exitWithFileClose;
     }
     retCode = bytesRead;
 
-  exitWithFileCloseAndSemUnlock:
+  exitWithFileClose:
     close(fd);
 
-  exitWithSemUnlock:
-    // If your system requires a lock on the bus, it should be called here 
-    // if ((semId >= 0) && (ipc_sem_unlock(semId) < 0)) {
-    //   retCode = -8;
-    // }
+  exitWithNoClose:
 
   return retCode;
 }
