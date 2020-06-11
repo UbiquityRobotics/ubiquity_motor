@@ -59,8 +59,12 @@ struct FirmwareParams {
     int32_t deadman_timer;
     int32_t deadzone_enable;
     int32_t hw_options;
+    int32_t option_switch;
+    int32_t system_events;
     float battery_voltage_multiplier;
     float battery_voltage_offset;
+    float battery_voltage_low_level;
+    float battery_voltage_critical;
 
     FirmwareParams()
         : pid_proportional(4000),
@@ -78,8 +82,12 @@ struct FirmwareParams {
           deadman_timer(2400000),
           deadzone_enable(1),
           hw_options(0),
+          option_switch(0),
+          system_events(0),
           battery_voltage_multiplier(0.05057),
-          battery_voltage_offset(0.40948){};
+          battery_voltage_offset(0.40948),
+          battery_voltage_low_level(22.5),
+          battery_voltage_critical(21.0){};
 
     FirmwareParams(ros::NodeHandle nh)
         : pid_proportional(4000),
@@ -97,8 +105,12 @@ struct FirmwareParams {
           deadman_timer(2400000),
           deadzone_enable(1),
           hw_options(0),
+          option_switch(0),
+          system_events(0),
           battery_voltage_multiplier(0.05057),
-          battery_voltage_offset(0.40948) 
+          battery_voltage_offset(0.40948), 
+          battery_voltage_low_level(22.5),
+          battery_voltage_critical(21.0)
         {
         // clang-format off
         pid_proportional = getParamOrDefault(
@@ -133,6 +145,10 @@ struct FirmwareParams {
             nh, "ubiquity_motor/battery_voltage_offset", battery_voltage_offset);
         battery_voltage_multiplier = getParamOrDefault(
             nh, "ubiquity_motor/battery_voltage_multiplier", battery_voltage_multiplier);
+        battery_voltage_low_level = getParamOrDefault(
+            nh, "ubiquity_motor/battery_voltage_low_level", battery_voltage_low_level);
+        battery_voltage_critical = getParamOrDefault(
+            nh, "ubiquity_motor/battery_voltage_critical", battery_voltage_critical);
         // clang-format on
     };
 };
@@ -157,12 +173,15 @@ struct CommsParams {
 
 struct NodeParams {
     double controller_loop_rate;
+    std::string wheel_type;
 
-    NodeParams() : controller_loop_rate(10.0){};
-    NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0) {
+    NodeParams() : controller_loop_rate(10.0), wheel_type("firmware_default"){};
+    NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0), wheel_type("firmware_default") {
         // clang-format off
         controller_loop_rate = getParamOrDefault(
             nh, "ubiquity_motor/controller_loop_rate", controller_loop_rate);
+        wheel_type = getParamOrDefault(
+            nh, "ubiquity_motor/wheel_type", wheel_type);
         // clang-format on
     };
 };

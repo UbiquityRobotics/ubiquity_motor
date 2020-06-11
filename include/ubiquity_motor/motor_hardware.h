@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <diagnostic_updater/update_functions.h>
 #include <diagnostic_updater/diagnostic_updater.h>
 
-#include <ubiquity_motor/motor_parmeters.h>
+#include <ubiquity_motor/motor_parameters.h>
 #include <ubiquity_motor/motor_serial.h>
 
 #include <gtest/gtest_prod.h>
@@ -74,6 +74,9 @@ struct MotorDiagnostics {
 
     // Power supply statuses
     float battery_voltage = 0.0;
+    float battery_voltage_low_level = 22.5;
+    float battery_voltage_critical = 21.0;
+
     /* For later implementation (firmware support)
     bool  main_5V_error = false;
     bool  main_5V_ol = false;
@@ -118,6 +121,11 @@ public:
     void setMaxFwdSpeed(int32_t max_speed_fwd);
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
+    void setHardwareOptions(int32_t hardware_options);
+    int  getOptionSwitch(void);
+    void setOptionSwitchReg(int32_t option_switch);
+    void requestSystemEvents();
+    void setSystemEvents(int32_t system_events);
     int firmware_version;
     int firmware_date;
     int firmware_options;
@@ -127,6 +135,7 @@ public:
     int max_speed_rev;
     int max_pwm;
     int deadman_enable;
+    int system_events;
 
     diagnostic_updater::Updater diag_updater;
 private:

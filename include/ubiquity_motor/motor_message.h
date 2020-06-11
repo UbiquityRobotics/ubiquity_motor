@@ -48,6 +48,13 @@ typedef boost::array<uint8_t, 8> RawMotorMessage;
 #define MIN_FW_FIRMWARE_DATE      35
 #define MIN_FW_DEADZONE           35
 #define MIN_FW_PID_V_TERM         35
+#define MIN_FW_SELFTESTS_REV1     36
+#define MIN_FW_BATTERY_WARN       36
+#define MIN_FW_PID_CONTROL_REV1   37
+#define MIN_FW_WHEEL_TYPE_THIN    37
+#define MIN_FW_SYSTEM_EVENTS      37
+#define MIN_FW_OPTION_SWITCH      37
+#define MIN_FW_PID_RDY_REGS       37
 
 // It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
 // In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose
@@ -68,80 +75,85 @@ public:
 
     // Registers enum in class to avoid global namespace pollution
     enum Registers {
-        REG_STOP_START = 0x00,
+        REG_STOP_START = 0x00,          // Deprecated
         REG_BRAKE_STOP = 0x01,
-        REG_CRUISE_STOP = 0x02,
+        REG_SYSTEM_EVENTS = 0x02,	// This register can set event bits such as a power on has happened
 
-        REG_LEFT_PWM = 0x03,
-        REG_RIGHT_PWM = 0x04,
+        REG_LEFT_PWM = 0x03,            // ReadOnly: M1 motor PWM setting
+        REG_RIGHT_PWM = 0x04,           // ReadOnly: M2 motor PWM setting
 
         // skip 0x05 and 0x06
 
-        REG_LEFT_SPEED_SET = 0x07,
-        REG_RIGHT_SPEED_SET = 0x08,
+        REG_LEFT_SPEED_SET = 0x07,      // Deprecated
+        REG_RIGHT_SPEED_SET = 0x08,     // Deprecated
 
-        REG_LEFT_RAMP = 0x09,
-        REG_RIGHT_RAMP = 0x0A,
+        REG_LEFT_RAMP = 0x09,           // Deprecated
+        REG_RIGHT_RAMP = 0x0A,          // Deprecated
 
-        REG_LEFT_ODOM = 0x0B,
-        REG_RIGHT_ODOM = 0x0C,
+        REG_LEFT_ODOM = 0x0B,           // Deprecated
+        REG_RIGHT_ODOM = 0x0C,          // Deprecated
 
-        REG_DEADMAN = 0x0D,
+        REG_DEADMAN = 0x0D,             // Deadman timer (VERY TRICKY VALUE, USE WITH CARE!)
 
-        REG_LEFT_CURRENT = 0x0E,
-        REG_RIGHT_CURRENT = 0x0F,
+        REG_LEFT_CURRENT = 0x0E,        // Electrical Current readback for M1 motor
+        REG_RIGHT_CURRENT = 0x0F,       // Electrical Current readback for M2 motor
 
-        REG_ERROR_COUNT = 0x10,
-        REG_5V_MAIN_ERROR = 0x11,
-        REG_5V_AUX_ERROR = 0x12,
-        REG_12V_MAIN_ERROR = 0x13,
-        REG_12V_AUX_ERROR = 0x14,
-        REG_5V_MAIN_OL = 0x15,
-        REG_5V_AUX_OL = 0x16,
-        REG_12V_MAIN_OL = 0x17,
-        REG_12V_AUX_OL = 0x18,
-        REG_UNUSED_19 = 0x19,
+        REG_ERROR_COUNT = 0x10,         // Deprecated
+        REG_5V_MAIN_ERROR = 0x11,       // Deprecated
+        REG_OPTION_SWITCH = 0x12,       // Setting of MCB option jumpers and rev
+        REG_PWM_OVERRIDE = 0x13,
+        REG_PID_CONTROL = 0x14,         // A write to this register controls Pid param setup and calculations
 
-        REG_PARAM_V = 0x1A,            // New in final v35 firmware and was an obsolite value before then
-        REG_PARAM_P = 0x1B,
-        REG_PARAM_I = 0x1C,
-        REG_PARAM_D = 0x1D,
-        REG_PARAM_C = 0x1E,
+        // The PID parameters below are setup without impacting the PID loop then all made active at once
+        REG_PARAM_V_RDY = 0x15,         // PID loop V factor being made ready but not in use yet
+        REG_PARAM_P_RDY = 0x16,         // PID loop P factor being made ready but not in use yet
+        REG_PARAM_I_RDY = 0x17,         // PID loop I factor being made ready but not in use yet
+        REG_PARAM_D_RDY = 0x18,         // PID loop D factor being made ready but not in use yet
+        REG_PARAM_C_RDY = 0x19,         // PID loop C factor being made ready but not in use yet
+
+        // The PID parameters below are active values and they get set one register at a time
+        REG_PARAM_V = 0x1A,             // PID loop V factor
+        REG_PARAM_P = 0x1B,             // PID loop P factor
+        REG_PARAM_I = 0x1C,             // PID loop I factor
+        REG_PARAM_D = 0x1D,             // PID loop D factor
+        REG_PARAM_C = 0x1E,             // PID loop C factor
 
         REG_LED_1 = 0x1F,
         REG_LED_2 = 0x20,
 
-        REG_HARDWARE_VERSION = 0x21,    // The hardware revision time 10. This must be read from motor controler to initialize
-        REG_FIRMWARE_VERSION = 0x22,
+        REG_HARDWARE_VERSION = 0x21,    // Hardware version BUT is settable from HOST!
+        REG_FIRMWARE_VERSION = 0x22,    // ReadOnly: Firmware version reported to HOST
 
-        REG_BATTERY_VOLTAGE = 0x23,
-        REG_5V_MAIN_CURRENT = 0x24,
-        REG_12V_MAIN_CURRENT = 0x25,
-        REG_5V_AUX_CURRENT = 0x26,
-        REG_12V_AUX_CURRENT = 0x27,
+        REG_BATTERY_VOLTAGE = 0x23,     // Electrical voltage of main battery
+        REG_5V_MAIN_CURRENT = 0x24,     // Electrical current in use on  5 Volt Main supply
+        REG_MAINV_TPOINT = 0x25,        // TP. Indicates 5V, 12V main power and used for selftests (MCB 5.2)
+        REG_12V_MAIN_CURRENT = 0x26,    // Electrical current in use on 12 Volt Main supply
+        REG_AUXV_TPOINT = 0x27,         // TP. Indicates 5V, 12V aux power and used for selftests
 
-        REG_LEFT_SPEED_MEASURED = 0x28,
-        REG_RIGHT_SPEED_MEASURED = 0x29,
+        REG_BATT_VOL_LOW = 0x28,        // Battery divider ADC counts when battery is low
+        REG_VBUF_SIZ = 0x29,            // Velocity averaging buffer length
 
-        REG_BOTH_SPEED_SET = 0x2A,
-        REG_MOVING_BUF_SIZE = 0x2B,
+        REG_BOTH_SPEED_SET = 0x2A,      // Speed setting: Two signed 16-bit speeds set by user. Upper=left
+        REG_MOVING_BUF_SIZE = 0x2B,     // PID loop moving average count. This caps at 100
 
-        REG_LIMIT_REACHED = 0x2C,
-        REG_BOTH_ERROR = 0x2D,
-        REG_BOTH_ODOM = 0x30,
-        REG_ROBOT_ID = 0x31,	    // Indicates 0 for Magni controller or 1 for Loki robot controller as of late 2018
+        REG_LIMIT_REACHED = 0x2C,       // Holds bits showing if some sort of limit was hit
+        REG_BOTH_ERROR = 0x2D,          // Two 16-bit signed error values for PID loop current Error value
+        REG_BOTH_ODOM = 0x30,           // Two 16-bit signed ODOM values
+        REG_ROBOT_ID = 0x31,	        // Type of robot. 0 for Magni or 1 for Loki 
 
-        REG_MOT_PWR_ACTIVE = 0x32,  // Readback register for host to know if motor controller thinks motor power is active
-        REG_ESTOP_ENABLE   = 0x33,  // An override that may be set to 0 to force motor controller firmware to NOT use some ESTOP logic
-        REG_PID_MAX_ERROR  = 0x34,  // A value that when non-zero enables motor firmware to limit harsh restarts in position after ESTOP release
+        REG_MOT_PWR_ACTIVE = 0x32,      // Indicates if motor power is active (ESTOP not active)
+        REG_ESTOP_ENABLE   = 0x33,      // Normally non 0. If 0 forces motor controller firmware to NOT all ESTOP logic
+        REG_PID_MAX_ERROR  = 0x34,      // Used in pre rev 5.0 board crude ESTOP logic only. NOT rev 5
 
-        REG_MAX_SPEED_FWD  = 0x35,  // Max forward speed cap in a speed message 
-        REG_MAX_SPEED_REV  = 0x36,  // Max reverse speed cap in a speed message  (This is negative)
-        REG_MAX_PWM        = 0x37,  // The maximum wheel driver PWM value that will be used on the motor driver
+        REG_MAX_SPEED_FWD  = 0x35,      // Caps the max forward speed settable by user
+        REG_MAX_SPEED_REV  = 0x36,      // Caps the max reverse speed settable by user
+        REG_MAX_PWM        = 0x37,      // Caps max PWM value that will be used due to PID loop
 
-        REG_HW_OPTIONS     = 0x38,  // Bitfield with options the firmware has been setup to use
-        REG_DEADZONE       = 0x39,  // Set to non zero to enable deadzone when stopped and speeds are zero
-        REG_FIRMWARE_DATE  = 0x3a,  // Read only firmware date as of version 35 firmware. 0x20190705 is July 5 2019
+        REG_HW_OPTIONS     = 0x38,      // Holds options such as 3 or 6 state enc. Some are ReadOnly MCB config
+        REG_DEADZONE       = 0x39,      // When non-zero enables speed deadzone at zero speed
+        REG_FIRMWARE_DATE  = 0x3a,      // ReadOnly: Hex encoded daycode such as 20190703 for July 3 2019
+        REG_STEST_REQUEST  = 0x3b,      // Set to non-zero to request tests.  Cleared after tests done
+        REG_STEST_RESULTS  = 0x3c,      // Last Selftest result bits are left in this register. 0=ok
 
         DEBUG_50 = 0x50,
         DEBUG_51 = 0x51,
@@ -154,9 +166,44 @@ public:
         DEBUG_58 = 0x58
     };
 
+    // PID Control values used in special register PID_CONTROL
+    enum PidControlActions {
+        PID_CTRL_RESET               = 1,
+        PID_CTRL_PWM_OVERRIDE        = 2
+    };
+
     // Bitfield values for hardware options enabled in the firmware
     enum HwOptions {
         OPT_ENC_6_STATE = 0x01,
+        OPT_WHEEL_TYPE_THIN = 0x02,    // As of rev v37 we support a 'thin' wheel type, gearless
+        OPT_WHEEL_TYPE_STANDARD = 0    // Default original, standard wheels
+    };
+
+    // Bitfield values indicating selftest involved. Most are used in test request and results.  
+    // A set bit in STEST_RESULTS indicates failure once tests complete
+    // STEST_IN_PROGRESS appears in RESULTS till tests are done then it goes to zero
+    #define STEST_STATE_SHIFT  24
+    enum StestRequestAndResults {
+        STEST_IDLE           = 0x00000000,  // Indicates test is done or not requested yet
+        STEST_MAINV          = 0x00000001,  // Main voltages not in limits for 5V_MAIN or perhaps 12V_MAIN
+        STEST_AUXV           = 0x00000002,  // Aux  voltages not in limits for 5V_AUX  or perhaps 12V_AUX
+        STEST_BATTERY        = 0x00000004,  // Indicates battery state not right or to do selftest
+        STEST_BATTERY_LOW    = 0x00000008,  // Indicates battery is low (required for low check)
+        STEST_MOT_PWR        = 0x00000080,  // Indicates motor power 
+        STEST_MOTOR_AND_ENCS = 0x00000100,  // Move motors back and forth (Will set ENC bits if needed)
+        STEST_MOTOR_POWER_ON = 0x00000400,  // If motor power is off this gets set so test with estop off
+        STEST_M1_CURNT       = 0x00001000,  // Motor 1 current test
+        STEST_M2_CURNT       = 0x00002000,  // Motor 2 current test
+        STEST_MOT_M1_ENC     = 0x00010000,  // Left enc not responding to movement  (in MOT_MOVE test)
+        STEST_MOT_M2_ENC     = 0x00020000,  // Right enc not responding to movement (in MOT_MOVE test)
+        STEST_IN_PROGRESS    = 0x00800000,  // Indicates selftest is in progress
+        STEST_STATE          = (0xF << STEST_STATE_SHIFT)   // Some tests may require a state 
+    };
+
+    // System Event Bits are set for things such as a power on has happened so host can see that
+    // The host can read this then clear it.
+    enum SystemEvents {
+        SYS_EVENT_POWERON    = 0x00000001   // Indicates MCB has had a reset
     };
 
     // Bitfield indicating which limits have been reached

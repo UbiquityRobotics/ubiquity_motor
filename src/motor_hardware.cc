@@ -33,6 +33,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/math/special_functions/round.hpp>
 
+// To access I2C we need some system includes
+#include <linux/i2c-dev.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#define  I2C_DEVICE  "/dev/i2c-1"     // This is specific to default Magni I2C port on host
+const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits but often shown as 8-bit
+
 //#define SENSOR_DISTANCE 0.002478
 
 // For experimental purposes users will see that the wheel encoders are three phases 
@@ -52,6 +59,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int32_t  g_odomLeft  = 0;
 int32_t  g_odomRight = 0;
 int32_t  g_odomEvent = 0;
+
+// This utility opens and reads 1 or more bytes from a device on an I2C bus
+// This method was taken on it's own from a big I2C class we may choose to use later
+static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2cAddr, 
+                          uint8_t* pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead);
+
 
 MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
                              FirmwareParams firmware_params) {
@@ -97,10 +110,11 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.pid_moving_buffer_size = -1;
     prev_fw_params.max_speed_fwd = -1;
     prev_fw_params.max_speed_rev = -1;
-    prev_fw_params.max_pwm = -1;
     prev_fw_params.deadman_timer = -1;
     prev_fw_params.deadzone_enable = -1;
     prev_fw_params.hw_options = -1;
+    prev_fw_params.option_switch = -1;
+    prev_fw_params.system_events = -1;
     prev_fw_params.controller_board_version = -1;
     prev_fw_params.estop_detection = -1;
     prev_fw_params.estop_pid_threshold = -1;
@@ -140,13 +154,20 @@ void MotorHardware::readInputs() {
         mm = motor_serial_->receiveCommand();
         if (mm.getType() == MotorMessage::TYPE_RESPONSE) {
             switch (mm.getRegister()) {
+
+                case MotorMessage::REG_SYSTEM_EVENTS:
+                    if ((mm.getData() & MotorMessage::SYS_EVENT_POWERON) != 0) {
+                        ROS_WARN("Firmware System Event for PowerOn transition");
+                        system_events = mm.getData();
+                    }
+                    break;
                 case MotorMessage::REG_FIRMWARE_VERSION:
                     if (mm.getData() < LOWEST_FIRMWARE_VERSION) {
                         ROS_FATAL("Firmware version %d, expect %d or above",
                                   mm.getData(), LOWEST_FIRMWARE_VERSION);
                         throw std::runtime_error("Firmware version too low");
                     } else {
-                        ROS_INFO("Firmware version %d", mm.getData());
+                        ROS_INFO_ONCE("Firmware version %d", mm.getData());
                         firmware_version = mm.getData();
 			motor_diag_.firmware_version = firmware_version;
                     }
@@ -154,7 +175,7 @@ void MotorHardware::readInputs() {
 
                 case MotorMessage::REG_FIRMWARE_DATE:
                     // Firmware date is only supported as of fw version MIN_FW_FIRMWARE_DATE
-                    ROS_INFO("Firmware date 0x%x (format 0xYYYYMMDD)", mm.getData());
+                    ROS_INFO_ONCE("Firmware date 0x%x (format 0xYYYYMMDD)", mm.getData());
                     firmware_date = mm.getData();
 		    motor_diag_.firmware_date = firmware_date;
                     break;
@@ -193,13 +214,14 @@ void MotorHardware::readInputs() {
                     rightError.publish(right);
                     break;
                 }
+
                 case MotorMessage::REG_HW_OPTIONS: {
                     int32_t data = mm.getData();
 
                     // Enable or disable hardware options reported from firmware
                     motor_diag_.firmware_options = data;
 
-                    // Set radians per encoder tic
+                    // Set radians per encoder tic based on encoder specifics
                     if (data & MotorMessage::OPT_ENC_6_STATE) {
 		     	fw_params.hw_options |= MotorMessage::OPT_ENC_6_STATE; 
                         ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE * 2;
@@ -207,8 +229,15 @@ void MotorHardware::readInputs() {
 		    	fw_params.hw_options &= ~MotorMessage::OPT_ENC_6_STATE; 
                         ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE;
                     }
+
+                    if (data & MotorMessage::OPT_WHEEL_TYPE_THIN) {
+                        ROS_WARN_ONCE("Wheel type is: 'thin'");
+                    } else {
+                        ROS_WARN_ONCE("Wheel type is: 'standard'");
+                    }
                     break;
                 }
+
                 case MotorMessage::REG_LIMIT_REACHED: {
                     int32_t data = mm.getData();
 
@@ -258,6 +287,8 @@ void MotorHardware::readInputs() {
                     battery_state.publish(bstate);
 
 		    motor_diag_.battery_voltage = bstate.voltage; 
+		    motor_diag_.battery_voltage_low_level = MotorHardware::fw_params.battery_voltage_low_level; 
+		    motor_diag_.battery_voltage_critical = MotorHardware::fw_params.battery_voltage_critical; 
                     break;
                 }
                 case MotorMessage::REG_MOT_PWR_ACTIVE: {   // Starting with rev 5.0 board we can see power state
@@ -345,6 +376,15 @@ void MotorHardware::requestFirmwareDate() {
     motor_serial_->transmitCommand(fw_date_msg);
 }
 
+// Request the MCB system event register
+void MotorHardware::requestSystemEvents() {
+    MotorMessage sys_event_msg;
+    sys_event_msg.setRegister(MotorMessage::REG_SYSTEM_EVENTS);
+    sys_event_msg.setType(MotorMessage::TYPE_READ);
+    sys_event_msg.setData(0);
+    motor_serial_->transmitCommand(sys_event_msg);
+}
+
 
 // Due to greatly limited pins on the firmware processor the host figures out the hardware rev and sends it to fw
 // The hardware version is 0x0000MMmm  where MM is major rev like 4 and mm is minor rev like 9 for first units.
@@ -393,6 +433,60 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
     motor_serial_->transmitCommand(mm);
 }
 
+// Setup the controller board hardware options that are setable from host side
+// This MCB register has some read only bits but no worries, write the bits
+// that are required to be set from the host side such as THIN_WHEELS
+void MotorHardware::setHardwareOptions(int32_t hardware_option_bits) {
+    ROS_INFO("setting MCB hardware options to 0x%x", (int)hardware_option_bits);
+    MotorMessage ho;
+    ho.setRegister(MotorMessage::REG_HW_OPTIONS);
+    ho.setType(MotorMessage::TYPE_WRITE);
+    ho.setData(hardware_option_bits);
+    motor_serial_->transmitCommand(ho);
+}
+
+// Read the controller board option switch itself that resides on the I2C bus but is on the MCB
+// This call inverts the bits because a shorted option switch is a 0 where we want it as 1
+// If return is negative something went wrong
+int MotorHardware::getOptionSwitch(void) {
+    uint8_t buf[16];
+    int retBits = 0;
+    ROS_INFO("reading MCB option switch on the I2C bus");
+    int retCount = i2c_BufferRead(I2C_DEVICE, I2C_PCF8574_8BIT_ADDR, &buf[0], -1, 1);
+    if (retCount < 0) {
+        ROS_ERROR("Error %d in reading MCB option switch at 8bit Addr 0x%x", 
+            retCount, I2C_PCF8574_8BIT_ADDR);
+        retBits = retCount;
+    } else if (retCount != 1) {
+        ROS_ERROR("Cannot read byte from MCB option switch at 8bit Addr 0x%x", I2C_PCF8574_8BIT_ADDR);
+        retBits = -1;
+    } else {
+        retBits = (0xff) & ~buf[0];
+    }
+
+    return retBits;
+}
+
+// Setup the controller board option switch register which comes from the I2C 8-bit IO chip on MCB
+void MotorHardware::setOptionSwitchReg(int32_t option_switch_bits) {
+    ROS_INFO("setting MCB option switch register to 0x%x", (int)option_switch_bits);
+    MotorMessage os;
+    os.setRegister(MotorMessage::REG_OPTION_SWITCH);
+    os.setType(MotorMessage::TYPE_WRITE);
+    os.setData(option_switch_bits);
+    motor_serial_->transmitCommand(os);
+}
+
+// Setup the controller board system event register or clear bits in the register
+void MotorHardware::setSystemEvents(int32_t system_events) {
+    ROS_INFO("setting MCB system event register to %d", (int)system_events);
+    MotorMessage se;
+    se.setRegister(MotorMessage::REG_SYSTEM_EVENTS);
+    se.setType(MotorMessage::TYPE_WRITE);
+    se.setData(system_events);
+    motor_serial_->transmitCommand(se);
+}
+
 // Setup the controller board maximum settable motor reverse speed
 void MotorHardware::setMaxRevSpeed(int32_t max_speed_rev) {
     ROS_INFO("setting max motor reverse speed to %d", (int)max_speed_rev);
@@ -439,6 +533,7 @@ void MotorHardware::setParams(FirmwareParams fp) {
     fw_params.pid_denominator = fp.pid_denominator;
     fw_params.pid_moving_buffer_size = fp.pid_moving_buffer_size;
     fw_params.pid_denominator = fp.pid_denominator;
+    fw_params.max_pwm = fp.max_pwm;
     fw_params.estop_pid_threshold = fp.estop_pid_threshold;
 }
 
@@ -451,7 +546,7 @@ void MotorHardware::sendParams() {
     // Only send one register at a time to avoid overwhelming serial comms
     // SUPPORT NOTE!  Adjust modulo for total parameters in the cycle
     //                and be sure no duplicate modulos are used!
-    int cycle = (sendPid_count++) % 6;     // MUST BE THE TOTAL NUMBER IN THIS HANDLING
+    int cycle = (sendPid_count++) % 7;     // MUST BE THE TOTAL NUMBER IN THIS HANDLING
 
     if (cycle == 0 &&
         fw_params.pid_proportional != prev_fw_params.pid_proportional) {
@@ -519,6 +614,18 @@ void MotorHardware::sendParams() {
         winsize.setData(fw_params.pid_moving_buffer_size);
         commands.push_back(winsize);
     }
+
+    if (cycle == 6 &&
+        fw_params.max_pwm != prev_fw_params.max_pwm) {
+        ROS_WARN("Setting max_pwm to %d", fw_params.max_pwm);
+        prev_fw_params.max_pwm = fw_params.max_pwm;
+        MotorMessage maxpwm;
+        maxpwm.setRegister(MotorMessage::REG_MAX_PWM);
+        maxpwm.setType(MotorMessage::TYPE_WRITE);
+        maxpwm.setData(fw_params.max_pwm);
+        commands.push_back(maxpwm);
+    }
+
 
     // SUPPORT NOTE!  Adjust max modulo for total parameters in the cycle, be sure no duplicates used!
 
@@ -642,10 +749,10 @@ void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
 
 void MotorDiagnostics::battery_status(DiagnosticStatusWrapper &stat) {
     stat.add("Battery Voltage", battery_voltage);
-    if (battery_voltage < 22.5) {
+    if (battery_voltage < battery_voltage_low_level) {
         stat.summary(DiagnosticStatusWrapper::WARN, "Battery low");
     } 
-    else if (battery_voltage < 21.0) {
+    else if (battery_voltage < battery_voltage_critical) {
         stat.summary(DiagnosticStatusWrapper::ERROR, "Battery critical");
     }
     else {
@@ -664,12 +771,76 @@ void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
 // motor_encoder_mode returns 0 for legacy encoders and 1 for 6-state firmware
 void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
     stat.add("Firmware Options", firmware_options);
+    std::string option_descriptions("");
     if (firmware_options & MotorMessage::OPT_ENC_6_STATE) {
-        stat.summary(DiagnosticStatusWrapper::OK, "High resolution encoders");
-    } 
-    else {
-        stat.summary(DiagnosticStatusWrapper::OK, "Standard resolution encoders");
+        option_descriptions += "High resolution encoders";
+    } else {
+        option_descriptions += "Standard resolution encoders";
     }
+    if (firmware_options & MotorMessage::OPT_WHEEL_TYPE_THIN) {
+        option_descriptions +=  ", Wheel type of 'thin'";
+    } else {
+        option_descriptions +=  ", Wheel type of 'standard'";
+    }
+    stat.summary(DiagnosticStatusWrapper::OK, option_descriptions);
 }
+
+// i2c_BufferRead()   A host OS system specific  utility to open, read, close from an I2C device
+//
+// The I2C address is the 8-bit address which is the 7-bit addr shifted left in some code
+// If chipRegAddr is greater than 1 we write this out for the internal chip address for the following read(s)
+//
+// Returns number of bytes read where 0 or less implies some form of failure
+//
+// NOTE: The i2c8bitAddr will be shifted right one bit to use as 7-bit I2C addr
+//
+static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr, 
+                          uint8_t *pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead)
+{
+   int bytesRead = 0;
+   int retCode   = 0;
+
+    // we are now free to access the I2C hardware
+    int fd;                                         // File descrition
+    int  address   = i2c8bitAddr >> 1;              // Address of the I2C device
+    uint8_t buf[8];                                 // Buffer for data being written to the i2c device
+
+    if ((fd = open(i2cDevFile, O_RDWR)) < 0) {      // Open port for reading and writing
+      retCode = -2;
+      ROS_ERROR("Cannot open I2C def of %s with error %s", i2cDevFile, strerror(errno));
+      goto exitWithNoClose;
+    }
+
+    // The ioctl here will address the I2C slave device making it ready for 1 or more other bytes
+    if (ioctl(fd, I2C_SLAVE, address) != 0) {        // Set the port options and addr of the dev
+      retCode = -3;
+      ROS_ERROR("Failed to get bus access to I2C device %s!  ERROR: %s", i2cDevFile, strerror(errno));
+      goto exitWithFileClose;
+    }
+
+    if (chipRegAddr < 0) {     // Suppress reg address if negative value was used
+      buf[0] = (uint8_t)(chipRegAddr);          // Internal chip register address
+      if ((write(fd, buf, 1)) != 1) {           // Write both bytes to the i2c port
+        retCode = -4;
+        goto exitWithFileClose;
+      }
+    }
+
+    bytesRead = read(fd, pBuffer, NumByteToRead);
+    if (bytesRead != NumByteToRead) {      // verify the number of bytes we requested were read
+      retCode = -9;
+      goto exitWithFileClose;
+    }
+    retCode = bytesRead;
+
+  exitWithFileClose:
+    close(fd);
+
+  exitWithNoClose:
+
+  return retCode;
+}
+
+
 
 
