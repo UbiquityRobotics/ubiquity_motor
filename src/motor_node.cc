@@ -143,13 +143,13 @@ int main(int argc, char* argv[]) {
 
     // Determine hardware options that can be set by the host to override firmware defaults
     int32_t host_setable_hw_options = 0;
-    if (node_params.wheel_type.compare("standard") == 0) {
+    if (node_params.wheel_type == "standard") {
         host_setable_hw_options |= MotorMessage::OPT_WHEEL_TYPE_STANDARD;
         ROS_INFO("Host is specifying hardware wheel_type of '%s'", "standard");
-    } else if (node_params.wheel_type.compare("thin")  == 0){
+    } else if (node_params.wheel_type == "thin"){
         host_setable_hw_options |= MotorMessage::OPT_WHEEL_TYPE_THIN;
         ROS_INFO("Host is specifying hardware wheel_type of '%s'", "thin");
-    } else if (node_params.wheel_type.compare("firmware_default") == 0) {
+    } else if (node_params.wheel_type == "firmware_default") {
         // Here there is no specification so the firmware default will be used
         ROS_INFO("Firmware default wheel_type will be used.");
     } else {
