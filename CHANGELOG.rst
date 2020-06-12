@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.11.0 (2020-06-12)
+-------------------
 * Fixed unit test error
 * Sync up registers with v37 firmware. This adds many thing like system_events pid control selftest and thin wheel and low voltage level. Our main need here is thin wheels. Also add system_info script to be used for simplier field state info gathering on a magni
 * Continued mod to add more recent firmware changes into host side.  Have added max_pwm to dynamic config.   Made some changes to system_info.py info tool
