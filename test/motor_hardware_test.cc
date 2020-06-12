@@ -221,7 +221,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
 }
 
 TEST_F(MotorHardwareTests, requestVersionOutputs) {
-    robot->requestVersion();
+    robot->requestFirmwareVersion();
 
     wait_for_read();
 
