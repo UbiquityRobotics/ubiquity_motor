@@ -812,7 +812,6 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
    int bytesRead = 0;
    int retCode   = 0;
 
-    // we are now free to access the I2C hardware
     int fd;                                         // File descrition
     int  address   = i2c8bitAddr >> 1;              // Address of the I2C device
     uint8_t buf[8];                                 // Buffer for data being written to the i2c device
@@ -852,7 +851,4 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
 
   return retCode;
 }
-
-
-
 

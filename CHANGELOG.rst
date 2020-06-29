@@ -2,6 +2,19 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.11.0 (2020-06-12)
+-------------------
+* Fixed unit test error
+* Sync up registers with v37 firmware. This adds many thing like system_events pid control selftest and thin wheel and low voltage level. Our main need here is thin wheels. Also add system_info script to be used for simplier field state info gathering on a magni
+* Continued mod to add more recent firmware changes into host side.  Have added max_pwm to dynamic config.   Made some changes to system_info.py info tool
+* Fix a repetitive logs for firmware date and version. Main new code is for support of v37 firmware registers and features.  Not function complete yet for all changes
+* Putting into action mcb reset detection from system_event register and reading of mcb option switch so it can be sent back down to the MCB since mcb cannot read the onboard option register itself.
+* First commit of function complete code for support of wheel type in base.yaml, notification of MCB reset conditions, reading I2C option switch and pushing it to MCB register as the main new additions
+* Adding updates to firmware and hardware rev description
+* Better error messages for common errors
+* Adding v35 information for firmware revisions
+* Contributors: Mark Johnston, Rohan Agrawal
+
 0.10.0 (2019-11-10)
 -------------------
 * Support for higher resolution odometry (firmware v35+ required)
