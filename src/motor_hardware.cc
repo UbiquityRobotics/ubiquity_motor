@@ -232,17 +232,21 @@ void MotorHardware::readInputs() {
 
                     // Set radians per encoder tic based on encoder specifics
                     if (data & MotorMessage::OPT_ENC_6_STATE) {
+                        ROS_WARN_ONCE("Encoder Resolution: 'Enhanced'");
 		     	fw_params.hw_options |= MotorMessage::OPT_ENC_6_STATE; 
                         ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE * 2;
                     } else {
+                        ROS_WARN_ONCE("Encoder Resolution: 'Standard'");
 		    	fw_params.hw_options &= ~MotorMessage::OPT_ENC_6_STATE; 
                         ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE;
                     }
 
                     if (data & MotorMessage::OPT_WHEEL_TYPE_THIN) {
                         ROS_WARN_ONCE("Wheel type is: 'thin'");
+		    	fw_params.hw_options |= MotorMessage::OPT_WHEEL_TYPE_THIN; 
                     } else {
                         ROS_WARN_ONCE("Wheel type is: 'standard'");
+		    	fw_params.hw_options &= ~MotorMessage::OPT_WHEEL_TYPE_THIN; 
                     }
                     break;
                 }
@@ -442,15 +446,14 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
     motor_serial_->transmitCommand(mm);
 }
 
-// Setup the controller board hardware options that are setable from host side
-// This MCB register has some read only bits but no worries, write the bits
-// that are required to be set from the host side such as THIN_WHEELS
-void MotorHardware::setHardwareOptions(int32_t hardware_option_bits) {
-    ROS_INFO("setting MCB hardware options to 0x%x", (int)hardware_option_bits);
+// Setup the Wheel Type. Overrides mode in use on hardware  
+// This used to only be standard but THIN_WHEELS were added in Jun 2020
+void MotorHardware::setWheelType(int32_t wheel_type) {
+    ROS_INFO("setting MCB wheel type %d", (int)wheel_type);
     MotorMessage ho;
-    ho.setRegister(MotorMessage::REG_HW_OPTIONS);
+    ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
     ho.setType(MotorMessage::TYPE_WRITE);
-    ho.setData(hardware_option_bits);
+    ho.setData(wheel_type);
     motor_serial_->transmitCommand(ho);
 }
 
@@ -787,9 +790,9 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
         option_descriptions += "Standard resolution encoders";
     }
     if (firmware_options & MotorMessage::OPT_WHEEL_TYPE_THIN) {
-        option_descriptions +=  ", Wheel type of 'thin'";
+        option_descriptions +=  ", Thin gearless wheels";
     } else {
-        option_descriptions +=  ", Wheel type of 'standard'";
+        option_descriptions +=  ", Standard wheels";
     }
     stat.summary(DiagnosticStatusWrapper::OK, option_descriptions);
 }
@@ -809,7 +812,6 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
    int bytesRead = 0;
    int retCode   = 0;
 
-    // we are now free to access the I2C hardware
     int fd;                                         // File descrition
     int  address   = i2c8bitAddr >> 1;              // Address of the I2C device
     uint8_t buf[8];                                 // Buffer for data being written to the i2c device
@@ -849,7 +851,4 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
 
   return retCode;
 }
-
-
-
 

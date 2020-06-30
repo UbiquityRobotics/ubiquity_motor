@@ -121,7 +121,7 @@ public:
     void setMaxFwdSpeed(int32_t max_speed_fwd);
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
-    void setHardwareOptions(int32_t hardware_options);
+    void setWheelType(int32_t wheel_type);
     int  getOptionSwitch(void);
     void setOptionSwitchReg(int32_t option_switch);
     void requestSystemEvents();

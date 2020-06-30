@@ -98,7 +98,7 @@ public:
         REG_LEFT_CURRENT = 0x0E,        // Electrical Current readback for M1 motor
         REG_RIGHT_CURRENT = 0x0F,       // Electrical Current readback for M2 motor
 
-        REG_ERROR_COUNT = 0x10,         // Deprecated
+        REG_WHEEL_TYPE = 0x10,          // The type of wheel-motor in use
         REG_5V_MAIN_ERROR = 0x11,       // Deprecated
         REG_OPTION_SWITCH = 0x12,       // Setting of MCB option jumpers and rev
         REG_PWM_OVERRIDE = 0x13,
@@ -149,7 +149,7 @@ public:
         REG_MAX_SPEED_REV  = 0x36,      // Caps the max reverse speed settable by user
         REG_MAX_PWM        = 0x37,      // Caps max PWM value that will be used due to PID loop
 
-        REG_HW_OPTIONS     = 0x38,      // Holds options such as 3 or 6 state enc. Some are ReadOnly MCB config
+        REG_HW_OPTIONS     = 0x38,      // ReadOnly: Indicates options such as 3 or 6 state enc or motor type
         REG_DEADZONE       = 0x39,      // When non-zero enables speed deadzone at zero speed
         REG_FIRMWARE_DATE  = 0x3a,      // ReadOnly: Hex encoded daycode such as 20190703 for July 3 2019
         REG_STEST_REQUEST  = 0x3b,      // Set to non-zero to request tests.  Cleared after tests done
