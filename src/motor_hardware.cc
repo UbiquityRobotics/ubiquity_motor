@@ -94,7 +94,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     motor_serial_ =
         new MotorSerial(serial_params.serial_port, serial_params.baud_rate);
 
-     ROS_INFO("MCB serial port initialized"); 
+     ROS_INFO("MCB serial port initialized");
 
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
