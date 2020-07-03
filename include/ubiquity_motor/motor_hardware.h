@@ -129,6 +129,7 @@ public:
     int firmware_version;
     int firmware_date;
     int firmware_options;
+    int num_fw_params;  // This is used for sendParams as modulo count
     int hardware_version;
     int estop_pid_threshold;
     int max_speed_fwd;
@@ -136,6 +137,7 @@ public:
     int max_pwm;
     int deadman_enable;
     int system_events;
+
 
     diagnostic_updater::Updater diag_updater;
 private:

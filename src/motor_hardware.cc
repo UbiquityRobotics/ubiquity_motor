@@ -103,6 +103,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     motor_power_active = nh.advertise<std_msgs::Bool>("motor_power_active", 1);
 
     sendPid_count = 0;
+    num_fw_params = 7;     // number of params sent if any change
 
     estop_motor_power_off = false;  // Keeps state of ESTOP switch where true is in ESTOP state
 
@@ -558,7 +559,7 @@ void MotorHardware::sendParams() {
     // Only send one register at a time to avoid overwhelming serial comms
     // SUPPORT NOTE!  Adjust modulo for total parameters in the cycle
     //                and be sure no duplicate modulos are used!
-    int cycle = (sendPid_count++) % 7;     // MUST BE THE TOTAL NUMBER IN THIS HANDLING
+    int cycle = (sendPid_count++) % num_fw_params;     // MUST BE THE TOTAL NUMBER IN THIS HANDLING
 
     if (cycle == 0 &&
         fw_params.pid_proportional != prev_fw_params.pid_proportional) {
@@ -637,7 +638,6 @@ void MotorHardware::sendParams() {
         maxpwm.setData(fw_params.max_pwm);
         commands.push_back(maxpwm);
     }
-
 
     // SUPPORT NOTE!  Adjust max modulo for total parameters in the cycle, be sure no duplicates used!
 
