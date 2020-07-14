@@ -2,6 +2,13 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixes ODOM bug and modifies way we set wheel type to safer system. (`#87 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/87>`_)
+* Sync up registers with v37 firmware. This adds many thing like system_events pid control selftest and thin wheel and low voltage level.
+* A workaround for issue 83.  Insert a 2 second delay prior to serial port setup.  Tests so far show this seems to avoid the issue where some OS components sets the serial port to 115200. The odd thing about the defect is stty still shows it as 38.4k but it is in fact 115.2k baud
+* Contributors: Mark Johnston
+
 0.11.0 (2020-06-12)
 -------------------
 * Fixed unit test error
