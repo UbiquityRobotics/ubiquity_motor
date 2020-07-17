@@ -119,8 +119,14 @@ void MotorMessage::setRegister(MotorMessage::Registers reg) {
     }
 }
 
+// Register address is masked off from the byte that also contains busy with msg bit
 MotorMessage::Registers MotorMessage::getRegister() const {
-    return static_cast<MotorMessage::Registers>(this->register_addr);
+    return static_cast<MotorMessage::Registers>((this->register_addr & REG_ADDRESS_MASK));
+}
+
+// Returns non zero if MCB is still busy with a message
+int32_t MotorMessage::getBusyWithMsg() const {
+    return (this->register_addr & REG_BUSY_IN_PROGRESS);
 }
 
 void MotorMessage::setData(int32_t data) {

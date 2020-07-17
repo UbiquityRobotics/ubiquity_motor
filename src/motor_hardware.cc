@@ -91,6 +91,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     ROS_INFO("Initialize MCB serial port '%s' for %d baud",
         serial_params.serial_port.c_str(), serial_params.baud_rate);
 
+    mcbIsBusyNow = 0;
+
     motor_serial_ =
         new MotorSerial(serial_params.serial_port, serial_params.baud_rate);
 
@@ -162,6 +164,14 @@ void MotorHardware::readInputs() {
     while (motor_serial_->commandAvailable()) {
         MotorMessage mm;
         mm = motor_serial_->receiveCommand();
+
+        // Keep track if mcb is still busy with a command
+        if (mm.getBusyWithMsg() != 0) {
+            mcbIsBusyNow = 1;
+        } else {
+            mcbIsBusyNow = 0;
+        }
+       
         if (mm.getType() == MotorMessage::TYPE_RESPONSE) {
             switch (mm.getRegister()) {
 
@@ -332,6 +342,42 @@ void MotorHardware::readInputs() {
     }
 }
 
+// We implement a message write routine that waits for MCB to not be processing message
+// prior to sending any new message.
+// This is a place that may get a great deal more involved but it is a central message send point
+// At this time it will wait for reasonabally long time then give up and just send the message
+//
+// NOTE: Only call this if system is receiving MCB status updates so we know busy bit is updated
+void MotorHardware::transmitMcbCommand(MotorMessage &mcbMessage) {
+    int32_t waitCount = 0;
+
+    while (mcbIsBusyNow != 0) {   // MCB still busy with a command so hold off a reasonable time
+        ros::Duration(0.05).sleep();
+        waitCount += 1;
+        if (waitCount > 5) {      // At some point we just send the silly message anyway to avoid lockup
+            mcbIsBusyNow = 0;     // a bit of a messy cleanup but required for this error
+            ROS_ERROR("Sent MCB message even though it seemed busy");
+            break;
+        }
+    }
+    if (waitCount != 0) {
+        ROS_INFO("MCB message had to wait for mcb busy.");
+    }
+    
+    // Send the message to the MCB
+    mcbIsBusyNow = 1;             // Set the MCB busy bit now and let next mcb replie(s) clear it
+    transmitMcbCommand(mcbMessage);
+}
+
+// transmitMcbCommands maintains the protocol to be sure mcb is not busy before next command
+// NOTE: Only call this if system is receiving MCB status updates so we know busy bit is updated
+int MotorHardware::transmitMcbCommands(std::vector<MotorMessage>& commands) {
+    for (auto& command : commands) {
+        transmitMcbCommand(command);
+    }
+    return 0;
+}
+
 // writeSpeedsInRadians()  Take in radians per sec for wheels and send in message to controller
 //
 // A direct write speeds that allows caller setting speeds in radians
@@ -353,7 +399,7 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
     std_msgs::Int32 smsg;
     smsg.data = left_speed;
 
-    motor_serial_->transmitCommand(both);
+    transmitMcbCommand(both);
 
     // ROS_ERROR("velocity_command %f rad/s %f rad/s",
     // joints_[0].velocity_command, joints_[1].velocity_command);
@@ -378,7 +424,7 @@ void MotorHardware::requestFirmwareVersion() {
     fw_version_msg.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
     fw_version_msg.setType(MotorMessage::TYPE_READ);
     fw_version_msg.setData(0);
-    motor_serial_->transmitCommand(fw_version_msg);
+    transmitMcbCommand(fw_version_msg);
 }
 
 // Firmware date register implemented as of MIN_FW_FIRMWARE_DATE
@@ -387,7 +433,7 @@ void MotorHardware::requestFirmwareDate() {
     fw_date_msg.setRegister(MotorMessage::REG_FIRMWARE_DATE);
     fw_date_msg.setType(MotorMessage::TYPE_READ);
     fw_date_msg.setData(0);
-    motor_serial_->transmitCommand(fw_date_msg);
+    transmitMcbCommand(fw_date_msg);
 }
 
 // Request the MCB system event register
@@ -396,7 +442,7 @@ void MotorHardware::requestSystemEvents() {
     sys_event_msg.setRegister(MotorMessage::REG_SYSTEM_EVENTS);
     sys_event_msg.setType(MotorMessage::TYPE_READ);
     sys_event_msg.setData(0);
-    motor_serial_->transmitCommand(sys_event_msg);
+    transmitMcbCommand(sys_event_msg);
 }
 
 
@@ -409,7 +455,7 @@ void MotorHardware::setHardwareVersion(int32_t hardware_version) {
     mm.setRegister(MotorMessage::REG_HARDWARE_VERSION);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(hardware_version);
-    motor_serial_->transmitCommand(mm);
+    transmitMcbCommand(mm);
 }
 
 // Setup the controller board threshold to put into force estop protection on boards prior to rev 5.0 with hardware support
@@ -419,7 +465,7 @@ void MotorHardware::setEstopPidThreshold(int32_t estop_pid_threshold) {
     mm.setRegister(MotorMessage::REG_PID_MAX_ERROR);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(estop_pid_threshold);
-    motor_serial_->transmitCommand(mm);
+    transmitMcbCommand(mm);
 }
 
 // Setup the controller board to have estop button state detection feature enabled or not
@@ -429,7 +475,7 @@ void MotorHardware::setEstopDetection(int32_t estop_detection) {
     mm.setRegister(MotorMessage::REG_ESTOP_ENABLE);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(estop_detection);
-    motor_serial_->transmitCommand(mm);
+    transmitMcbCommand(mm);
 }
 
 // Returns true if estop switch is active OR if motor power is off somehow off
@@ -444,7 +490,7 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
     mm.setRegister(MotorMessage::REG_MAX_SPEED_FWD);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(max_speed_fwd);
-    motor_serial_->transmitCommand(mm);
+    transmitMcbCommand(mm);
 }
 
 // Setup the Wheel Type. Overrides mode in use on hardware  
@@ -455,7 +501,7 @@ void MotorHardware::setWheelType(int32_t wheel_type) {
     ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
     ho.setType(MotorMessage::TYPE_WRITE);
     ho.setData(wheel_type);
-    motor_serial_->transmitCommand(ho);
+    transmitMcbCommand(ho);
 }
 
 // Read the controller board option switch itself that resides on the I2C bus but is on the MCB
@@ -487,7 +533,7 @@ void MotorHardware::setOptionSwitchReg(int32_t option_switch_bits) {
     os.setRegister(MotorMessage::REG_OPTION_SWITCH);
     os.setType(MotorMessage::TYPE_WRITE);
     os.setData(option_switch_bits);
-    motor_serial_->transmitCommand(os);
+    transmitMcbCommand(os);
 }
 
 // Setup the controller board system event register or clear bits in the register
@@ -497,7 +543,7 @@ void MotorHardware::setSystemEvents(int32_t system_events) {
     se.setRegister(MotorMessage::REG_SYSTEM_EVENTS);
     se.setType(MotorMessage::TYPE_WRITE);
     se.setData(system_events);
-    motor_serial_->transmitCommand(se);
+    transmitMcbCommand(se);
 }
 
 // Setup the controller board maximum settable motor reverse speed
@@ -507,7 +553,7 @@ void MotorHardware::setMaxRevSpeed(int32_t max_speed_rev) {
     mm.setRegister(MotorMessage::REG_MAX_SPEED_REV);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(max_speed_rev);
-    motor_serial_->transmitCommand(mm);
+    transmitMcbCommand(mm);
 }
 
 // Setup the controller board maximum PWM level allowed for a motor
@@ -517,7 +563,7 @@ void MotorHardware::setMaxPwm(int32_t max_pwm) {
     mm.setRegister(MotorMessage::REG_MAX_PWM);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(max_pwm);
-    motor_serial_->transmitCommand(mm);
+    transmitMcbCommand(mm);
 }
 
 void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
@@ -526,7 +572,7 @@ void MotorHardware::setDeadmanTimer(int32_t deadman_timer) {
     mm.setRegister(MotorMessage::REG_DEADMAN);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(deadman_timer);
-    motor_serial_->transmitCommand(mm);
+    transmitMcbCommand(mm);
 }
 
 void MotorHardware::setDeadzoneEnable(int32_t deadzone_enable) {
@@ -535,7 +581,7 @@ void MotorHardware::setDeadzoneEnable(int32_t deadzone_enable) {
     mm.setRegister(MotorMessage::REG_DEADZONE);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(deadman_timer);
-    motor_serial_->transmitCommand(mm);
+    transmitMcbCommand(mm);
 }
 
 void MotorHardware::setParams(FirmwareParams fp) {
@@ -642,7 +688,7 @@ void MotorHardware::sendParams() {
     // SUPPORT NOTE!  Adjust max modulo for total parameters in the cycle, be sure no duplicates used!
 
     if (commands.size() != 0) {
-        motor_serial_->transmitCommands(commands);
+        transmitMcbCommands(commands);
     }
 }
 
@@ -669,7 +715,7 @@ void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
     }
     commands.push_back(led2);
 
-    motor_serial_->transmitCommands(commands);
+    transmitMcbCommands(commands);
 }
 
 // calculate the binary speed value sent to motor controller board

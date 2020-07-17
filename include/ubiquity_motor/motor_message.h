@@ -73,6 +73,10 @@ public:
         TYPE_ERROR = 0xD
     };
 
+    // The byte of the message containing the register address contains a busy bit as of v38
+    uint8_t REG_ADDRESS_MASK    = 0x7F; // The register will remain within this mask
+    uint8_t REG_BUSY_IN_PROGRESS = 0x80; // This bit is above address and indicates MCB is busy with a request
+
     // Registers enum in class to avoid global namespace pollution
     enum Registers {
         REG_STOP_START = 0x00,          // Deprecated
@@ -222,6 +226,8 @@ public:
 
     void setType(MotorMessage::MessageTypes type);
     MotorMessage::MessageTypes getType() const;
+
+    int32_t getBusyWithMsg() const;
 
     void setRegister(MotorMessage::Registers reg);
     MotorMessage::Registers getRegister() const;

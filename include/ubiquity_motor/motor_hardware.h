@@ -105,6 +105,8 @@ public:
     virtual ~MotorHardware();
     void clearCommands();
     void readInputs();
+    void transmitMcbCommand(MotorMessage &mcbMessage);
+    int transmitMcbCommands(std::vector<MotorMessage>& commands);
     void writeSpeeds();
     void writeSpeedsInRadians(double  left_radians, double  right_radians);
     void requestFirmwareVersion();
@@ -152,6 +154,8 @@ private:
 
     FirmwareParams fw_params;
     FirmwareParams prev_fw_params;
+
+    int32_t mcbIsBusyNow;
 
     int32_t deadman_timer;
 
