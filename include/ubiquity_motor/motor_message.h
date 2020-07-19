@@ -75,7 +75,7 @@ public:
 
     // The byte of the message containing the register address contains a busy bit as of v38
     uint8_t REG_ADDRESS_MASK    = 0x7F; // The register will remain within this mask
-    uint8_t REG_BUSY_IN_PROGRESS = 0x80; // This bit is above address and indicates MCB is busy with a request
+    uint8_t MCB_BUSY_STATE_MASK = 0x80; // This bit is above address and indicates MCB is busy with a request
 
     // Registers enum in class to avoid global namespace pollution
     enum Registers {
@@ -227,7 +227,7 @@ public:
     void setType(MotorMessage::MessageTypes type);
     MotorMessage::MessageTypes getType() const;
 
-    int32_t getBusyWithMsg() const;
+    uint8_t getMcbBusyState() const;
 
     void setRegister(MotorMessage::Registers reg);
     MotorMessage::Registers getRegister() const;
@@ -257,6 +257,8 @@ private:
     uint8_t type;
     // Register address should be in MotorMessage::Registers
     uint8_t register_addr;
+
+    int8_t  mcbBusyState;
 
     // 4 bytes of data, numbers should be in big endian format
     boost::array<uint8_t, 4> data;

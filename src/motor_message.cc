@@ -115,18 +115,18 @@ MotorMessage::MessageTypes MotorMessage::getType() const {
 
 void MotorMessage::setRegister(MotorMessage::Registers reg) {
     if (verifyRegister(reg)) {
-        this->register_addr = reg;
+        this->register_addr = reg & REG_ADDRESS_MASK;
     }
 }
 
-// Register address is masked off from the byte that also contains busy with msg bit
+// Get Register address contained in this motor message packet
 MotorMessage::Registers MotorMessage::getRegister() const {
-    return static_cast<MotorMessage::Registers>((this->register_addr & REG_ADDRESS_MASK));
+    return static_cast<MotorMessage::Registers>(this->register_addr);
 }
 
 // Returns non zero if MCB is still busy with a message
-int32_t MotorMessage::getBusyWithMsg() const {
-    return (this->register_addr & REG_BUSY_IN_PROGRESS);
+uint8_t MotorMessage::getMcbBusyState() const {
+    return this->mcbBusyState;
 }
 
 void MotorMessage::setData(int32_t data) {
@@ -148,7 +148,7 @@ RawMotorMessage MotorMessage::serialize() const {
     RawMotorMessage out;
     out[0] = delimeter;
     out[1] = (protocol_version << 4) | type;
-    out[2] = register_addr;
+    out[2] = register_addr & REG_ADDRESS_MASK;
     std::copy(data.begin(), data.end(), out.begin() + 3);
     out[7] = generateChecksum(out);
     return out;
@@ -161,7 +161,8 @@ MotorMessage::ErrorCodes MotorMessage::deserialize(const RawMotorMessage &serial
                 if (verifyType(serialized[1] & 0x0F)) {
                     if (verifyRegister(serialized[2])) {
                         this->type = serialized[1] & 0x0F;
-                        this->register_addr = serialized[2];
+                        this->register_addr = serialized[2] & REG_ADDRESS_MASK;
+                        this->mcbBusyState  = serialized[2] & MCB_BUSY_STATE_MASK;
                         std::copy(serialized.begin() + 3,
                                   serialized.begin() + 7, data.begin());
                         return MotorMessage::ERR_NONE;

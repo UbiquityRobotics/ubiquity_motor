@@ -155,7 +155,8 @@ private:
     FirmwareParams fw_params;
     FirmwareParams prev_fw_params;
 
-    int32_t mcbIsBusyNow;
+    uint8_t mcbIsBusyNow;
+    uint8_t mcbLastReadReg;
 
     int32_t deadman_timer;
 

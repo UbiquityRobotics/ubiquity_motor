@@ -166,11 +166,12 @@ void MotorHardware::readInputs() {
         mm = motor_serial_->receiveCommand();
 
         // Keep track if mcb is still busy with a command
-        if (mm.getBusyWithMsg() != 0) {
-            mcbIsBusyNow = 1;
-        } else {
-            mcbIsBusyNow = 0;
+        uint8_t busyNow = mm.getMcbBusyState();
+        if ((mcbIsBusyNow != 0) && (busyNow == 0)) {
+            ROS_INFO("Mcb went from busy to idle when receiving REG 0x%x.  Last REG 0x%x",
+                mm.getRegister(), mcbLastReadReg);
         }
+        mcbIsBusyNow = busyNow;
        
         if (mm.getType() == MotorMessage::TYPE_RESPONSE) {
             switch (mm.getRegister()) {
@@ -342,31 +343,39 @@ void MotorHardware::readInputs() {
     }
 }
 
-// We implement a message write routine that waits for MCB to not be processing message
-// prior to sending any new message.
-// This is a place that may get a great deal more involved but it is a central message send point
-// At this time it will wait for reasonabally long time then give up and just send the message
+// Implement a message transmit routine that waits for MCB to not be processing any prior message
+//
+// For each message read the MCB will be sending a busy bit for firmware rev v38 or greater.
+// For prior versions the bit is always 0 and this never busy so this should be backward compatible
+// As a failsafe we wait for reasonabally long time then give up and just send the message
 //
 // NOTE: Only call this if system is receiving MCB status updates so we know busy bit is updated
 void MotorHardware::transmitMcbCommand(MotorMessage &mcbMessage) {
     int32_t waitCount = 0;
+    float   transmitRetryDelay = 0.05;   // Seconds we hold off if we got a MCB busy indication
 
     while (mcbIsBusyNow != 0) {   // MCB still busy with a command so hold off a reasonable time
-        ros::Duration(0.05).sleep();
+        ros::Duration(transmitRetryDelay).sleep();
         waitCount += 1;
-        if (waitCount > 5) {      // At some point we just send the silly message anyway to avoid lockup
+        if (waitCount > 8) {      // At some point we just send the silly message anyway to avoid lockup
             mcbIsBusyNow = 0;     // a bit of a messy cleanup but required for this error
-            ROS_ERROR("Sent MCB message even though it seemed busy");
             break;
         }
     }
     if (waitCount != 0) {
-        ROS_INFO("MCB message had to wait for mcb busy.");
+        ROS_WARN("MCB message for reg 0x%x waited %5.3f sec for mcb being busy and last read message for reg 0x%x.",
+            mcbMessage.getRegister(), (transmitRetryDelay*(float)(waitCount)), mcbLastReadReg);
     }
     
-    // Send the message to the MCB
-    mcbIsBusyNow = 1;             // Set the MCB busy bit now and let next mcb replie(s) clear it
-    transmitMcbCommand(mcbMessage);
+    // Set the MCB busy bit now if this is a read we are sending now  
+    // Future replies by the MCB will set and clear it each reply
+    if (mcbMessage.getType() == MotorMessage::TYPE_READ) {
+        mcbIsBusyNow          = 1;             
+        mcbLastReadReg        = mcbMessage.getRegister();
+    }
+
+    // Send the message with low level serial packet transmission
+    motor_serial_->transmitCommand(mcbMessage);
 }
 
 // transmitMcbCommands maintains the protocol to be sure mcb is not busy before next command
