@@ -352,19 +352,20 @@ void MotorHardware::readInputs() {
 // NOTE: Only call this if system is receiving MCB status updates so we know busy bit is updated
 void MotorHardware::transmitMcbCommand(MotorMessage &mcbMessage) {
     int32_t waitCount = 0;
-    float   transmitRetryDelay = 0.05;   // Seconds we hold off if we got a MCB busy indication
+    float   transmitRetryDelay = 0.02;   // Seconds we hold off if we got a MCB busy indication
 
     while (mcbIsBusyNow != 0) {   // MCB still busy with a command so hold off a reasonable time
         ros::Duration(transmitRetryDelay).sleep();
         waitCount += 1;
-        if (waitCount > 8) {      // At some point we just send the silly message anyway to avoid lockup
+        if (waitCount > 10) {     // At some point we just send the silly message anyway to avoid lockup
             mcbIsBusyNow = 0;     // a bit of a messy cleanup but required for this error
             break;
         }
     }
     if (waitCount != 0) {
-        ROS_WARN("MCB message for reg 0x%x waited %5.3f sec for mcb being busy and last read message for reg 0x%x.",
-            mcbMessage.getRegister(), (transmitRetryDelay*(float)(waitCount)), mcbLastReadReg);
+        ROS_WARN("MCB message for reg 0x%x, type %s,  waited %5.3f sec for mcb being busy and last read message for reg 0x%x.",
+            mcbMessage.getRegister(), (mcbMessage.getType() ==  MotorMessage::TYPE_READ) ? "READ" : "WRITE",
+            (transmitRetryDelay*(float)(waitCount)), mcbLastReadReg);
     }
     
     // Set the MCB busy bit now if this is a read we are sending now  
@@ -454,6 +455,13 @@ void MotorHardware::requestSystemEvents() {
     transmitMcbCommand(sys_event_msg);
 }
 
+// Interface so last known battery voltage can be read
+float MotorHardware::getBatteryVoltage() {
+    float battery_voltage;
+    battery_voltage = motor_diag_.battery_voltage;
+    return battery_voltage;
+}
+
 
 // Due to greatly limited pins on the firmware processor the host figures out the hardware rev and sends it to fw
 // The hardware version is 0x0000MMmm  where MM is major rev like 4 and mm is minor rev like 9 for first units.
@@ -505,7 +513,7 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
 // Setup the Wheel Type. Overrides mode in use on hardware  
 // This used to only be standard but THIN_WHEELS were added in Jun 2020
 void MotorHardware::setWheelType(int32_t wheel_type) {
-    ROS_INFO("setting MCB wheel type %d", (int)wheel_type);
+    ROS_INFO_ONCE("setting MCB wheel type %d", (int)wheel_type);
     MotorMessage ho;
     ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
     ho.setType(MotorMessage::TYPE_WRITE);

@@ -127,6 +127,7 @@ public:
     int  getOptionSwitch(void);
     void setOptionSwitchReg(int32_t option_switch);
     void requestSystemEvents();
+    float getBatteryVoltage();
     void setSystemEvents(int32_t system_events);
     int firmware_version;
     int firmware_date;

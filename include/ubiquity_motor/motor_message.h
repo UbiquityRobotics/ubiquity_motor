@@ -52,9 +52,9 @@ typedef boost::array<uint8_t, 8> RawMotorMessage;
 #define MIN_FW_BATTERY_WARN       36
 #define MIN_FW_PID_CONTROL_REV1   37
 #define MIN_FW_WHEEL_TYPE_THIN    37
-#define MIN_FW_SYSTEM_EVENTS      37
 #define MIN_FW_OPTION_SWITCH      37
 #define MIN_FW_PID_RDY_REGS       37
+#define MIN_FW_SYSTEM_EVENTS      38
 
 // It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
 // In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose

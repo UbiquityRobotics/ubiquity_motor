@@ -222,6 +222,7 @@ int main(int argc, char* argv[]) {
 
     last_time = ros::Time::now();
     last_sys_event_query_time = last_time;
+    robot->system_events = 0;
 
     ROS_WARN("Starting motor control node now");
 
@@ -234,39 +235,38 @@ int main(int argc, char* argv[]) {
         last_time = current_time;
         robot->readInputs();
         float elapsedSecs = elapsed.toSec();
-        if (minCycleTime < elapsedSecs && elapsedSecs < maxCycleTime) {
+        if ((elapsedSecs > minCycleTime) && (elapsedSecs < maxCycleTime)) {
             cm.update(current_time, elapsed);
-        }
-        else {
-            ROS_WARN("Resetting controller due to time jump %f seconds",
-                     elapsedSecs);
+        } else {
+            ROS_WARN("Resetting controller due to time jump %5.3f seconds", elapsedSecs);
             cm.update(current_time, ctrlLoopDelay.expectedCycleTime(), true);
             robot->clearCommands();
         }
         robot->setParams(firmware_params);
         robot->sendParams(); 
 
-        // Periodically watch for MCB board having been reset which is an MCB system event
+        // Periodically do some maintenance for MCB board and show battery voltage.
+        // We will use this section to detect MCB reset and re-initialize MCB in future
         // This is also a good place to refresh or show status that may have changed
         elapsed_since_sys_event_query = current_time - last_sys_event_query_time;
-        if ((robot->firmware_version >= MIN_FW_SYSTEM_EVENTS) &&
-           (elapsed_since_sys_event_query > sysEventQueryPeriod)) {
-            robot->requestSystemEvents();
+        if (elapsed_since_sys_event_query > sysEventQueryPeriod) {
             last_sys_event_query_time = ros::Time::now();
-            ctrlLoopDelay.sleep();        // Allow controller to process command
-            ROS_INFO("Motor controller RUNNING. MCB System events are 0x%x", robot->system_events);
+
+            if (robot->firmware_version >= MIN_FW_SYSTEM_EVENTS) {
+                robot->requestSystemEvents();
+            }
+            ROS_INFO("Motor controller RUNNING. Battery voltage %5.2fV  MCB System events 0x%x",
+                robot->getBatteryVoltage(), robot->system_events);
 
             // If we detect a power-on of MCB we should re-initialize MCB
             if ((robot->system_events & MotorMessage::SYS_EVENT_POWERON) != 0) {
                 ROS_WARN("Motor controller has had a PowerOn event!");
                 robot->setSystemEvents(0);  // Clear entire system events register
                 robot->system_events = 0;
-                ctrlLoopDelay.sleep();        // Allow controller to process command
             }
 
             // Refresh the wheel type setting
             robot->setWheelType(wheel_type);
-            ctrlLoopDelay.sleep();    // Allow controller to process command
         }
 
         // Update motor controller speeds.
