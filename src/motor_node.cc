@@ -164,6 +164,29 @@ int main(int argc, char* argv[]) {
         ctrlLoopDelay.sleep();    // Allow controller to process command
     }
 
+    int32_t wheel_direction = 0;
+    if (node_params.wheel_direction == "firmware_default") {
+        // Here there is no specification so the firmware default will be used
+        ROS_INFO("Firmware default wheel_direction will be used.");
+    } else {
+        // Any other setting leads to host setting the wheel type
+        if (node_params.wheel_direction == "standard") {
+            wheel_direction = MotorMessage::OPT_WHEEL_DIR_STANDARD;
+            ROS_INFO("Host is specifying wheel_direction of '%s'", "standard");
+        } else if (node_params.wheel_direction == "reverse"){
+            wheel_type = MotorMessage::OPT_WHEEL_DIR_REVERSE;
+            ROS_INFO("Host is specifying wheel_direction of '%s'", "reverse");
+        } else {
+            ROS_WARN("Invalid wheel_direction of '%s' specified! Using wheel direction of standard", 
+                node_params.wheel_direction.c_str());
+            node_params.wheel_direction = "standard";
+            wheel_direction = MotorMessage::OPT_WHEEL_DIR_STANDARD;
+        }
+        // Write out the wheel direction setting
+        robot->setWheelDirection(wheel_direction);
+        ctrlLoopDelay.sleep();    // Allow controller to process command
+    }
+
     // Tell the controller board firmware what version the hardware is at this time.
     // TODO: Read from I2C.   At this time we only allow setting the version from ros parameters
     if (robot->firmware_version >= MIN_FW_HW_VERSION_SET) {

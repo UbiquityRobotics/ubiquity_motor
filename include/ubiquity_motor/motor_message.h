@@ -55,6 +55,7 @@ typedef boost::array<uint8_t, 8> RawMotorMessage;
 #define MIN_FW_SYSTEM_EVENTS      37
 #define MIN_FW_OPTION_SWITCH      37
 #define MIN_FW_PID_RDY_REGS       37
+#define MIN_FW_WHEEL_DIRECTION    38
 
 // It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
 // In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose
@@ -91,7 +92,7 @@ public:
         REG_RIGHT_RAMP = 0x0A,          // Deprecated
 
         REG_LEFT_ODOM = 0x0B,           // Deprecated
-        REG_RIGHT_ODOM = 0x0C,          // Deprecated
+        REG_WHEEL_DIR = 0x0C,           // Set wheels to go in reverse if set for OPT_WHEEL_DIR_REVERSE
 
         REG_DEADMAN = 0x0D,             // Deadman timer (VERY TRICKY VALUE, USE WITH CARE!)
 
@@ -176,7 +177,9 @@ public:
     enum HwOptions {
         OPT_ENC_6_STATE = 0x01,
         OPT_WHEEL_TYPE_THIN = 0x02,    // As of rev v37 we support a 'thin' wheel type, gearless
-        OPT_WHEEL_TYPE_STANDARD = 0    // Default original, standard wheels
+        OPT_WHEEL_DIR_REVERSE = 0x04,  // As of rev v38 we support wheels to move in reverse direction
+        OPT_WHEEL_TYPE_STANDARD = 0,   // Default original, standard wheels
+        OPT_WHEEL_DIR_STANDARD = 0     // Default original, standard wheels
     };
 
     // Bitfield values indicating selftest involved. Most are used in test request and results.  

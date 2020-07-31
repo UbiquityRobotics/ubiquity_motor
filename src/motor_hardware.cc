@@ -249,6 +249,14 @@ void MotorHardware::readInputs() {
                         ROS_WARN_ONCE("Wheel type is: 'standard'");
 		    	fw_params.hw_options &= ~MotorMessage::OPT_WHEEL_TYPE_THIN; 
                     }
+
+                    if (data & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
+                        ROS_WARN_ONCE("Wheel direction is: 'reverse'");
+		    	fw_params.hw_options |= MotorMessage::OPT_WHEEL_DIR_REVERSE; 
+                    } else {
+                        ROS_WARN_ONCE("Wheel direction is: 'standard'");
+		    	fw_params.hw_options &= ~MotorMessage::OPT_WHEEL_DIR_REVERSE; 
+                    }
                     break;
                 }
 
@@ -450,11 +458,22 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
 // Setup the Wheel Type. Overrides mode in use on hardware  
 // This used to only be standard but THIN_WHEELS were added in Jun 2020
 void MotorHardware::setWheelType(int32_t wheel_type) {
-    ROS_INFO("setting MCB wheel type %d", (int)wheel_type);
+    ROS_INFO("setting MCB wheel type to %d", (int)wheel_type);
     MotorMessage ho;
     ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
     ho.setType(MotorMessage::TYPE_WRITE);
     ho.setData(wheel_type);
+    motor_serial_->transmitCommand(ho);
+}
+
+// Setup the Wheel direction. Overrides mode in use on hardware  
+// This allows for customer to install wheels on cutom robots as they like
+void MotorHardware::setWheelDirection(int32_t wheel_direction) {
+    ROS_INFO("setting MCB wheel direction to %d", (int)wheel_direction);
+    MotorMessage ho;
+    ho.setRegister(MotorMessage::REG_WHEEL_DIR);
+    ho.setType(MotorMessage::TYPE_WRITE);
+    ho.setData(wheel_direction);
     motor_serial_->transmitCommand(ho);
 }
 
@@ -793,6 +812,10 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
         option_descriptions +=  ", Thin gearless wheels";
     } else {
         option_descriptions +=  ", Standard wheels";
+    }
+    if (firmware_options & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
+        // Only indicate wheel reversal if that has been set as it is non-standard
+        option_descriptions +=  ", Reverse wheels";
     }
     stat.summary(DiagnosticStatusWrapper::OK, option_descriptions);
 }
