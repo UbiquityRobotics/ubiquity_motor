@@ -87,7 +87,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     // Insert a delay prior to serial port setup to avoid a race defect.
     // We see soemtimes the OS sets the port to 115200 baud just after we set it
     ROS_INFO("Delay before MCB serial port initialization");
-    ros::Duration(0.5).sleep();
+    ros::Duration(3.0).sleep();
     ROS_INFO("Initialize MCB serial port '%s' for %d baud",
         serial_params.serial_port.c_str(), serial_params.baud_rate);
 
@@ -449,8 +449,10 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
 
 // Setup the Wheel Type. Overrides mode in use on hardware  
 // This used to only be standard but THIN_WHEELS were added in Jun 2020
-void MotorHardware::setWheelType(int32_t wheel_type) {
-    ROS_INFO("setting MCB wheel type %d", (int)wheel_type);
+void MotorHardware::setWheelType(int32_t wheel_type, bool showLog) {
+    if (showLog) {
+        ROS_INFO("setting MCB wheel type %d", (int)wheel_type);
+    }
     MotorMessage ho;
     ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
     ho.setType(MotorMessage::TYPE_WRITE);

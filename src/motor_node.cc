@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
             wheel_type = MotorMessage::OPT_WHEEL_TYPE_STANDARD;
         }
         // Write out the wheel type setting
-        robot->setWheelType(wheel_type);
+        robot->setWheelType(wheel_type, true);
         ctrlLoopDelay.sleep();    // Allow controller to process command
     }
 
@@ -201,10 +201,13 @@ int main(int argc, char* argv[]) {
 
     ros::Time last_time;
     ros::Time current_time;
-    ros::Time last_sys_event_query_time;
     ros::Duration elapsed;
-    ros::Duration elapsed_since_sys_event_query;
-    ros::Duration sysEventQueryPeriod(15.0);     // A periodic query of MCB
+    ros::Time last_sys_event_query_time;
+    ros::Duration elapsed_since_last_action;
+    ros::Duration sysEventQueryPeriod(30.0);     // A periodic query of MCB events
+    ros::Time last_wheel_refresh_time;
+    ros::Duration elapsed_since_wheel_refresh;;
+    ros::Duration wheelRefreshPeriod(52.0);  // A refresh of wheel type which we may remove later
 
     // Send out the refreshable firmware parameters, most are the PID terms
     // We must be sure num_fw_params is set to the modulo used in sendParams()
@@ -217,11 +220,14 @@ int main(int argc, char* argv[]) {
     float minCycleTime = 0.75 * expectedCycleTime;
     float maxCycleTime = 1.25 * expectedCycleTime;
 
+    float mcbStatusPeriodSec = 0.02;   // Twice the period for status reports from MCB
+
     // Clear any commands the robot has at this time
     robot->clearCommands();
 
     last_time = ros::Time::now();
     last_sys_event_query_time = last_time;
+    last_wheel_refresh_time = last_time;
 
     ROS_WARN("Starting motor control node now");
 
@@ -248,12 +254,12 @@ int main(int argc, char* argv[]) {
 
         // Periodically watch for MCB board having been reset which is an MCB system event
         // This is also a good place to refresh or show status that may have changed
-        elapsed_since_sys_event_query = current_time - last_sys_event_query_time;
+        elapsed_since_last_action = current_time - last_sys_event_query_time;
         if ((robot->firmware_version >= MIN_FW_SYSTEM_EVENTS) &&
-           (elapsed_since_sys_event_query > sysEventQueryPeriod)) {
+           (elapsed_since_last_action > sysEventQueryPeriod)) {
             robot->requestSystemEvents();
             last_sys_event_query_time = ros::Time::now();
-            ctrlLoopDelay.sleep();        // Allow controller to process command
+            ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
             ROS_INFO("Motor controller RUNNING. MCB System events are 0x%x", robot->system_events);
 
             // If we detect a power-on of MCB we should re-initialize MCB
@@ -261,12 +267,22 @@ int main(int argc, char* argv[]) {
                 ROS_WARN("Motor controller has had a PowerOn event!");
                 robot->setSystemEvents(0);  // Clear entire system events register
                 robot->system_events = 0;
-                ctrlLoopDelay.sleep();        // Allow controller to process command
+                ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
             }
-
-            // Refresh the wheel type setting
-            robot->setWheelType(wheel_type);
-            ctrlLoopDelay.sleep();    // Allow controller to process command
+        } else {
+            // a periodic refresh of wheel type which is a safety net due to it's importance.
+            // This can be removed when a solid message protocol is developed
+            // We skip this if a system event query just happened to minimize extra delays
+            elapsed_since_last_action = current_time - last_wheel_refresh_time;
+            if ((robot->firmware_version >= MIN_FW_WHEEL_TYPE_THIN) &&
+               (elapsed_since_last_action > wheelRefreshPeriod)) {
+                last_wheel_refresh_time = ros::Time::now();
+                // Refresh the wheel type setting
+                ROS_INFO("Motor controller wheel type is '%s'",
+                    (wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
+                robot->setWheelType(wheel_type, false);
+                ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+            }
         }
 
         // Update motor controller speeds.
