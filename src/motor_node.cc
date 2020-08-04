@@ -266,23 +266,25 @@ int main(int argc, char* argv[]) {
             robot->requestSystemEvents();
             ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
             last_sys_maint_time = ros::Time::now();
-            ROS_INFO("Motor controller RUNNING. MCB System events are 0x%x", robot->system_events);
+
+            // Post a status message for MCB state periodically. This may be nice to do more on as required
+            ROS_INFO("Motor controller running. MCB System events 0x%x  Wheel type is '%s'", 
+                robot->system_events, (wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
 
             // If we detect a power-on of MCB we should re-initialize MCB
             if ((robot->system_events & MotorMessage::SYS_EVENT_POWERON) != 0) {
-                ROS_WARN("Motor controller has had a PowerOn event!");
+                ROS_WARN("Detected Motor controller PowerOn event!");
                 robot->setSystemEvents(0);  // Clear entire system events register
                 robot->system_events = 0;
                 ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+              
+                // TODO: Need to re-initialize MCB here. Refer to ubiquity_motor issue #98
             }
 
             // a periodic refresh of wheel type which is a safety net due to it's importance.
             // This can be removed when a solid message protocol is developed
-            // We skip this if a system event query just happened to minimize extra delays
             if (robot->firmware_version >= MIN_FW_WHEEL_TYPE_THIN) {
                 // Refresh the wheel type setting
-                ROS_INFO("Motor controller wheel type is '%s'",
-                    (wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
                 robot->setWheelType(wheel_type, false);
                 ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
             }
