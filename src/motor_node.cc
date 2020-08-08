@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
 
     // Until we have a holdoff for MCB message overruns we do this delay to be cautious
     // Twice the period for status reports from MCB
-    float mcbStatusPeriodSec = 0.02;   
+    ros::Duration mcbStatusPeriodSec(0.02);
 
     std::unique_ptr<MotorHardware> robot = nullptr;
     // Keep trying to open serial
@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
     robot->requestFirmwareVersion();
 
     // wait for reply then we know firmware version
-    ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+    mcbStatusPeriodSec.sleep();
 
     if (robot->firmware_version >= MIN_FW_FIRMWARE_DATE) {
         ROS_INFO("Request the firmware daycode");
@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
                 ROS_ERROR("The Firmware not reporting its version");
                 robot->requestFirmwareVersion();
             robot->readInputs();
-            ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+            mcbStatusPeriodSec.sleep();
             times++;
         }
     }
@@ -164,8 +164,8 @@ int main(int argc, char* argv[]) {
             wheel_type = MotorMessage::OPT_WHEEL_TYPE_STANDARD;
         }
         // Write out the wheel type setting
-        robot->setWheelType(wheel_type, true);
-        ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+        robot->setWheelType(wheel_type);
+        mcbStatusPeriodSec.sleep();
     }
 
     // Tell the controller board firmware what version the hardware is at this time.
@@ -176,7 +176,7 @@ int main(int argc, char* argv[]) {
         robot->setHardwareVersion(firmware_params.controller_board_version);
         ROS_DEBUG("Controller board version has been set to %d", 
             firmware_params.controller_board_version);
-        ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+        mcbStatusPeriodSec.sleep();
     }
 
     // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
@@ -185,42 +185,40 @@ int main(int argc, char* argv[]) {
         firmware_params.option_switch = robot->getOptionSwitch();
         ROS_INFO_ONCE("Setting firmware option register to 0x%x.", firmware_params.option_switch);
         robot->setOptionSwitchReg(firmware_params.option_switch);
-        ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+        mcbStatusPeriodSec.sleep();
     }
     
     if (robot->firmware_version >= MIN_FW_SYSTEM_EVENTS) {
         // Start out with zero for system events
         robot->setSystemEvents(0);  // Clear entire system events register
         robot->system_events = 0;
-        ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+        mcbStatusPeriodSec.sleep();
     }
 
     // Setup other firmware parameters that could come from ROS parameters
     if (robot->firmware_version >= MIN_FW_ESTOP_SUPPORT) {
         robot->setEstopPidThreshold(firmware_params.estop_pid_threshold);
-        ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+        mcbStatusPeriodSec.sleep();
         robot->setEstopDetection(firmware_params.estop_detection);
-        ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+        mcbStatusPeriodSec.sleep();
     }
 
     if (robot->firmware_version >= MIN_FW_MAX_SPEED_AND_PWM) {
         robot->setMaxFwdSpeed(firmware_params.max_speed_fwd);
-        ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+        mcbStatusPeriodSec.sleep();
         robot->setMaxRevSpeed(firmware_params.max_speed_rev);
-        ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+        mcbStatusPeriodSec.sleep();
     }
 
     ros::Time last_time;
     ros::Time current_time;
     ros::Duration elapsed;
-    ros::Time last_sys_maint_time;
-    ros::Duration elapsed_since_last_action;
     ros::Duration sysMaintPeriod(60.0);     // A periodic MCB maintenance operation
 
     // Send out the refreshable firmware parameters, most are the PID terms
     // We must be sure num_fw_params is set to the modulo used in sendParams()
     for (int i = 0; i < robot->num_fw_params; i++) {
-        ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+        mcbStatusPeriodSec.sleep();
         robot->sendParams();
     }
 
@@ -233,7 +231,8 @@ int main(int argc, char* argv[]) {
     robot->clearCommands();
 
     last_time = ros::Time::now();
-    last_sys_maint_time = last_time;
+    ros::Time last_sys_maint_time = last_time;
+    ros::Duration elapsed_since_last_action;
 
     ROS_WARN("Starting motor control node now");
 
@@ -264,7 +263,7 @@ int main(int argc, char* argv[]) {
         if ((robot->firmware_version >= MIN_FW_SYSTEM_EVENTS) &&
            (elapsed_since_last_action > sysMaintPeriod)) {
             robot->requestSystemEvents();
-            ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+            mcbStatusPeriodSec.sleep();
             last_sys_maint_time = ros::Time::now();
 
             // Post a status message for MCB state periodically. This may be nice to do more on as required
@@ -276,7 +275,7 @@ int main(int argc, char* argv[]) {
                 ROS_WARN("Detected Motor controller PowerOn event!");
                 robot->setSystemEvents(0);  // Clear entire system events register
                 robot->system_events = 0;
-                ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+                mcbStatusPeriodSec.sleep();
               
                 // TODO: Need to re-initialize MCB here. Refer to ubiquity_motor issue #98
             }
@@ -285,8 +284,8 @@ int main(int argc, char* argv[]) {
             // This can be removed when a solid message protocol is developed
             if (robot->firmware_version >= MIN_FW_WHEEL_TYPE_THIN) {
                 // Refresh the wheel type setting
-                robot->setWheelType(wheel_type, false);
-                ros::Duration(mcbStatusPeriodSec).sleep();  // allow 2 status replies
+                robot->setWheelType(wheel_type);
+                mcbStatusPeriodSec.sleep();
             }
         }
 

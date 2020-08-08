@@ -449,10 +449,8 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
 
 // Setup the Wheel Type. Overrides mode in use on hardware  
 // This used to only be standard but THIN_WHEELS were added in Jun 2020
-void MotorHardware::setWheelType(int32_t wheel_type, bool showLog) {
-    if (showLog == true) {
-        ROS_INFO("setting MCB wheel type %d", (int)wheel_type);
-    }
+void MotorHardware::setWheelType(int32_t wheel_type) {
+    ROS_INFO_ONCE("setting MCB wheel type %d", (int)wheel_type);
     MotorMessage ho;
     ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
     ho.setType(MotorMessage::TYPE_WRITE);
