@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
         }
         // Write out the wheel direction setting
         robot->setWheelDirection(wheel_direction);
-        ctrlLoopDelay.sleep();    // Allow controller to process command
+        mcbStatusPeriodSec.sleep();
     }
 
     // Tell the controller board firmware what version the hardware is at this time.
