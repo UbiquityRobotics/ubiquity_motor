@@ -500,7 +500,10 @@ class serCommander():
                     ser.write(queryBytes)
                     hexRegValue = '{:02x}'.format(reg)
                     registerValue = fetchReplyLongWord(ser, '3c', hexRegValue)
-                    print("Reg ", hexRegValue, " value = ", registerValue, " hex : or dec ", int(registerValue,16))
+                    integerValue = int(registerValue,16)
+                    if integerValue > 2147483647:
+                        integerValue = (4294967296 - integerValue) * -1
+                    print("Reg ", hexRegValue, " value = ", registerValue, " hex : or dec ", integerValue)
 
                 time.sleep(0.02)
 
@@ -603,7 +606,10 @@ class serCommander():
                 ser.flushInput()
                 ser.write(queryBytes)
                 registerValue = fetchReplyLongWord(ser, '3c', cmdRegAsHex)
-                print("Register was set to  ", int(registerValue,16), " decimal", registerValue, " hex")
+                integerValue = int(registerValue,16)
+                if integerValue > 2147483647:
+                    integerValue = (4294967296 - integerValue) * -1
+                print("Reg ", cmdRegAsHex, " value = ", registerValue, " hex : or dec ", integerValue)
                 time.sleep(0.02)
 
             if input == 'S':          # Set any register to any value
