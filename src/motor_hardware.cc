@@ -145,6 +145,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     diag_updater.add("PidParamI", &motor_diag_, &MotorDiagnostics::motor_pid_i_status);
     diag_updater.add("PidParamD", &motor_diag_, &MotorDiagnostics::motor_pid_d_status);
     diag_updater.add("PidParamV", &motor_diag_, &MotorDiagnostics::motor_pid_v_status);
+    diag_updater.add("PidMaxPWM", &motor_diag_, &MotorDiagnostics::motor_max_pwm_status);
     diag_updater.add("FirmwareOptions", &motor_diag_, &MotorDiagnostics::firmware_options_status);
     diag_updater.add("FirmwareDate", &motor_diag_, &MotorDiagnostics::firmware_date_status);
 }
@@ -820,7 +821,7 @@ void MotorDiagnostics::motor_pid_v_status(DiagnosticStatusWrapper &stat) {
     stat.summary(DiagnosticStatus::OK, "PID Parameter V");
 }
 void MotorDiagnostics::motor_max_pwm_status(DiagnosticStatusWrapper &stat) {
-    stat.add("PidParam maxpwm", fw_max_pwm);
+    stat.add("PidParam MaxPWM", fw_max_pwm);
     stat.summary(DiagnosticStatus::OK, "PID Max PWM");
 }
 
