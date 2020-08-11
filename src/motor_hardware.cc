@@ -837,7 +837,7 @@ void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
 }
 
 
-// motor_encoder_mode returns 0 for legacy encoders and 1 for 6-state firmware
+// Show firmware options and give readable decoding of the meaning of the bits
 void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
     stat.add("Firmware Options", firmware_options);
     std::string option_descriptions("");
@@ -853,7 +853,7 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
     }
     if (firmware_options & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
         // Only indicate wheel reversal if that has been set as it is non-standard
-        option_descriptions +=  ", Reverse wheels";
+        option_descriptions +=  ", Reverse polarity wheels";
     }
     stat.summary(DiagnosticStatusWrapper::OK, option_descriptions);
 }
