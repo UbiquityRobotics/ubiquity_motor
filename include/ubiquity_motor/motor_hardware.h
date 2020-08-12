@@ -58,6 +58,15 @@ struct MotorDiagnostics {
     int firmware_version = 0;
     int firmware_date    = 0;
     int firmware_options = 0;
+
+    // These are for diagnostic topic output 
+    int fw_pid_proportional = 0;
+    int fw_pid_integral = 0;
+    int fw_pid_derivative = 0;
+    int fw_pid_velocity = 0;
+    int fw_pid_denominator = 0;
+    int fw_pid_moving_buffer_size = 0;
+    int fw_max_pwm = 0;
    
     double odom_max_freq = 1000;
     double odom_min_freq = 50;
@@ -94,6 +103,11 @@ struct MotorDiagnostics {
     void limit_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void battery_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void motor_power_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_pid_p_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_pid_i_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_pid_d_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_pid_v_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_max_pwm_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void firmware_options_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void firmware_date_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
 };
@@ -122,6 +136,7 @@ public:
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
     void setWheelType(int32_t wheel_type);
+    void setWheelDirection(int32_t wheel_direction);
     int  getOptionSwitch(void);
     void setOptionSwitchReg(int32_t option_switch);
     void requestSystemEvents();
