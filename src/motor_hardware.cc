@@ -158,6 +158,21 @@ void MotorHardware::clearCommands() {
     }
 }
 
+// Read the current wheel positions in radians both at once for a snapshot of position
+void MotorHardware::getWheelJointPositions(double &leftWheelPosition, double &rightWheelPosition) {
+    leftWheelPosition  = joints_[LEFT_WHEEL_JOINT].position;
+    rightWheelPosition = joints_[RIGHT_WHEEL_JOINT].position;
+    return;
+}
+
+// Set the current wheel joing velocities in radians/sec both at once for a snapshot of velocity
+// This interface is supplied because MotorHardware does not do a loop on it's own
+void MotorHardware::setWheelJointVelocities(double leftWheelVelocity, double rightWheelVelocity) {
+    joints_[LEFT_WHEEL_JOINT].velocity  = leftWheelVelocity;
+    joints_[RIGHT_WHEEL_JOINT].velocity = rightWheelVelocity;
+    return;
+}
+
 // readInputs() will receive serial and act on the response from motor controller
 //
 // The motor controller sends unsolicited messages periodically so we must read the
@@ -196,8 +211,13 @@ void MotorHardware::readInputs() {
                     break;
 
                 case MotorMessage::REG_BOTH_ODOM: {
-                    // These counts are the incremental number of ticks since last report
-                    // WARNING: IF WE LOOSE A MESSAGE WE DRIFT FROM REAL POSITION
+                    /* 
+                     * ODOM messages from the MCB tell us how far wheels have rotated
+                     *
+                     * It is here we keep track of wheel joint position 
+                     * The odom counts from the MCB are the incremental number of ticks since last report
+                     *  WARNING: IF WE LOOSE A MESSAGE WE DRIFT FROM REAL POSITION
+                     */
                     int32_t odom = mm.getData();
                     // ROS_ERROR("odom signed %d", odom);
                     int16_t odomLeft = (odom >> 16) & 0xffff;
@@ -209,9 +229,9 @@ void MotorHardware::readInputs() {
                     g_odomEvent += 1;
                     //if ((g_odomEvent % 50) == 1) { ROS_ERROR("leftOdom %d rightOdom %d", g_odomLeft, g_odomRight); }
 
-                    // Add or subtract from position using the incremental odom value
-                    joints_[0].position += (odomLeft / ticks_per_radian);
-                    joints_[1].position += (odomRight / ticks_per_radian);
+                    // Add or subtract from position in radians using the incremental odom value
+                    joints_[LEFT_WHEEL_JOINT].position  += (odomLeft / ticks_per_radian);
+                    joints_[RIGHT_WHEEL_JOINT].position += (odomRight / ticks_per_radian);
 
 		    motor_diag_.odom_update_status.tick(); // Let diag know we got odom
                     break;
@@ -369,7 +389,7 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
     motor_serial_->transmitCommand(both);
 
     // ROS_ERROR("velocity_command %f rad/s %f rad/s",
-    // joints_[0].velocity_command, joints_[1].velocity_command);
+    // joints_[LEFT_WHEEL_JOINT].velocity_command, joints_[RIGHT_WHEEL_JOINT].velocity_command);
     // ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
 }
 
@@ -380,8 +400,8 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
 void MotorHardware::writeSpeeds() {
     // This call pulls in speeds from the joints array maintained by other layers
 
-    double  left_radians = joints_[0].velocity_command;
-    double  right_radians = joints_[1].velocity_command;
+    double  left_radians  = joints_[LEFT_WHEEL_JOINT].velocity_command;
+    double  right_radians = joints_[RIGHT_WHEEL_JOINT].velocity_command;
 
     writeSpeedsInRadians(left_radians, right_radians);
 }
