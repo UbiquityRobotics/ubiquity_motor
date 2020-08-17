@@ -112,12 +112,8 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
     fw_params = firmware_params;
 
-    prev_fw_params.pid_proportional = -1;
-    prev_fw_params.pid_integral = -1;
-    prev_fw_params.pid_derivative = -1;
-    prev_fw_params.pid_velocity = -1;
-    prev_fw_params.pid_denominator = -1;
-    prev_fw_params.pid_moving_buffer_size = -1;
+    forcePidParamUpdates();   // Init members of prev_fw_params for PID control so they get sent by sendParams()
+
     prev_fw_params.max_speed_fwd = -1;
     prev_fw_params.max_speed_rev = -1;
     prev_fw_params.deadman_timer = -1;
@@ -130,7 +126,6 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.estop_pid_threshold = -1;
     prev_fw_params.max_speed_fwd = -1;
     prev_fw_params.max_speed_rev = -1;
-    prev_fw_params.max_pwm = -1;
 
     hardware_version = 0;
     firmware_version = 0;
@@ -462,23 +457,25 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
 
 // Setup the Wheel Type. Overrides mode in use on hardware  
 // This used to only be standard but THIN_WHEELS were added in Jun 2020
-void MotorHardware::setWheelType(int32_t wheel_type) {
-    ROS_INFO_ONCE("setting MCB wheel type %d", (int)wheel_type);
+void MotorHardware::setWheelType(int32_t wheel_type_setting) {
+    ROS_INFO_ONCE("setting MCB wheel type %d", (int)wheel_type_setting);
+    wheel_type = wheel_type_setting;
     MotorMessage ho;
     ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
     ho.setType(MotorMessage::TYPE_WRITE);
-    ho.setData(wheel_type);
+    ho.setData(wheel_type_setting);
     motor_serial_->transmitCommand(ho);
 }
 
 // Setup the Wheel direction. Overrides mode in use on hardware  
 // This allows for customer to install wheels on cutom robots as they like
-void MotorHardware::setWheelDirection(int32_t wheel_direction) {
-    ROS_INFO("setting MCB wheel direction to %d", (int)wheel_direction);
+void MotorHardware::setWheelDirection(int32_t wheel_direction_setting) {
+    ROS_INFO("setting MCB wheel direction to %d", (int)wheel_direction_setting);
+    wheel_direction = wheel_direction_setting;
     MotorMessage ho;
     ho.setRegister(MotorMessage::REG_WHEEL_DIR);
     ho.setType(MotorMessage::TYPE_WRITE);
-    ho.setData(wheel_direction);
+    ho.setData(wheel_direction_setting);
     motor_serial_->transmitCommand(ho);
 }
 
@@ -574,6 +571,24 @@ void MotorHardware::setParams(FirmwareParams fp) {
     fw_params.estop_pid_threshold = fp.estop_pid_threshold;
 }
 
+// Forces next calls to sendParams() to always update each parameter.
+// KEEP THIS IN SYNC WITH CHANGES TO sendParams()
+void MotorHardware::forcePidParamUpdates() {
+
+    // Reset each of the flags that causes parameters to be  sent to MCB by sendParams()
+    prev_fw_params.pid_proportional = -1;
+    prev_fw_params.pid_integral = -1;
+    prev_fw_params.pid_derivative = -1;
+    prev_fw_params.pid_velocity = -1;
+    prev_fw_params.pid_denominator = -1;
+    prev_fw_params.pid_moving_buffer_size = -1;
+    prev_fw_params.max_pwm = -1;
+
+}
+
+// sendParams() sends updated parameters to the MCB, mostly for PID coefficients.
+// WARNING: This call has history and sends only one parameter each call!
+// KEEP THIS IN SYNC WITH CHANGES TO forcePidParamUpdates()
 void MotorHardware::sendParams() {
     std::vector<MotorMessage> commands;
 
@@ -587,7 +602,7 @@ void MotorHardware::sendParams() {
 
     if (cycle == 0 &&
         fw_params.pid_proportional != prev_fw_params.pid_proportional) {
-        ROS_WARN("Setting PidParam P to %d", fw_params.pid_proportional);
+        ROS_INFO("Setting PidParam P to %d", fw_params.pid_proportional);
         prev_fw_params.pid_proportional = fw_params.pid_proportional;
         motor_diag_.fw_pid_proportional = fw_params.pid_proportional;
         MotorMessage p;
@@ -598,7 +613,7 @@ void MotorHardware::sendParams() {
     }
 
     if (cycle == 1 && fw_params.pid_integral != prev_fw_params.pid_integral) {
-        ROS_WARN("Setting PidParam I to %d", fw_params.pid_integral);
+        ROS_INFO("Setting PidParam I to %d", fw_params.pid_integral);
         prev_fw_params.pid_integral = fw_params.pid_integral;
         motor_diag_.fw_pid_integral = fw_params.pid_integral;
         MotorMessage i;
@@ -610,7 +625,7 @@ void MotorHardware::sendParams() {
 
     if (cycle == 2 &&
         fw_params.pid_derivative != prev_fw_params.pid_derivative) {
-        ROS_WARN("Setting PidParam D to %d", fw_params.pid_derivative);
+        ROS_INFO("Setting PidParam D to %d", fw_params.pid_derivative);
         prev_fw_params.pid_derivative = fw_params.pid_derivative;
         motor_diag_.fw_pid_derivative = fw_params.pid_derivative;
         MotorMessage d;
@@ -622,7 +637,7 @@ void MotorHardware::sendParams() {
 
     if (cycle == 3 && (motor_diag_.firmware_version >= MIN_FW_PID_V_TERM) &&
         fw_params.pid_velocity != prev_fw_params.pid_velocity) {
-        ROS_WARN("Setting PidParam V to %d", fw_params.pid_velocity);
+        ROS_INFO("Setting PidParam V to %d", fw_params.pid_velocity);
         prev_fw_params.pid_velocity = fw_params.pid_velocity;
         motor_diag_.fw_pid_velocity = fw_params.pid_velocity;
         MotorMessage v;
@@ -634,7 +649,7 @@ void MotorHardware::sendParams() {
 
     if (cycle == 4 &&
         fw_params.pid_denominator != prev_fw_params.pid_denominator) {
-        ROS_WARN("Setting PidParam Denominator to %d", fw_params.pid_denominator);
+        ROS_INFO("Setting PidParam Denominator to %d", fw_params.pid_denominator);
         prev_fw_params.pid_denominator = fw_params.pid_denominator;
         motor_diag_.fw_pid_denominator = fw_params.pid_denominator;
         MotorMessage denominator;
@@ -647,7 +662,7 @@ void MotorHardware::sendParams() {
     if (cycle == 5 &&
         fw_params.pid_moving_buffer_size !=
             prev_fw_params.pid_moving_buffer_size) {
-        ROS_WARN("Setting PidParam D window to %d", fw_params.pid_moving_buffer_size);
+        ROS_INFO("Setting PidParam D window to %d", fw_params.pid_moving_buffer_size);
         prev_fw_params.pid_moving_buffer_size =
             fw_params.pid_moving_buffer_size;
         motor_diag_.fw_pid_moving_buffer_size = fw_params.pid_moving_buffer_size;
@@ -660,7 +675,7 @@ void MotorHardware::sendParams() {
 
     if (cycle == 6 &&
         fw_params.max_pwm != prev_fw_params.max_pwm) {
-        ROS_WARN("Setting PidParam max_pwm to %d", fw_params.max_pwm);
+        ROS_INFO("Setting PidParam max_pwm to %d", fw_params.max_pwm);
         prev_fw_params.max_pwm = fw_params.max_pwm;
         motor_diag_.fw_max_pwm = fw_params.max_pwm;
         MotorMessage maxpwm;
@@ -675,6 +690,11 @@ void MotorHardware::sendParams() {
     if (commands.size() != 0) {
         motor_serial_->transmitCommands(commands);
     }
+}
+
+// Get current battery voltage
+float MotorHardware::getBatteryVoltage(void) {
+    return motor_diag_.battery_voltage;   // We keep battery_voltage in diagnostic context
 }
 
 void MotorHardware::setDebugLeds(bool led_1, bool led_2) {

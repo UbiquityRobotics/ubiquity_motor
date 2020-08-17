@@ -125,6 +125,8 @@ public:
     void requestFirmwareDate();
     void setParams(FirmwareParams firmware_params);
     void sendParams();
+    void forcePidParamUpdates();
+    float getBatteryVoltage();
     void setDeadmanTimer(int32_t deadman);
     void setDeadzoneEnable(int32_t deadzone_enable);
     void setDebugLeds(bool led1, bool led2);
@@ -135,8 +137,8 @@ public:
     void setMaxFwdSpeed(int32_t max_speed_fwd);
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
-    void setWheelType(int32_t wheel_type);
-    void setWheelDirection(int32_t wheel_direction);
+    void setWheelType(int32_t wheel_type_setting);
+    void setWheelDirection(int32_t wheel_direction_setting);
     int  getOptionSwitch(void);
     void setOptionSwitchReg(int32_t option_switch);
     void requestSystemEvents();
@@ -144,7 +146,7 @@ public:
     int firmware_version;
     int firmware_date;
     int firmware_options;
-    int num_fw_params;  // This is used for sendParams as modulo count
+    int num_fw_params;             // This is used for sendParams as modulo count
     int hardware_version;
     int estop_pid_threshold;
     int max_speed_fwd;
@@ -152,7 +154,8 @@ public:
     int max_pwm;
     int deadman_enable;
     int system_events;
-
+    int wheel_type;
+    int wheel_direction;
 
     diagnostic_updater::Updater diag_updater;
 private:
@@ -170,9 +173,9 @@ private:
 
     int32_t deadman_timer;
 
-    double  ticks_per_radian;       // Odom ticks per radian for wheel encoders in use
+    double  ticks_per_radian;      // Odom ticks per radian for wheel encoders in use
 
-    int32_t sendPid_count;
+    int32_t sendPid_count;         // Used in sendParams() to cycle through MCB parameter updates (Tricky!)
 
     bool estop_motor_power_off;    // Motor power inactive, most likely from ESTOP switch
 
