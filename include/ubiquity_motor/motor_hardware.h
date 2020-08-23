@@ -188,9 +188,9 @@ private:
     } joints_[2];
 
     // MessageTypes enum in class to avoid global namespace pollution
-    enum WheelJointNumbers {
-        LEFT_WHEEL_JOINT  = 0,
-        RIGHT_WHEEL_JOINT = 1
+    enum WheelJointLocation {
+        Left  = 0,
+        Right = 1
     };
 
     ros::Publisher leftError;

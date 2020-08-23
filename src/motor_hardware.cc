@@ -160,16 +160,16 @@ void MotorHardware::clearCommands() {
 
 // Read the current wheel positions in radians both at once for a snapshot of position
 void MotorHardware::getWheelJointPositions(double &leftWheelPosition, double &rightWheelPosition) {
-    leftWheelPosition  = joints_[LEFT_WHEEL_JOINT].position;
-    rightWheelPosition = joints_[RIGHT_WHEEL_JOINT].position;
+    leftWheelPosition  = joints_[WheelJointLocation::Left].position;
+    rightWheelPosition = joints_[WheelJointLocation::Right].position;
     return;
 }
 
 // Set the current wheel joing velocities in radians/sec both at once for a snapshot of velocity
 // This interface is supplied because MotorHardware does not do a loop on it's own
 void MotorHardware::setWheelJointVelocities(double leftWheelVelocity, double rightWheelVelocity) {
-    joints_[LEFT_WHEEL_JOINT].velocity  = leftWheelVelocity;
-    joints_[RIGHT_WHEEL_JOINT].velocity = rightWheelVelocity;
+    joints_[WheelJointLocation::Left].velocity  = leftWheelVelocity;
+    joints_[WheelJointLocation::Right].velocity = rightWheelVelocity;
     return;
 }
 
@@ -230,8 +230,8 @@ void MotorHardware::readInputs() {
                     //if ((g_odomEvent % 50) == 1) { ROS_ERROR("leftOdom %d rightOdom %d", g_odomLeft, g_odomRight); }
 
                     // Add or subtract from position in radians using the incremental odom value
-                    joints_[LEFT_WHEEL_JOINT].position  += (odomLeft / ticks_per_radian);
-                    joints_[RIGHT_WHEEL_JOINT].position += (odomRight / ticks_per_radian);
+                    joints_[WheelJointLocation::Left].position  += (odomLeft / ticks_per_radian);
+                    joints_[WheelJointLocation::Right].position += (odomRight / ticks_per_radian);
 
 		    motor_diag_.odom_update_status.tick(); // Let diag know we got odom
                     break;
@@ -389,7 +389,7 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
     motor_serial_->transmitCommand(both);
 
     // ROS_ERROR("velocity_command %f rad/s %f rad/s",
-    // joints_[LEFT_WHEEL_JOINT].velocity_command, joints_[RIGHT_WHEEL_JOINT].velocity_command);
+    // joints_[WheelJointLocation::Left].velocity_command, joints_[WheelJointLocation::Right].velocity_command);
     // ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
 }
 
@@ -400,8 +400,8 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
 void MotorHardware::writeSpeeds() {
     // This call pulls in speeds from the joints array maintained by other layers
 
-    double  left_radians  = joints_[LEFT_WHEEL_JOINT].velocity_command;
-    double  right_radians = joints_[RIGHT_WHEEL_JOINT].velocity_command;
+    double  left_radians  = joints_[WheelJointLocation::Left].velocity_command;
+    double  right_radians = joints_[WheelJointLocation::Right].velocity_command;
 
     writeSpeedsInRadians(left_radians, right_radians);
 }
