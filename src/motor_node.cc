@@ -242,8 +242,8 @@ int main(int argc, char* argv[]) {
     }
 
     float expectedCycleTime = ctrlLoopDelay.expectedCycleTime().toSec();
-    float minCycleTime = 0.75 * expectedCycleTime;
-    float maxCycleTime = 1.25 * expectedCycleTime;
+    ros::Duration minCycleTime = ros::Duration(0.75 * expectedCycleTime);
+    ros::Duration maxCycleTime = ros::Duration(1.25 * expectedCycleTime);
 
     // Clear any commands the robot has at this time
     robot->clearCommands();
@@ -263,7 +263,7 @@ int main(int argc, char* argv[]) {
     // Setup to be able to do periodic operations based on elapsed times
     ros::Time current_time;
     ros::Duration sysMaintPeriod(60.0);     // A periodic MCB maintenance operation
-    ros::Duration jointUpdatePeriod(0.5);   // A periodic time to update joint velocity
+    ros::Duration jointUpdatePeriod(0.25);  // A periodic time to update joint velocity
 
     ros::Time last_loop_time = ros::Time::now();
     ros::Duration elapsed_loop_time;
@@ -291,8 +291,7 @@ int main(int argc, char* argv[]) {
         }
 
         robot->readInputs();
-        if ((minCycleTime < elapsed_loop_time.toSec()) && 
-            (elapsed_loop_time.toSec() < maxCycleTime)) {
+        if ((minCycleTime < elapsed_loop_time) && (elapsed_loop_time < maxCycleTime)) {
             cm.update(current_time, elapsed_loop_time);
         }
         else {
