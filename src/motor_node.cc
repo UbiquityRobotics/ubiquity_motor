@@ -257,7 +257,7 @@ int main(int argc, char* argv[]) {
     robot->system_events = 0;
     mcbStatusPeriodSec.sleep();
 
-    ros::Time last_time;
+    ros::Time last_loop_time;
     ros::Time current_time;
     ros::Duration elapsed;
     ros::Duration sysMaintPeriod(60.0);     // A periodic MCB maintenance operation
@@ -276,9 +276,18 @@ int main(int argc, char* argv[]) {
     // Clear any commands the robot has at this time
     robot->clearCommands();
 
-    last_time = ros::Time::now();
-    ros::Time last_sys_maint_time = last_time;
+    last_loop_time = ros::Time::now();
+    ros::Time last_sys_maint_time = last_loop_time;
     ros::Duration elapsed_since_last_action;
+
+    double leftWheelVelocity  = 0.0;
+    double leftWheelPosition  = 0.0;
+    double leftLastWheelPos   = 0.0;
+    double rightWheelVelocity = 0.0;
+    double rightWheelPosition = 0.0;
+    double rightLastWheelPos  = 0.0;
+    robot-> getWheelJointPositions(leftLastWheelPos, rightWheelPosition);
+    ctrlLoopDelay.sleep(); // We do this delay so velocity calc uses non-zero time
 
     ROS_WARN("Starting motor control node now");
 
@@ -287,10 +296,19 @@ int main(int argc, char* argv[]) {
     double estopReleaseDelay    = 0.0;
     while (ros::ok()) {
         current_time = ros::Time::now();
-        elapsed = current_time - last_time;
-        last_time = current_time;
-        robot->readInputs();
+        elapsed = current_time - last_loop_time;
+        last_loop_time = current_time;
         float elapsedSecs = elapsed.toSec();
+
+        // Determine and set measured wheel velocities in rad/sec from hardware positions in radians
+        robot-> getWheelJointPositions(leftWheelPosition, rightWheelPosition);
+        leftWheelVelocity  = (leftWheelPosition  - leftLastWheelPos)  / elapsedSecs;
+        rightWheelVelocity = (rightWheelPosition - rightLastWheelPos) / elapsedSecs;
+        robot-> setWheelJointVelocities(leftWheelVelocity, rightWheelVelocity);  // units are rad/sec
+        leftLastWheelPos  = leftWheelPosition;
+        rightLastWheelPos = rightWheelPosition;
+
+        robot->readInputs();
         if (minCycleTime < elapsedSecs && elapsedSecs < maxCycleTime) {
             cm.update(current_time, elapsed);
         }
