@@ -35,8 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // To access I2C we need some system includes
 #include <linux/i2c-dev.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
+#include <linux/i2c.h>
 #define  I2C_DEVICE  "/dev/i2c-1"     // This is specific to default Magni I2C port on host
 const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits but often shown as 8-bit
 
@@ -489,7 +488,7 @@ int MotorHardware::getOptionSwitch(void) {
     uint8_t buf[16];
     int retBits = 0;
     ROS_INFO("reading MCB option switch on the I2C bus");
-    int retCount = i2c_BufferRead(I2C_DEVICE, I2C_PCF8574_8BIT_ADDR, &buf[0], -1, 1);
+    int retCount = i2c_BufferRead(I2C_DEVICE, I2C_PCF8574_8BIT_ADDR, &buf[0], -1);
     if (retCount < 0) {
         ROS_ERROR("Error %d in reading MCB option switch at 8bit Addr 0x%x", 
             retCount, I2C_PCF8574_8BIT_ADDR);
@@ -868,48 +867,46 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
 // NOTE: The i2c8bitAddr will be shifted right one bit to use as 7-bit I2C addr
 //
 static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr, 
-                          uint8_t *pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead)
+                          uint8_t *pBuffer, int16_t chipRegAddr)
 {
-   int bytesRead = 0;
-   int retCode   = 0;
-
-    int fd;                                         // File descrition
-    int  address   = i2c8bitAddr >> 1;              // Address of the I2C device
-    uint8_t buf[8];                                 // Buffer for data being written to the i2c device
+    int fd;                                         // File descriptor
+    int retCode = 0;
 
     if ((fd = open(i2cDevFile, O_RDWR)) < 0) {      // Open port for reading and writing
-      retCode = -2;
+      retCode = -1;
       ROS_ERROR("Cannot open I2C def of %s with error %s", i2cDevFile, strerror(errno));
       goto exitWithNoClose;
     }
 
-    // The ioctl here will address the I2C slave device making it ready for 1 or more other bytes
-    if (ioctl(fd, I2C_SLAVE, address) != 0) {        // Set the port options and addr of the dev
-      retCode = -3;
+    uint8_t buf[8];                    		  // Buffer for data being written to the i2c device
+    int address = i2c8bitAddr >> 1;              // Address of the I2C device
+    struct i2c_msg msgs[2];
+    struct i2c_rdwr_ioctl_data msgset[1];
+
+    msgs[0].addr = address; // slave adress
+    msgs[0].flags = 0; // write bit
+    msgs[0].len = 1; // number of data bytes written to I2C slave address 
+    msgs[0].buf = buf;
+    msgs[1].addr = address;
+    msgs[1].flags = I2C_M_RD | I2C_M_NOSTART;
+    msgs[1].len = 1;
+    msgs[1].buf = pBuffer;
+
+    msgset[0].msgs = msgs;
+    msgset[0].nmsgs = 2; // number of messages (write and read)
+
+    if (chipRegAddr < 0) { // Suppress reg adress if negative value was used 
+    	buf[0] = (uint8_t)(chipRegAddr);
+    }
+
+    if (ioctl(fd, I2C_RDWR, &msgset) < 0) { 
+      retCode = -2;
       ROS_ERROR("Failed to get bus access to I2C device %s!  ERROR: %s", i2cDevFile, strerror(errno));
-      goto exitWithFileClose;
     }
-
-    if (chipRegAddr < 0) {     // Suppress reg address if negative value was used
-      buf[0] = (uint8_t)(chipRegAddr);          // Internal chip register address
-      if ((write(fd, buf, 1)) != 1) {           // Write both bytes to the i2c port
-        retCode = -4;
-        goto exitWithFileClose;
-      }
-    }
-
-    bytesRead = read(fd, pBuffer, NumByteToRead);
-    if (bytesRead != NumByteToRead) {      // verify the number of bytes we requested were read
-      retCode = -9;
-      goto exitWithFileClose;
-    }
-    retCode = bytesRead;
-
-  exitWithFileClose:
+    retCode = *pBuffer;
     close(fd);
 
   exitWithNoClose:
 
   return retCode;
 }
-
