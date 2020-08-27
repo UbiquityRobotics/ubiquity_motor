@@ -58,6 +58,15 @@ struct MotorDiagnostics {
     int firmware_version = 0;
     int firmware_date    = 0;
     int firmware_options = 0;
+
+    // These are for diagnostic topic output 
+    int fw_pid_proportional = 0;
+    int fw_pid_integral = 0;
+    int fw_pid_derivative = 0;
+    int fw_pid_velocity = 0;
+    int fw_pid_denominator = 0;
+    int fw_pid_moving_buffer_size = 0;
+    int fw_max_pwm = 0;
    
     double odom_max_freq = 1000;
     double odom_min_freq = 50;
@@ -77,6 +86,10 @@ struct MotorDiagnostics {
     float battery_voltage_low_level = 22.5;
     float battery_voltage_critical = 21.0;
 
+    // Wheel current states
+    double motorCurrentLeft  = 0.0;
+    double motorCurrentRight = 0.0;
+
     /* For later implementation (firmware support)
     bool  main_5V_error = false;
     bool  main_5V_ol = false;
@@ -94,6 +107,11 @@ struct MotorDiagnostics {
     void limit_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void battery_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void motor_power_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_pid_p_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_pid_i_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_pid_d_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_pid_v_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
+    void motor_max_pwm_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void firmware_options_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
     void firmware_date_status(diagnostic_updater::DiagnosticStatusWrapper &stat);
 };
@@ -123,6 +141,7 @@ public:
     void setMaxPwm(int32_t max_pwm);
     void setWheelType(int32_t wheel_type);
     void setWheelDirection(int32_t wheel_direction);
+    void getMotorCurrents(double &currentLeft, double &currentRight);
     int  getOptionSwitch(void);
     void setOptionSwitchReg(int32_t option_switch);
     void requestSystemEvents();
@@ -138,7 +157,6 @@ public:
     int max_pwm;
     int deadman_enable;
     int system_events;
-
 
     diagnostic_updater::Updater diag_updater;
 private:
@@ -173,6 +191,9 @@ private:
 
     ros::Publisher leftError;
     ros::Publisher rightError;
+
+    ros::Publisher leftCurrent;
+    ros::Publisher rightCurrent;
 
     ros::Publisher battery_state;
     ros::Publisher motor_power_active;

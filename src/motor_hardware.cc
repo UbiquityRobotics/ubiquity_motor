@@ -87,7 +87,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     // Insert a delay prior to serial port setup to avoid a race defect.
     // We see soemtimes the OS sets the port to 115200 baud just after we set it
     ROS_INFO("Delay before MCB serial port initialization");
-    ros::Duration(0.5).sleep();
+    ros::Duration(3.0).sleep();
     ROS_INFO("Initialize MCB serial port '%s' for %d baud",
         serial_params.serial_port.c_str(), serial_params.baud_rate);
 
@@ -98,6 +98,9 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
+
+    leftCurrent = nh.advertise<std_msgs::Int32>("left_current", 1);
+    rightCurrent = nh.advertise<std_msgs::Int32>("right_current", 1);
 
     battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
     motor_power_active = nh.advertise<std_msgs::Bool>("motor_power_active", 1);
@@ -141,6 +144,11 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     diag_updater.add("Limits", &motor_diag_, &MotorDiagnostics::limit_status);
     diag_updater.add("Battery", &motor_diag_, &MotorDiagnostics::battery_status);
     diag_updater.add("MotorPower", &motor_diag_, &MotorDiagnostics::motor_power_status);
+    diag_updater.add("PidParamP", &motor_diag_, &MotorDiagnostics::motor_pid_p_status);
+    diag_updater.add("PidParamI", &motor_diag_, &MotorDiagnostics::motor_pid_i_status);
+    diag_updater.add("PidParamD", &motor_diag_, &MotorDiagnostics::motor_pid_d_status);
+    diag_updater.add("PidParamV", &motor_diag_, &MotorDiagnostics::motor_pid_v_status);
+    diag_updater.add("PidMaxPWM", &motor_diag_, &MotorDiagnostics::motor_max_pwm_status);
     diag_updater.add("FirmwareOptions", &motor_diag_, &MotorDiagnostics::firmware_options_status);
     diag_updater.add("FirmwareDate", &motor_diag_, &MotorDiagnostics::firmware_date_status);
 }
@@ -224,7 +232,22 @@ void MotorHardware::readInputs() {
                     rightError.publish(right);
                     break;
                 }
-
+                case MotorMessage::REG_LEFT_CURRENT: {
+                    std_msgs::Int32 currentMsg;
+                    int32_t data = mm.getData();
+                    motor_diag_.motorCurrentLeft = (double)(data - 1024) / 100.0;
+                    currentMsg.data = data - 1024;
+                    leftCurrent.publish(currentMsg);
+                    break;
+                }
+                case MotorMessage::REG_RIGHT_CURRENT: {
+                    std_msgs::Int32 currentMsg;
+                    int32_t data = mm.getData();
+                    motor_diag_.motorCurrentRight = (double)(data - 1024) / 100.0;
+                    currentMsg.data = data - 1024;
+                    rightCurrent.publish(currentMsg);
+                    break;
+                }
                 case MotorMessage::REG_HW_OPTIONS: {
                     int32_t data = mm.getData();
 
@@ -407,6 +430,13 @@ void MotorHardware::requestSystemEvents() {
     motor_serial_->transmitCommand(sys_event_msg);
 }
 
+// Read the wheel currents in amps
+void MotorHardware::getMotorCurrents(double &currentLeft, double &currentRight) {
+    currentLeft  = motor_diag_.motorCurrentLeft;
+    currentRight = motor_diag_.motorCurrentRight;
+    return;
+}
+
 
 // Due to greatly limited pins on the firmware processor the host figures out the hardware rev and sends it to fw
 // The hardware version is 0x0000MMmm  where MM is major rev like 4 and mm is minor rev like 9 for first units.
@@ -458,23 +488,23 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
 // Setup the Wheel Type. Overrides mode in use on hardware  
 // This used to only be standard but THIN_WHEELS were added in Jun 2020
 void MotorHardware::setWheelType(int32_t wheel_type) {
-    ROS_INFO("setting MCB wheel type to %d", (int)wheel_type);
-    MotorMessage ho;
-    ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
-    ho.setType(MotorMessage::TYPE_WRITE);
-    ho.setData(wheel_type);
-    motor_serial_->transmitCommand(ho);
+    ROS_INFO_ONCE("setting MCB wheel type %d", (int)wheel_type);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_WHEEL_TYPE);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(wheel_type);
+    motor_serial_->transmitCommand(mm);
 }
 
 // Setup the Wheel direction. Overrides mode in use on hardware  
 // This allows for customer to install wheels on cutom robots as they like
 void MotorHardware::setWheelDirection(int32_t wheel_direction) {
     ROS_INFO("setting MCB wheel direction to %d", (int)wheel_direction);
-    MotorMessage ho;
-    ho.setRegister(MotorMessage::REG_WHEEL_DIR);
-    ho.setType(MotorMessage::TYPE_WRITE);
-    ho.setData(wheel_direction);
-    motor_serial_->transmitCommand(ho);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_WHEEL_DIR);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(wheel_direction);
+    motor_serial_->transmitCommand(mm);
 }
 
 // Read the controller board option switch itself that resides on the I2C bus but is on the MCB
@@ -582,8 +612,9 @@ void MotorHardware::sendParams() {
 
     if (cycle == 0 &&
         fw_params.pid_proportional != prev_fw_params.pid_proportional) {
-        ROS_WARN("Setting P to %d", fw_params.pid_proportional);
+        ROS_WARN("Setting PidParam P to %d", fw_params.pid_proportional);
         prev_fw_params.pid_proportional = fw_params.pid_proportional;
+        motor_diag_.fw_pid_proportional = fw_params.pid_proportional;
         MotorMessage p;
         p.setRegister(MotorMessage::REG_PARAM_P);
         p.setType(MotorMessage::TYPE_WRITE);
@@ -592,8 +623,9 @@ void MotorHardware::sendParams() {
     }
 
     if (cycle == 1 && fw_params.pid_integral != prev_fw_params.pid_integral) {
-        ROS_WARN("Setting I to %d", fw_params.pid_integral);
+        ROS_WARN("Setting PidParam I to %d", fw_params.pid_integral);
         prev_fw_params.pid_integral = fw_params.pid_integral;
+        motor_diag_.fw_pid_integral = fw_params.pid_integral;
         MotorMessage i;
         i.setRegister(MotorMessage::REG_PARAM_I);
         i.setType(MotorMessage::TYPE_WRITE);
@@ -603,8 +635,9 @@ void MotorHardware::sendParams() {
 
     if (cycle == 2 &&
         fw_params.pid_derivative != prev_fw_params.pid_derivative) {
-        ROS_WARN("Setting D to %d", fw_params.pid_derivative);
+        ROS_WARN("Setting PidParam D to %d", fw_params.pid_derivative);
         prev_fw_params.pid_derivative = fw_params.pid_derivative;
+        motor_diag_.fw_pid_derivative = fw_params.pid_derivative;
         MotorMessage d;
         d.setRegister(MotorMessage::REG_PARAM_D);
         d.setType(MotorMessage::TYPE_WRITE);
@@ -614,8 +647,9 @@ void MotorHardware::sendParams() {
 
     if (cycle == 3 && (motor_diag_.firmware_version >= MIN_FW_PID_V_TERM) &&
         fw_params.pid_velocity != prev_fw_params.pid_velocity) {
-        ROS_WARN("Setting V to %d", fw_params.pid_velocity);
+        ROS_WARN("Setting PidParam V to %d", fw_params.pid_velocity);
         prev_fw_params.pid_velocity = fw_params.pid_velocity;
+        motor_diag_.fw_pid_velocity = fw_params.pid_velocity;
         MotorMessage v;
         v.setRegister(MotorMessage::REG_PARAM_V);
         v.setType(MotorMessage::TYPE_WRITE);
@@ -625,8 +659,9 @@ void MotorHardware::sendParams() {
 
     if (cycle == 4 &&
         fw_params.pid_denominator != prev_fw_params.pid_denominator) {
-        ROS_WARN("Setting Denominator to %d", fw_params.pid_denominator);
+        ROS_WARN("Setting PidParam Denominator to %d", fw_params.pid_denominator);
         prev_fw_params.pid_denominator = fw_params.pid_denominator;
+        motor_diag_.fw_pid_denominator = fw_params.pid_denominator;
         MotorMessage denominator;
         denominator.setRegister(MotorMessage::REG_PARAM_C);
         denominator.setType(MotorMessage::TYPE_WRITE);
@@ -637,9 +672,10 @@ void MotorHardware::sendParams() {
     if (cycle == 5 &&
         fw_params.pid_moving_buffer_size !=
             prev_fw_params.pid_moving_buffer_size) {
-        ROS_WARN("Setting D window to %d", fw_params.pid_moving_buffer_size);
+        ROS_WARN("Setting PidParam D window to %d", fw_params.pid_moving_buffer_size);
         prev_fw_params.pid_moving_buffer_size =
             fw_params.pid_moving_buffer_size;
+        motor_diag_.fw_pid_moving_buffer_size = fw_params.pid_moving_buffer_size;
         MotorMessage winsize;
         winsize.setRegister(MotorMessage::REG_MOVING_BUF_SIZE);
         winsize.setType(MotorMessage::TYPE_WRITE);
@@ -649,8 +685,9 @@ void MotorHardware::sendParams() {
 
     if (cycle == 6 &&
         fw_params.max_pwm != prev_fw_params.max_pwm) {
-        ROS_WARN("Setting max_pwm to %d", fw_params.max_pwm);
+        ROS_WARN("Setting PidParam max_pwm to %d", fw_params.max_pwm);
         prev_fw_params.max_pwm = fw_params.max_pwm;
+        motor_diag_.fw_max_pwm = fw_params.max_pwm;
         MotorMessage maxpwm;
         maxpwm.setRegister(MotorMessage::REG_MAX_PWM);
         maxpwm.setType(MotorMessage::TYPE_WRITE);
@@ -790,6 +827,30 @@ void MotorDiagnostics::battery_status(DiagnosticStatusWrapper &stat) {
         stat.summary(DiagnosticStatusWrapper::OK, "Battery OK");
     }
 }
+
+// PID parameters for motor control
+void MotorDiagnostics::motor_pid_p_status(DiagnosticStatusWrapper &stat) {
+    stat.add("PidParam P", fw_pid_proportional);
+    stat.summary(DiagnosticStatus::OK, "PID Parameter P");
+}
+void MotorDiagnostics::motor_pid_i_status(DiagnosticStatusWrapper &stat) {
+    stat.add("PidParam I", fw_pid_integral);
+    stat.summary(DiagnosticStatus::OK, "PID Parameter I");
+}
+void MotorDiagnostics::motor_pid_d_status(DiagnosticStatusWrapper &stat) {
+    stat.add("PidParam D", fw_pid_derivative);
+    stat.summary(DiagnosticStatus::OK, "PID Parameter D");
+}
+void MotorDiagnostics::motor_pid_v_status(DiagnosticStatusWrapper &stat) {
+    stat.add("PidParam V", fw_pid_velocity);
+    stat.summary(DiagnosticStatus::OK, "PID Parameter V");
+}
+void MotorDiagnostics::motor_max_pwm_status(DiagnosticStatusWrapper &stat) {
+    stat.add("PidParam MaxPWM", fw_max_pwm);
+    stat.summary(DiagnosticStatus::OK, "PID Max PWM");
+}
+
+
 void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
     stat.add("Motor Power", !estop_motor_power_off);
     if (estop_motor_power_off == false) {
@@ -799,7 +860,9 @@ void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
         stat.summary(DiagnosticStatusWrapper::WARN, "Motor power off");
     }
 }
-// motor_encoder_mode returns 0 for legacy encoders and 1 for 6-state firmware
+
+
+// Show firmware options and give readable decoding of the meaning of the bits
 void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
     stat.add("Firmware Options", firmware_options);
     std::string option_descriptions("");
@@ -815,7 +878,7 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
     }
     if (firmware_options & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
         // Only indicate wheel reversal if that has been set as it is non-standard
-        option_descriptions +=  ", Reverse wheels";
+        option_descriptions +=  ", Reverse polarity wheels";
     }
     stat.summary(DiagnosticStatusWrapper::OK, option_descriptions);
 }
