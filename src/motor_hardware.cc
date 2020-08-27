@@ -36,6 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // To access I2C we need some system includes
 #include <linux/i2c-dev.h>
 #include <linux/i2c.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #define  I2C_DEVICE  "/dev/i2c-1"     // This is specific to default Magni I2C port on host
 const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits but often shown as 8-bit
 
@@ -62,7 +64,7 @@ int32_t  g_odomEvent = 0;
 // This utility opens and reads 1 or more bytes from a device on an I2C bus
 // This method was taken on it's own from a big I2C class we may choose to use later
 static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2cAddr, 
-                          uint8_t* pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead);
+                          uint8_t* pBuffer, int16_t chipRegAddr);
 
 
 MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
@@ -870,12 +872,9 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
                           uint8_t *pBuffer, int16_t chipRegAddr)
 {
     int fd;                                         // File descriptor
-    int retCode = 0;
-
     if ((fd = open(i2cDevFile, O_RDWR)) < 0) {      // Open port for reading and writing
-      retCode = -1;
       ROS_ERROR("Cannot open I2C def of %s with error %s", i2cDevFile, strerror(errno));
-      goto exitWithNoClose;
+      return -1;
     }
 
     uint8_t buf[8];                    		  // Buffer for data being written to the i2c device
@@ -900,13 +899,10 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
     }
 
     if (ioctl(fd, I2C_RDWR, &msgset) < 0) { 
-      retCode = -2;
       ROS_ERROR("Failed to get bus access to I2C device %s!  ERROR: %s", i2cDevFile, strerror(errno));
+      return -2;
     }
-    retCode = *pBuffer;
     close(fd);
 
-  exitWithNoClose:
-
-  return retCode;
+  return *pBuffer;
 }
