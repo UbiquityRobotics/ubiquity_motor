@@ -146,6 +146,8 @@ public:
     void setOptionSwitchReg(int32_t option_switch);
     void requestSystemEvents();
     void setSystemEvents(int32_t system_events);
+    void getWheelJointPositions(double &leftWheelPosition, double &rightWheelPosition);
+    void setWheelJointVelocities(double leftWheelVelocity, double rightWheelVelocity);
     int firmware_version;
     int firmware_date;
     int firmware_options;
@@ -189,6 +191,12 @@ private:
         Joint() : position(0), velocity(0), effort(0), velocity_command(0) {}
     } joints_[2];
 
+    // MessageTypes enum in class to avoid global namespace pollution
+    enum WheelJointLocation {
+        Left  = 0,
+        Right = 1
+    };
+
     ros::Publisher leftError;
     ros::Publisher rightError;
 
@@ -197,6 +205,7 @@ private:
 
     ros::Publisher battery_state;
     ros::Publisher motor_power_active;
+    ros::Publisher motor_state;
 
     MotorSerial* motor_serial_;
 

@@ -10,6 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>message_runtime</build_depend>
   <test_depend>rostest</test_depend>
   <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
@@ -20,6 +21,7 @@
   <depend>controller_manager</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>diagnostic_updater</depend>
+  <exec_depend>message_runtime</exec_depend>
   <exec_depend>diff_drive_controller</exec_depend>
   <exec_depend>joint_state_controller</exec_depend>
   <exec_depend>python-requests</exec_depend>

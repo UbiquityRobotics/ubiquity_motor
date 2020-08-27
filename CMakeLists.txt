@@ -7,9 +7,11 @@ set(CMAKE_CXX_STANDARD 14) # use C++14
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
+        message_generation
 	roscpp 
 	geometry_msgs  
 	std_msgs  
+        genmsg
 	nav_msgs 
 	serial 
 	hardware_interface 
@@ -40,6 +42,12 @@ generate_dynamic_reconfigure_options(
 #   FILES
 #   Leds.msg
 # )
+add_message_files (
+    DIRECTORY
+    msg
+    FILES
+    MotorState.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -49,10 +57,10 @@ generate_dynamic_reconfigure_options(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -65,7 +73,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES ubiquity_motor
-#  CATKIN_DEPENDS other_catkin_pkg
+  CATKIN_DEPENDS std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
