@@ -125,6 +125,8 @@ public:
     void requestFirmwareDate();
     void setParams(FirmwareParams firmware_params);
     void sendParams();
+    void forcePidParamUpdates();
+    float getBatteryVoltage(void); 
     void setDeadmanTimer(int32_t deadman);
     void setDeadzoneEnable(int32_t deadzone_enable);
     void setDebugLeds(bool led1, bool led2);
@@ -154,6 +156,7 @@ public:
     int max_pwm;
     int deadman_enable;
     int system_events;
+    int wheel_type;
 
 
     diagnostic_updater::Updater diag_updater;
