@@ -287,6 +287,9 @@ int main(int argc, char* argv[]) {
             robot-> setWheelJointVelocities(leftWheelVel, rightWheelVel); // rad/sec
             leftLastWheelPos  = leftWheelPos;
             rightLastWheelPos = rightWheelPos;
+
+            // Publish motor state at this time
+            robot->publishMotorState();
         }
 
         robot->readInputs();

@@ -39,8 +39,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "std_msgs/Int32.h"
 #include "std_msgs/UInt32.h"
+#include "std_msgs/Float32.h"
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/BatteryState.h"
+#include "ubiquity_motor/MotorState.h"
 
 #include <diagnostic_updater/update_functions.h>
 #include <diagnostic_updater/diagnostic_updater.h>
@@ -89,6 +91,8 @@ struct MotorDiagnostics {
     // Wheel current states
     double motorCurrentLeft  = 0.0;
     double motorCurrentRight = 0.0;
+    double motorAmpsPerAdcCount = 0.00238;  // 0.1V/Amp  2.44V=1024 count so 419.7 cnt/volt
+    double motorAmpsZeroAdcCount = 1024;    // The ADC count for zero current
 
     /* For later implementation (firmware support)
     bool  main_5V_error = false;
@@ -148,6 +152,7 @@ public:
     void setSystemEvents(int32_t system_events);
     void getWheelJointPositions(double &leftWheelPosition, double &rightWheelPosition);
     void setWheelJointVelocities(double leftWheelVelocity, double rightWheelVelocity);
+    void publishMotorState(void);
     int firmware_version;
     int firmware_date;
     int firmware_options;

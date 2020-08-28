@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <boost/math/special_functions/round.hpp>
 
-// #include <ubiquity_motor/MotorState.h>
-
 // To access I2C we need some system includes
 #include <linux/i2c-dev.h>
 #include <fcntl.h>
@@ -101,13 +99,12 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
 
-    leftCurrent = nh.advertise<std_msgs::Int32>("left_current", 1);
-    rightCurrent = nh.advertise<std_msgs::Int32>("right_current", 1);
-
     battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
     motor_power_active = nh.advertise<std_msgs::Bool>("motor_power_active", 1);
 
-    // motor_state = nh.advertise<MotorState>("motor_state", 1);
+    motor_state = nh.advertise<ubiquity_motor::MotorState>("motor_state", 1);
+    leftCurrent = nh.advertise<std_msgs::Float32>("left_current", 1);
+    rightCurrent = nh.advertise<std_msgs::Float32>("right_current", 1);
 
     sendPid_count = 0;
     num_fw_params = 7;     // number of params sent if any change
@@ -180,6 +177,17 @@ void MotorHardware::setWheelJointVelocities(double leftWheelVelocity, double rig
     return;
 }
 
+// Publish motor state conditions
+void MotorHardware::publishMotorState(void) {
+    ubiquity_motor::MotorState mstateMsg;
+    mstateMsg.leftCurrent     = motor_diag_.motorCurrentLeft;
+    mstateMsg.rightCurrent    = motor_diag_.motorCurrentRight;
+    mstateMsg.leftRotateRate  = joints_[WheelJointLocation::Left].velocity;
+    mstateMsg.rightRotateRate = joints_[WheelJointLocation::Right].velocity;
+    motor_state.publish(mstateMsg);
+    return;
+}
+
 // readInputs() will receive serial and act on the response from motor controller
 //
 // The motor controller sends unsolicited messages periodically so we must read the
@@ -197,7 +205,9 @@ void MotorHardware::readInputs() {
                         ROS_WARN("Firmware System Event for PowerOn transition");
                         system_events = mm.getData();
                     }
+
                     break;
+
                 case MotorMessage::REG_FIRMWARE_VERSION:
                     if (mm.getData() < LOWEST_FIRMWARE_VERSION) {
                         ROS_FATAL("Firmware version %d, expect %d or above",
@@ -241,6 +251,7 @@ void MotorHardware::readInputs() {
                     joints_[WheelJointLocation::Right].position += (odomRight / ticks_per_radian);
 
 		    motor_diag_.odom_update_status.tick(); // Let diag know we got odom
+
                     break;
                 }
                 case MotorMessage::REG_BOTH_ERROR: {
@@ -254,22 +265,19 @@ void MotorHardware::readInputs() {
                     right.data = rightSpeed;
                     leftError.publish(left);
                     rightError.publish(right);
+
                     break;
                 }
                 case MotorMessage::REG_LEFT_CURRENT: {
-                    std_msgs::Int32 currentMsg;
                     int32_t data = mm.getData();
-                    motor_diag_.motorCurrentLeft = (double)(data - 1024) / 100.0;
-                    currentMsg.data = data - 1024;
-                    leftCurrent.publish(currentMsg);
+                    motor_diag_.motorCurrentLeft = (double)(data - motor_diag_.motorAmpsZeroAdcCount) * 
+                        motor_diag_.motorAmpsPerAdcCount;
                     break;
                 }
                 case MotorMessage::REG_RIGHT_CURRENT: {
-                    std_msgs::Int32 currentMsg;
                     int32_t data = mm.getData();
-                    motor_diag_.motorCurrentRight = (double)(data - 1024) / 100.0;
-                    currentMsg.data = data - 1024;
-                    rightCurrent.publish(currentMsg);
+                    motor_diag_.motorCurrentRight = (double)(data - motor_diag_.motorAmpsZeroAdcCount) * 
+                        motor_diag_.motorAmpsPerAdcCount;
                     break;
                 }
                 case MotorMessage::REG_HW_OPTIONS: {

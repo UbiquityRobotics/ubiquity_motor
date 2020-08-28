@@ -1,4 +1,4 @@
-float64 leftCurrent
-float64 rightCurrent
-float64 leftRotateRate
-float64 rightRotateRate
+float32 leftCurrent
+float32 rightCurrent
+float32 leftRotateRate
+float32 rightRotateRate
