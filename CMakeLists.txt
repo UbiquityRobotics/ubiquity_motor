@@ -87,6 +87,8 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 add_library(ubiquity_motor
   src/motor_message.cc src/motor_serial.cc src/motor_hardware.cc
 )
+add_dependencies(ubiquity_motor ${PROJECT_NAME}_generate_messages_cpp)
+
 target_link_libraries(ubiquity_motor
  ${catkin_LIBRARIES}
  ${Boost_LIBRARIES}
