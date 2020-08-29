@@ -864,32 +864,33 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
 // The I2C address is the 8-bit address which is the 7-bit addr shifted left in some code
 // If chipRegAddr is greater than 1 we write this out for the internal chip address for the following read(s)
 //
-// Returns number of bytes read where 0 or less implies some form of failure
-//
 // NOTE: The i2c8bitAddr will be shifted right one bit to use as 7-bit I2C addr
 //
 static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr, 
                           uint8_t *pBuffer, int16_t chipRegAddr)
 {
     int fd;                                         // File descriptor
+    int retCode = 0;
     if ((fd = open(i2cDevFile, O_RDWR)) < 0) {      // Open port for reading and writing
       ROS_ERROR("Cannot open I2C def of %s with error %s", i2cDevFile, strerror(errno));
-      return -1;
+      retCode = -1;
+      goto exitWithNoClose;
     }
 
-    uint8_t buf[8];                    		  // Buffer for data being written to the i2c device
-    int address = i2c8bitAddr >> 1;              // Address of the I2C device
+    uint8_t buf[1];                                   // Buffer for data being written to the i2c device
+    uint8_t outbuf[1];
+    int slaveAddress = i2c8bitAddr >> 1;              // Address of the I2C device
     struct i2c_msg msgs[2];
     struct i2c_rdwr_ioctl_data msgset[1];
 
-    msgs[0].addr = address; // slave adress
+    msgs[0].addr = slaveAddress; // slave adress
     msgs[0].flags = 0; // write bit
     msgs[0].len = 1; // number of data bytes written to I2C slave address 
     msgs[0].buf = buf;
-    msgs[1].addr = address;
+    msgs[1].addr = slaveAddress;
     msgs[1].flags = I2C_M_RD | I2C_M_NOSTART;
     msgs[1].len = 1;
-    msgs[1].buf = pBuffer;
+    msgs[1].buf = outbuf;
 
     msgset[0].msgs = msgs;
     msgset[0].nmsgs = 2; // number of messages (write and read)
@@ -900,9 +901,16 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
 
     if (ioctl(fd, I2C_RDWR, &msgset) < 0) { 
       ROS_ERROR("Failed to get bus access to I2C device %s!  ERROR: %s", i2cDevFile, strerror(errno));
-      return -2;
+      retCode = -2;
+      goto exitWithFileClose;
     }
-    close(fd);
+    *pBuffer = outbuf[0];
+    retCode = 1;
 
-  return *pBuffer;
+    exitWithFileClose:
+        close(fd);
+
+    exitWithNoClose:
+
+  return retCode;
 }
