@@ -93,6 +93,8 @@ struct MotorDiagnostics {
     double motorCurrentRight = 0.0;
     double motorAmpsPerAdcCount = 0.00238;  // 0.1V/Amp  2.44V=1024 count so 419.7 cnt/volt
     double motorAmpsZeroAdcCount = 1024;    // The ADC count for zero current
+    int    motorPwmDriveLeft  = 0;
+    int    motorPwmDriveRight = 0;
 
     /* For later implementation (firmware support)
     bool  main_5V_error = false;

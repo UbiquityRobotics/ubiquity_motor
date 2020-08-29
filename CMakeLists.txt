@@ -3,14 +3,20 @@ project(ubiquity_motor)
 
 set(CMAKE_CXX_STANDARD 14) # use C++14
 
+## System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED COMPONENTS
+	thread
+	atomic)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
         message_generation
 	roscpp 
-	geometry_msgs  
+	rospy 
 	std_msgs  
+	geometry_msgs  
         genmsg
 	nav_msgs 
 	serial 
@@ -18,10 +24,6 @@ find_package(catkin REQUIRED COMPONENTS
 	controller_manager
 	diagnostic_updater
 	dynamic_reconfigure)
-## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS
-	thread
-	atomic)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 generate_dynamic_reconfigure_options(
@@ -42,12 +44,8 @@ generate_dynamic_reconfigure_options(
 #   FILES
 #   Leds.msg
 # )
-add_message_files (
-    DIRECTORY
-    msg
-    FILES
-    MotorState.msg
-)
+
+add_message_files(DIRECTORY msg FILES MotorState.msg)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -59,7 +57,7 @@ add_message_files (
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs  # Or other packages containing msgs
+  std_msgs  ubiquity_motor # Or other packages containing msgs
 )
 
 ###################################
@@ -72,8 +70,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES ubiquity_motor
   CATKIN_DEPENDS std_msgs message_runtime
+#  LIBRARIES ubiquity_motor
 #  DEPENDS system_lib
 )
 

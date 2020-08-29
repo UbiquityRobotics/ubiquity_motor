@@ -85,7 +85,7 @@ public:
 
         // skip 0x05 and 0x06
 
-        REG_LEFT_SPEED_SET = 0x07,      // Deprecated
+        REG_BOTH_PWM = 0x07,            // Both wheel PWM drive values in packed 16 bit ints
         REG_RIGHT_SPEED_SET = 0x08,     // Deprecated
 
         REG_LEFT_RAMP = 0x09,           // Deprecated

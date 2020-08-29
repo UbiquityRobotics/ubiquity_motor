@@ -2,3 +2,5 @@ float32 leftCurrent
 float32 rightCurrent
 float32 leftRotateRate
 float32 rightRotateRate
+int32 leftPwmDrive
+int32 rightPwmDrive

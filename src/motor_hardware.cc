@@ -184,6 +184,8 @@ void MotorHardware::publishMotorState(void) {
     mstateMsg.rightCurrent    = motor_diag_.motorCurrentRight;
     mstateMsg.leftRotateRate  = joints_[WheelJointLocation::Left].velocity;
     mstateMsg.rightRotateRate = joints_[WheelJointLocation::Right].velocity;
+    mstateMsg.leftPwmDrive    = motor_diag_.motorPwmDriveLeft;
+    mstateMsg.rightPwmDrive   = motor_diag_.motorPwmDriveRight;
     motor_state.publish(mstateMsg);
     return;
 }
@@ -268,6 +270,14 @@ void MotorHardware::readInputs() {
 
                     break;
                 }
+
+                case MotorMessage::REG_BOTH_PWM: {
+                    int32_t bothPwm = mm.getData();
+                    motor_diag_.motorPwmDriveLeft  = (bothPwm >> 16) & 0xffff;                    
+                    motor_diag_.motorPwmDriveRight = bothPwm & 0xffff;                    
+                    break;
+                }
+
                 case MotorMessage::REG_LEFT_CURRENT: {
                     int32_t data = mm.getData();
                     motor_diag_.motorCurrentLeft = (double)(data - motor_diag_.motorAmpsZeroAdcCount) * 
