@@ -57,7 +57,7 @@ add_message_files(DIRECTORY msg FILES MotorState.msg)
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs  ubiquity_motor # Or other packages containing msgs
+  std_msgs # Or other packages containing msgs
 )
 
 ###################################
@@ -94,7 +94,7 @@ target_link_libraries(ubiquity_motor
 
 ## Declare a cpp executable
 add_executable(motor_node src/motor_node.cc)
-add_dependencies(motor_node ${PROJECT_NAME}_gencfg)
+add_dependencies(motor_node ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(motor_node
  ubiquity_motor
  ${catkin_LIBRARIES}
