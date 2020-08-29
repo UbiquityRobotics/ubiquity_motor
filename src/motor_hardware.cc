@@ -871,6 +871,8 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
 {
     int fd;                                         // File descriptor
     int retCode = 0;
+    int slaveAddress = i2c8bitAddr >> 1;              // Address of the I2C device
+
     if ((fd = open(i2cDevFile, O_RDWR)) < 0) {      // Open port for reading and writing
       ROS_ERROR("Cannot open I2C def of %s with error %s", i2cDevFile, strerror(errno));
       retCode = -1;
@@ -879,10 +881,8 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
 
     uint8_t buf[1];                                   // Buffer for data being written to the i2c device
     uint8_t outbuf[1];
-    int slaveAddress = i2c8bitAddr >> 1;              // Address of the I2C device
     struct i2c_msg msgs[2];
     struct i2c_rdwr_ioctl_data msgset[1];
-
     msgs[0].addr = slaveAddress; // slave adress
     msgs[0].flags = 0; // write bit
     msgs[0].len = 1; // number of data bytes written to I2C slave address 
