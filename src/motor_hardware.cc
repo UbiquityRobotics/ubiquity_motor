@@ -279,15 +279,19 @@ void MotorHardware::readInputs() {
                 }
 
                 case MotorMessage::REG_LEFT_CURRENT: {
-                    int32_t data = mm.getData();
-                    motor_diag_.motorCurrentLeft = (double)(data - motor_diag_.motorAmpsZeroAdcCount) * 
-                        motor_diag_.motorAmpsPerAdcCount;
+                    // Motor current is an absolute value and goes up from a nominal count of near 1024
+                    // So we subtract a nominal offset then multiply count * scale factor to get amps
+                    int32_t data = mm.getData() & 0xffff;
+                    motor_diag_.motorCurrentLeft = 
+                        (double)(data - motor_diag_.motorAmpsZeroAdcCount) * motor_diag_.motorAmpsPerAdcCount;
                     break;
                 }
                 case MotorMessage::REG_RIGHT_CURRENT: {
-                    int32_t data = mm.getData();
-                    motor_diag_.motorCurrentRight = (double)(data - motor_diag_.motorAmpsZeroAdcCount) * 
-                        motor_diag_.motorAmpsPerAdcCount;
+                    // Motor current is an absolute value and goes up from a nominal count of near 1024
+                    // So we subtract a nominal offset then multiply count * scale factor to get amps
+                    int32_t data = mm.getData() & 0xffff;
+                    motor_diag_.motorCurrentRight = 
+                        (double)(data - motor_diag_.motorAmpsZeroAdcCount) * motor_diag_.motorAmpsPerAdcCount;
                     break;
                 }
                 case MotorMessage::REG_HW_OPTIONS: {

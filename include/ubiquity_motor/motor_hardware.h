@@ -91,8 +91,8 @@ struct MotorDiagnostics {
     // Wheel current states
     double motorCurrentLeft  = 0.0;
     double motorCurrentRight = 0.0;
-    double motorAmpsPerAdcCount = 0.00238;  // 0.1V/Amp  2.44V=1024 count so 419.7 cnt/volt
-    double motorAmpsZeroAdcCount = 1024;    // The ADC count for zero current
+    double motorAmpsPerAdcCount = 0.0238;   // 0.1V/Amp  2.44V=1024 count so 41.97 cnt/amp
+    double motorAmpsZeroAdcCount = 1015;    // The approximate ADC count for zero current
     int    motorPwmDriveLeft  = 0;
     int    motorPwmDriveRight = 0;
 
