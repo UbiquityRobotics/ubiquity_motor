@@ -871,7 +871,7 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
 {
     int fd;                                         // File descriptor
     int retCode = 0;
-    int slaveAddress = i2c8bitAddr >> 1;              // Address of the I2C device
+    int slaveAddress = i2c8bitAddr >> 1;            // Address of the I2C device
 
     if ((fd = open(i2cDevFile, O_RDWR)) < 0) {      // Open port for reading and writing
       ROS_ERROR("Cannot open I2C def of %s with error %s", i2cDevFile, strerror(errno));
@@ -879,27 +879,26 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
       goto exitWithNoClose;
     }
 
-    uint8_t buf[1];                                   // Buffer for data being written to the i2c device
-    uint8_t outbuf[1];
+    uint8_t buf[1];                                 // Buffer to be written to i2c device 
+    uint8_t outbuf[1];                              // Buffer to be read into from i2c device
     struct i2c_msg msgs[2];
     struct i2c_rdwr_ioctl_data msgset[1];
-    msgs[0].addr = slaveAddress; // slave adress
-    msgs[0].flags = 0; // write bit
-    msgs[0].len = 1; // number of data bytes written to I2C slave address 
-    msgs[0].buf = buf;
+    msgs[0].addr = slaveAddress;                    // Slave adress
+    msgs[0].flags = 0;                              // Write bit
+    msgs[0].len = 1;                                // Number of data bytes written to I2C slave address 
+    msgs[0].buf = buf;                              // Writting to register
     msgs[1].addr = slaveAddress;
     msgs[1].flags = I2C_M_RD | I2C_M_NOSTART;
     msgs[1].len = 1;
-    msgs[1].buf = outbuf;
+    msgs[1].buf = outbuf;                           // Buffer to be read in from register
 
-    msgset[0].msgs = msgs;
-    msgset[0].nmsgs = 2; // number of messages (write and read)
-
-    if (chipRegAddr < 0) { // Suppress reg adress if negative value was used 
-    	buf[0] = (uint8_t)(chipRegAddr);
+    if (chipRegAddr < 0) {
+        buf[0] = (uint8_t)(chipRegAddr);
     }
+    msgset[0].msgs = msgs;
+    msgset[0].nmsgs = 2;                            // Number of messages (write and read)
 
-    if (ioctl(fd, I2C_RDWR, &msgset) < 0) { 
+    if (ioctl(fd, I2C_RDWR, &msgset) < 0) {  
       ROS_ERROR("Failed to get bus access to I2C device %s!  ERROR: %s", i2cDevFile, strerror(errno));
       retCode = -2;
       goto exitWithFileClose;
