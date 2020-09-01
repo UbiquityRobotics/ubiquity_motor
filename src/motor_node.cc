@@ -262,7 +262,7 @@ int main(int argc, char* argv[]) {
     // Setup to be able to do periodic operations based on elapsed times
     ros::Time current_time;
     ros::Duration sysMaintPeriod(60.0);     // A periodic MCB maintenance operation
-    ros::Duration jointUpdatePeriod(0.25);  // A periodic time to update joint velocity
+    ros::Duration jointUpdatePeriod(0.10);  // A periodic time to update joint velocity
 
     ros::Time last_loop_time = ros::Time::now();
     ros::Duration elapsed_loop_time;

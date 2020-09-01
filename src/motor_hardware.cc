@@ -180,6 +180,11 @@ void MotorHardware::setWheelJointVelocities(double leftWheelVelocity, double rig
 // Publish motor state conditions
 void MotorHardware::publishMotorState(void) {
     ubiquity_motor::MotorState mstateMsg;
+
+    mstateMsg.header.frame_id = "motor_state";
+    mstateMsg.header.stamp    = ros::Time::now();
+    mstateMsg.header.seq      = 0;
+
     mstateMsg.leftCurrent     = motor_diag_.motorCurrentLeft;
     mstateMsg.rightCurrent    = motor_diag_.motorCurrentRight;
     mstateMsg.leftRotateRate  = joints_[WheelJointLocation::Left].velocity;
