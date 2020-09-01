@@ -39,8 +39,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "std_msgs/Int32.h"
 #include "std_msgs/UInt32.h"
+#include "std_msgs/Float32.h"
 #include "std_msgs/Bool.h"
 #include "sensor_msgs/BatteryState.h"
+#include "ubiquity_motor/MotorState.h"
 
 #include <diagnostic_updater/update_functions.h>
 #include <diagnostic_updater/diagnostic_updater.h>
@@ -85,6 +87,17 @@ struct MotorDiagnostics {
     float battery_voltage = 0.0;
     float battery_voltage_low_level = 22.5;
     float battery_voltage_critical = 21.0;
+
+    // Wheel current states
+    double motorCurrentLeft  = 0.0;
+    double motorCurrentRight = 0.0;
+
+    // ADC count for zero current. We could calibrate this if required. 
+    // Nominally 1024 and goes up from there this lower value is used. 
+    double motorAmpsZeroAdcCount = 1015;    
+
+    int    motorPwmDriveLeft  = 0;
+    int    motorPwmDriveRight = 0;
 
     /* For later implementation (firmware support)
     bool  main_5V_error = false;
@@ -137,12 +150,14 @@ public:
     void setMaxPwm(int32_t max_pwm);
     void setWheelType(int32_t wheel_type);
     void setWheelDirection(int32_t wheel_direction);
+    void getMotorCurrents(double &currentLeft, double &currentRight);
     int  getOptionSwitch(void);
     void setOptionSwitchReg(int32_t option_switch);
     void requestSystemEvents();
     void setSystemEvents(int32_t system_events);
     void getWheelJointPositions(double &leftWheelPosition, double &rightWheelPosition);
     void setWheelJointVelocities(double leftWheelVelocity, double rightWheelVelocity);
+    void publishMotorState(void);
     int firmware_version;
     int firmware_date;
     int firmware_options;
@@ -154,7 +169,6 @@ public:
     int max_pwm;
     int deadman_enable;
     int system_events;
-
 
     diagnostic_updater::Updater diag_updater;
 private:
@@ -196,8 +210,12 @@ private:
     ros::Publisher leftError;
     ros::Publisher rightError;
 
+    ros::Publisher leftCurrent;
+    ros::Publisher rightCurrent;
+
     ros::Publisher battery_state;
     ros::Publisher motor_power_active;
+    ros::Publisher motor_state;
 
     MotorSerial* motor_serial_;
 

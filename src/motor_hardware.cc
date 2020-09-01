@@ -48,8 +48,10 @@ const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits 
 // Below we will go with the exact ratio from gearbox specs 
 // 60 ticks per revolution of the motor (pre gearbox)
 // 17.2328767123 and  gear ratio of 4.29411764706:1
-#define TICKS_PER_RADIAN_ENC_3_STATE (20.50251516)   // used to read more misleading value of (41.0058030317/2)
+#define TICKS_PER_RADIAN_ENC_3_STATE (20.50251516)    // used to read more misleading value of (41.0058030317/2)
 #define QTICKS_PER_RADIAN   (ticks_per_radian*4)      // Quadrature ticks makes code more readable later
+
+#define MOTOR_AMPS_PER_ADC_COUNT   ((double)(0.0238)) // 0.1V/Amp  2.44V=1024 count so 41.97 cnt/amp
 
 #define VELOCITY_READ_PER_SECOND \
     10.0  // read = ticks / (100 ms), so we have scale of 10 for ticks/second
@@ -101,6 +103,10 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
     battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
     motor_power_active = nh.advertise<std_msgs::Bool>("motor_power_active", 1);
+
+    motor_state = nh.advertise<ubiquity_motor::MotorState>("motor_state", 1);
+    leftCurrent = nh.advertise<std_msgs::Float32>("left_current", 1);
+    rightCurrent = nh.advertise<std_msgs::Float32>("right_current", 1);
 
     sendPid_count = 0;
     num_fw_params = 7;     // number of params sent if any change
@@ -173,12 +179,30 @@ void MotorHardware::setWheelJointVelocities(double leftWheelVelocity, double rig
     return;
 }
 
+// Publish motor state conditions
+void MotorHardware::publishMotorState(void) {
+    ubiquity_motor::MotorState mstateMsg;
+
+    mstateMsg.header.frame_id = "";   // Could be base_link.  We will use empty till required
+    mstateMsg.header.stamp    = ros::Time::now();
+
+    mstateMsg.leftCurrent     = motor_diag_.motorCurrentLeft;
+    mstateMsg.rightCurrent    = motor_diag_.motorCurrentRight;
+    mstateMsg.leftRotateRate  = joints_[WheelJointLocation::Left].velocity;
+    mstateMsg.rightRotateRate = joints_[WheelJointLocation::Right].velocity;
+    mstateMsg.leftPwmDrive    = motor_diag_.motorPwmDriveLeft;
+    mstateMsg.rightPwmDrive   = motor_diag_.motorPwmDriveRight;
+    motor_state.publish(mstateMsg);
+    return;
+}
+
 // readInputs() will receive serial and act on the response from motor controller
 //
 // The motor controller sends unsolicited messages periodically so we must read the
 // messages to update status in near realtime
 //
 void MotorHardware::readInputs() {
+
     while (motor_serial_->commandAvailable()) {
         MotorMessage mm;
         mm = motor_serial_->receiveCommand();
@@ -190,7 +214,9 @@ void MotorHardware::readInputs() {
                         ROS_WARN("Firmware System Event for PowerOn transition");
                         system_events = mm.getData();
                     }
+
                     break;
+
                 case MotorMessage::REG_FIRMWARE_VERSION:
                     if (mm.getData() < LOWEST_FIRMWARE_VERSION) {
                         ROS_FATAL("Firmware version %d, expect %d or above",
@@ -234,6 +260,7 @@ void MotorHardware::readInputs() {
                     joints_[WheelJointLocation::Right].position += (odomRight / ticks_per_radian);
 
 		    motor_diag_.odom_update_status.tick(); // Let diag know we got odom
+
                     break;
                 }
                 case MotorMessage::REG_BOTH_ERROR: {
@@ -247,9 +274,33 @@ void MotorHardware::readInputs() {
                     right.data = rightSpeed;
                     leftError.publish(left);
                     rightError.publish(right);
+
                     break;
                 }
 
+                case MotorMessage::REG_BOTH_PWM: {
+                    int32_t bothPwm = mm.getData();
+                    motor_diag_.motorPwmDriveLeft  = (bothPwm >> 16) & 0xffff;                    
+                    motor_diag_.motorPwmDriveRight = bothPwm & 0xffff;                    
+                    break;
+                }
+
+                case MotorMessage::REG_LEFT_CURRENT: {
+                    // Motor current is an absolute value and goes up from a nominal count of near 1024
+                    // So we subtract a nominal offset then multiply count * scale factor to get amps
+                    int32_t data = mm.getData() & 0xffff;
+                    motor_diag_.motorCurrentLeft = 
+                        (double)(data - motor_diag_.motorAmpsZeroAdcCount) * MOTOR_AMPS_PER_ADC_COUNT;
+                    break;
+                }
+                case MotorMessage::REG_RIGHT_CURRENT: {
+                    // Motor current is an absolute value and goes up from a nominal count of near 1024
+                    // So we subtract a nominal offset then multiply count * scale factor to get amps
+                    int32_t data = mm.getData() & 0xffff;
+                    motor_diag_.motorCurrentRight = 
+                        (double)(data - motor_diag_.motorAmpsZeroAdcCount) * MOTOR_AMPS_PER_ADC_COUNT;
+                    break;
+                }
                 case MotorMessage::REG_HW_OPTIONS: {
                     int32_t data = mm.getData();
 
@@ -432,6 +483,13 @@ void MotorHardware::requestSystemEvents() {
     motor_serial_->transmitCommand(sys_event_msg);
 }
 
+// Read the wheel currents in amps
+void MotorHardware::getMotorCurrents(double &currentLeft, double &currentRight) {
+    currentLeft  = motor_diag_.motorCurrentLeft;
+    currentRight = motor_diag_.motorCurrentRight;
+    return;
+}
+
 
 // Due to greatly limited pins on the firmware processor the host figures out the hardware rev and sends it to fw
 // The hardware version is 0x0000MMmm  where MM is major rev like 4 and mm is minor rev like 9 for first units.
@@ -484,22 +542,22 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
 // This used to only be standard but THIN_WHEELS were added in Jun 2020
 void MotorHardware::setWheelType(int32_t wheel_type) {
     ROS_INFO_ONCE("setting MCB wheel type %d", (int)wheel_type);
-    MotorMessage ho;
-    ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
-    ho.setType(MotorMessage::TYPE_WRITE);
-    ho.setData(wheel_type);
-    motor_serial_->transmitCommand(ho);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_WHEEL_TYPE);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(wheel_type);
+    motor_serial_->transmitCommand(mm);
 }
 
 // Setup the Wheel direction. Overrides mode in use on hardware  
 // This allows for customer to install wheels on cutom robots as they like
 void MotorHardware::setWheelDirection(int32_t wheel_direction) {
     ROS_INFO("setting MCB wheel direction to %d", (int)wheel_direction);
-    MotorMessage ho;
-    ho.setRegister(MotorMessage::REG_WHEEL_DIR);
-    ho.setType(MotorMessage::TYPE_WRITE);
-    ho.setData(wheel_direction);
-    motor_serial_->transmitCommand(ho);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_WHEEL_DIR);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(wheel_direction);
+    motor_serial_->transmitCommand(mm);
 }
 
 // Read the controller board option switch itself that resides on the I2C bus but is on the MCB

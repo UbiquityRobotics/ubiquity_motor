@@ -1,0 +1,7 @@
+Header header
+float32 leftRotateRate
+float32 rightRotateRate
+float32 leftCurrent
+float32 rightCurrent
+int32 leftPwmDrive
+int32 rightPwmDrive
