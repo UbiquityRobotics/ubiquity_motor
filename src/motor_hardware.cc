@@ -186,10 +186,12 @@ void MotorHardware::publishMotorState(void) {
     mstateMsg.header.frame_id = "";   // Could be base_link.  We will use empty till required
     mstateMsg.header.stamp    = ros::Time::now();
 
-    mstateMsg.leftCurrent     = motor_diag_.motorCurrentLeft;
-    mstateMsg.rightCurrent    = motor_diag_.motorCurrentRight;
+    mstateMsg.leftPosition    = joints_[WheelJointLocation::Left].position;
+    mstateMsg.rightPosition   = joints_[WheelJointLocation::Right].position;
     mstateMsg.leftRotateRate  = joints_[WheelJointLocation::Left].velocity;
     mstateMsg.rightRotateRate = joints_[WheelJointLocation::Right].velocity;
+    mstateMsg.leftCurrent     = motor_diag_.motorCurrentLeft;
+    mstateMsg.rightCurrent    = motor_diag_.motorCurrentRight;
     mstateMsg.leftPwmDrive    = motor_diag_.motorPwmDriveLeft;
     mstateMsg.rightPwmDrive   = motor_diag_.motorPwmDriveRight;
     motor_state.publish(mstateMsg);
