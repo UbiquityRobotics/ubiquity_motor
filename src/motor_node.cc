@@ -74,10 +74,11 @@ void PID_update_callback(const ubiquity_motor::PIDConfig& config,
 int main(int argc, char* argv[]) {
     ros::init(argc, argv, "motor_node");
     ros::NodeHandle nh;
-
-    firmware_params = FirmwareParams(nh);
-    serial_params = CommsParams(nh);
-    node_params = NodeParams(nh);
+    ros::NodeHandle pnh("~");
+    
+    firmware_params = FirmwareParams(pnh);
+    serial_params = CommsParams(pnh);
+    node_params = NodeParams(pnh);
 
     ros::Rate ctrlLoopDelay(node_params.controller_loop_rate);
 
@@ -91,7 +92,7 @@ int main(int argc, char* argv[]) {
         int times = 0;
         while (ros::ok() && robot.get() == nullptr) {
             try {
-                robot.reset(new MotorHardware(nh, serial_params, firmware_params));
+                robot.reset(new MotorHardware(nh, node_params, serial_params, firmware_params));
             }
             catch (const serial::IOException& e) {
                 if (times % 30 == 0)
