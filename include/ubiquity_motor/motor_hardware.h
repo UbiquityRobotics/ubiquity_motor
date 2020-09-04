@@ -127,7 +127,7 @@ struct MotorDiagnostics {
 
 class MotorHardware : public hardware_interface::RobotHW {
 public:
-    MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
+    MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsParams serial_params,
                   FirmwareParams firmware_params);
     virtual ~MotorHardware();
     void clearCommands();

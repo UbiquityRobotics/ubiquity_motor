@@ -114,41 +114,41 @@ struct FirmwareParams {
         {
         // clang-format off
         pid_proportional = getParamOrDefault(
-            nh, "ubiquity_motor/pid_proportional", pid_proportional);
+            nh, "pid_proportional", pid_proportional);
         pid_integral = getParamOrDefault(
-            nh, "ubiquity_motor/pid_integral", pid_integral);
+            nh, "pid_integral", pid_integral);
         pid_derivative = getParamOrDefault(
-            nh, "ubiquity_motor/pid_derivative", pid_derivative);
+            nh, "pid_derivative", pid_derivative);
         pid_velocity = getParamOrDefault(
-            nh, "ubiquity_motor/pid_velocity", pid_velocity);
+            nh, "pid_velocity", pid_velocity);
         pid_denominator = getParamOrDefault(
-            nh, "ubiquity_motor/pid_denominator", pid_denominator);
+            nh, "pid_denominator", pid_denominator);
         pid_moving_buffer_size = getParamOrDefault(
-            nh, "ubiquity_motor/window_size", pid_moving_buffer_size);
+            nh, "window_size", pid_moving_buffer_size);
         controller_board_version = getParamOrDefault(
-            nh, "ubiquity_motor/controller_board_version", controller_board_version);
+            nh, "controller_board_version", controller_board_version);
         estop_detection = getParamOrDefault(
-            nh, "ubiquity_motor/fw_estop_detection", estop_detection);
+            nh, "fw_estop_detection", estop_detection);
         estop_pid_threshold = getParamOrDefault(
-            nh, "ubiquity_motor/fw_estop_pid_threshold", estop_pid_threshold);
+            nh, "fw_estop_pid_threshold", estop_pid_threshold);
         max_speed_fwd = getParamOrDefault(
-            nh, "ubiquity_motor/fw_max_speed_fwd", max_speed_fwd);
+            nh, "fw_max_speed_fwd", max_speed_fwd);
         max_speed_rev = getParamOrDefault(
-            nh, "ubiquity_motor/fw_max_speed_rev", max_speed_rev);
+            nh, "fw_max_speed_rev", max_speed_rev);
         max_pwm = getParamOrDefault(
-            nh, "ubiquity_motor/fw_max_pwm", max_pwm);
+            nh, "fw_max_pwm", max_pwm);
         deadman_timer = getParamOrDefault(
-            nh, "ubiquity_motor/deadman_timer", deadman_timer);
+            nh, "deadman_timer", deadman_timer);
         deadzone_enable = getParamOrDefault(
-            nh, "ubiquity_motor/deadzone_enable", deadzone_enable);
+            nh, "deadzone_enable", deadzone_enable);
         battery_voltage_offset = getParamOrDefault(
-            nh, "ubiquity_motor/battery_voltage_offset", battery_voltage_offset);
+            nh, "battery_voltage_offset", battery_voltage_offset);
         battery_voltage_multiplier = getParamOrDefault(
-            nh, "ubiquity_motor/battery_voltage_multiplier", battery_voltage_multiplier);
+            nh, "battery_voltage_multiplier", battery_voltage_multiplier);
         battery_voltage_low_level = getParamOrDefault(
-            nh, "ubiquity_motor/battery_voltage_low_level", battery_voltage_low_level);
+            nh, "battery_voltage_low_level", battery_voltage_low_level);
         battery_voltage_critical = getParamOrDefault(
-            nh, "ubiquity_motor/battery_voltage_critical", battery_voltage_critical);
+            nh, "battery_voltage_critical", battery_voltage_critical);
         // clang-format on
     };
 };
@@ -164,9 +164,9 @@ struct CommsParams {
         : serial_port("/dev/ttyS0"), baud_rate(9600) {
         // clang-format off
         serial_port = getParamOrDefault(
-            nh, "ubiquity_motor/serial_port", serial_port);
+            nh, "serial_port", serial_port);
         baud_rate = getParamOrDefault(
-            nh, "ubiquity_motor/serial_baud", baud_rate);
+            nh, "serial_baud", baud_rate);
         // clang-format on
     };
 };
@@ -176,17 +176,30 @@ struct NodeParams {
     std::string wheel_type;
     std::string wheel_direction;
 
-    NodeParams() : controller_loop_rate(10.0), wheel_type("firmware_default"), wheel_direction("firmware_default"){};
+    std::string left_joint;
+    std::string right_joint;
+
+    NodeParams()
+        : controller_loop_rate(10.0),
+          wheel_type("firmware_default"),
+          wheel_direction("firmware_default"),
+	  left_joint("left_wheel_joint"),
+	  right_joint("right_wheel_joint"){};
+
     NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0),
         wheel_type("firmware_default"),
         wheel_direction("firmware_default") {
         // clang-format off
         controller_loop_rate = getParamOrDefault(
-            nh, "ubiquity_motor/controller_loop_rate", controller_loop_rate);
+            nh, "controller_loop_rate", controller_loop_rate);
         wheel_type = getParamOrDefault(
-            nh, "ubiquity_motor/wheel_type", wheel_type);
+            nh, "wheel_type", wheel_type);
         wheel_direction = getParamOrDefault(
-            nh, "ubiquity_motor/wheel_direction", wheel_direction);
+            nh, "wheel_direction", wheel_direction);
+        left_joint = getParamOrDefault(
+            nh, "left_joint", left_joint);
+        right_joint = getParamOrDefault(
+            nh, "right_joint", right_joint);
         // clang-format on
     };
 };
