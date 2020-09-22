@@ -391,6 +391,7 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
 
     // ROS_ERROR("velocity_command %f rad/s %f rad/s",
     // joints_[WheelJointLocation::Left].velocity_command, joints_[WheelJointLocation::Right].velocity_command);
+    // joints_[LEFT_WHEEL_JOINT].velocity_command, joints_[RIGHT_WHEEL_JOINT].velocity_command);
     // ROS_ERROR("SPEEDS %d %d", left.getData(), right.getData());
 }
 
@@ -483,8 +484,9 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
 
 // Setup the Wheel Type. Overrides mode in use on hardware  
 // This used to only be standard but THIN_WHEELS were added in Jun 2020
-void MotorHardware::setWheelType(int32_t wheel_type) {
+void MotorHardware::setWheelType(int32_t new_wheel_type) {
     ROS_INFO_ONCE("setting MCB wheel type %d", (int)wheel_type);
+    wheel_type = new_wheel_type;
     MotorMessage ho;
     ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
     ho.setType(MotorMessage::TYPE_WRITE);
@@ -595,6 +597,21 @@ void MotorHardware::setParams(FirmwareParams fp) {
     fw_params.estop_pid_threshold = fp.estop_pid_threshold;
 }
 
+// Forces next calls to sendParams() to always update each parameter.
+// KEEP THIS IN SYNC WITH CHANGES TO sendParams()
+void MotorHardware::forcePidParamUpdates() {
+
+    // Reset each of the flags that causes parameters to be  sent to MCB by sendParams()
+    prev_fw_params.pid_proportional = -1;
+    prev_fw_params.pid_integral = -1;
+    prev_fw_params.pid_derivative = -1;
+    prev_fw_params.pid_velocity = -1;
+    prev_fw_params.pid_denominator = -1;
+    prev_fw_params.pid_moving_buffer_size = -1;
+    prev_fw_params.max_pwm = -1;
+
+}
+
 void MotorHardware::sendParams() {
     std::vector<MotorMessage> commands;
 
@@ -696,6 +713,11 @@ void MotorHardware::sendParams() {
     if (commands.size() != 0) {
         motor_serial_->transmitCommands(commands);
     }
+}
+
+// Get current battery voltage
+float MotorHardware::getBatteryVoltage(void) {
+    return motor_diag_.battery_voltage;   // We keep battery_voltage in diagnostic context
 }
 
 void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
