@@ -549,6 +549,17 @@ void MotorHardware::setWheelType(int32_t wheel_type) {
     motor_serial_->transmitCommand(mm);
 }
 
+// Do a one time NULL of the wheel setpoint based on current position error
+// This allows to relieve stress in static situation where wheels cannot slip to match setpoint
+void MotorHardware::nullWheelErrors(void) {
+    ROS_INFO("Nulling MCB wheel errors using current wheel positions");
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_WHEEL_NULL_ERR);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(MotorOrWheelNumber::Motor_M1|MotorOrWheelNumber::Motor_M2);
+    motor_serial_->transmitCommand(mm);
+}
+
 // Setup the Wheel direction. Overrides mode in use on hardware  
 // This allows for customer to install wheels on cutom robots as they like
 void MotorHardware::setWheelDirection(int32_t wheel_direction) {

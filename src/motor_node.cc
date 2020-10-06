@@ -203,6 +203,20 @@ int main(int argc, char* argv[]) {
         mcbStatusPeriodSec.sleep();
     }
 
+    // Certain 4WD robots rely on wheels to skid to reach final positions.
+    // For such robots when loaded down the wheels can get in a state where they cannot skid.
+    // This leads to motor overheating.  This code below sacrifices accurate odometry which
+    // in not achievable in such robots anyway to relieve high wattage static drive currents
+    // at zero velocity that are due to inability of wheels to slip tiny amounts.
+    int32_t wheel_slip_nulling = 0;
+    if (robot->firmware_version >= MIN_FW_WHEEL_NULL_ERROR) {
+        if (node_params.wheel_slip_nulling == "enabled") {
+            wheel_slip_nulling = 1;
+            ROS_INFO_ONCE("Wheel slip nulling will be enabled for when velocity remains at zero.");
+        }
+    }
+
+
     // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
     // We could re-read periodically but perhaps only every 5-10 sec but should do it from main loop
     if (robot->firmware_version >= MIN_FW_OPTION_SWITCH) {
@@ -253,6 +267,8 @@ int main(int argc, char* argv[]) {
     double leftWheelPos  = 0.0;
     double rightWheelPos = 0.0;
     robot-> getWheelJointPositions(leftLastWheelPos, rightWheelPos);
+    ros::Duration zeroVelocityTime(0.0);
+    ros::Duration wheelSlipNullingPeriod(5.0);
 
     ROS_INFO("Starting motor control node now");
 
@@ -291,6 +307,24 @@ int main(int argc, char* argv[]) {
 
             // Publish motor state at this time
             robot->publishMotorState();
+
+            // Implement static wheel slippage relief
+            // Deal with auto-null of MCB wheel setpoints if wheel slip nulling is enabled
+            if (wheel_slip_nulling != 0) {
+                if ((leftWheelVel == 0.0) && (rightWheelVel == 0.0)) {
+                    zeroVelocityTime += jointUpdatePeriod;   // add to time at zero velocity
+                    if (zeroVelocityTime > wheelSlipNullingPeriod) {
+                        // null wheel error if at zero velocity for the nulling check period
+                        // OPTION: We could also just null wheels at high wheel power   
+                        ROS_INFO("Applying wheel slip relief  now");
+                        robot->nullWheelErrors();
+                        zeroVelocityTime = ros::Duration(0.0);   // reset time we have been at zero velocity
+                    }
+                } else {
+                    zeroVelocityTime = ros::Duration(0.0);   // reset time we have been at zero velocity
+                }
+            }
+
         }
 
         robot->readInputs();
@@ -336,6 +370,7 @@ int main(int argc, char* argv[]) {
                 mcbStatusPeriodSec.sleep();
             }
         }
+
 
         // Update motor controller speeds.
         if (robot->getEstopState()) {
