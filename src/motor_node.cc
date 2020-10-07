@@ -215,6 +215,7 @@ int main(int argc, char* argv[]) {
             ROS_INFO_ONCE("Wheel slip nulling will be enabled for when velocity remains at zero.");
         }
     }
+    wheel_slip_nulling = 1;  // !!! DEBUG HACK TILL ROS Param implemented
 
 
     // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
@@ -311,7 +312,7 @@ int main(int argc, char* argv[]) {
             // Implement static wheel slippage relief
             // Deal with auto-null of MCB wheel setpoints if wheel slip nulling is enabled
             if (wheel_slip_nulling != 0) {
-                if ((leftWheelVel == 0.0) && (rightWheelVel == 0.0)) {
+                if (robot->areWheelSpeedsLower(0.01) != 0) {
                     zeroVelocityTime += jointUpdatePeriod;   // add to time at zero velocity
                     if (zeroVelocityTime > wheelSlipNullingPeriod) {
                         // null wheel error if at zero velocity for the nulling check period

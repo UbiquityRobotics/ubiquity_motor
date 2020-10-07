@@ -134,6 +134,7 @@ public:
     void readInputs();
     void writeSpeeds();
     void writeSpeedsInRadians(double  left_radians, double  right_radians);
+    int  areWheelSpeedsLower(double wheelSpeedRadPerSec);
     void requestFirmwareVersion();
     void requestFirmwareDate();
     void setParams(FirmwareParams firmware_params);
