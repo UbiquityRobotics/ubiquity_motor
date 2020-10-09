@@ -192,6 +192,7 @@ int main(int argc, char* argv[]) {
         mcbStatusPeriodSec.sleep();
     }
 
+
     // Tell the controller board firmware what version the hardware is at this time.
     // TODO: Read from I2C.   At this time we only allow setting the version from ros parameters
     if (robot->firmware_version >= MIN_FW_HW_VERSION_SET) {
@@ -209,14 +210,14 @@ int main(int argc, char* argv[]) {
     // in not achievable in such robots anyway to relieve high wattage static drive currents
     // at zero velocity that are due to inability of wheels to slip tiny amounts.
     int32_t wheel_slip_nulling = 0;
-    if (robot->firmware_version >= MIN_FW_WHEEL_NULL_ERROR) {
-        if (node_params.wheel_slip_nulling == "enabled") {
-            wheel_slip_nulling = 1;
-            ROS_INFO_ONCE("Wheel slip nulling will be enabled for when velocity remains at zero.");
-        }
+    if ((robot->firmware_version >= MIN_FW_WHEEL_NULL_ERROR) && (node_params.drive_type == "4wd")) {
+        wheel_slip_nulling = 1;
+        ROS_INFO_ONCE("Wheel slip nulling will be enabled for this 4wd system when velocity remains at zero.");
     }
-    wheel_slip_nulling = 1;  // !!! DEBUG HACK TILL ROS Param implemented
 
+    wheel_slip_nulling = 1;   // !!! DEBUG HACK !!! Force to 1 for avalon code till param flows to here
+    ROS_INFO("DEBUG: FORCING Chassis drive_type to 4wd till ROS param works");
+    // Use when ROS Param works ROS_INFO("Chassis drive_type is set to '%s'", node_params.drive_type.c_str());
 
     // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
     // We could re-read periodically but perhaps only every 5-10 sec but should do it from main loop
@@ -349,9 +350,10 @@ int main(int argc, char* argv[]) {
             mcbStatusPeriodSec.sleep();
             last_sys_maint_time = ros::Time::now();
 
-            // Periodic Status message. This can improve over time such as cpu load, %mem left
-            ROS_INFO("Motor controller running. MCB System events 0x%x  Wheel type is '%s'", 
-                robot->system_events, (wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
+            // Post a status message for MCB state periodically. This may be nice to do more on as required
+            ROS_INFO("Battery = %5.2f volts, MCB system events 0x%x, Wheel type '%s'",
+                robot->getBatteryVoltage(), robot->system_events, 
+                (wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
 
             // If we detect a power-on of MCB we should re-initialize MCB
             if ((robot->system_events & MotorMessage::SYS_EVENT_POWERON) != 0) {

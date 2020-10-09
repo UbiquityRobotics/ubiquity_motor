@@ -175,23 +175,22 @@ struct NodeParams {
     double controller_loop_rate;
     std::string wheel_type;
     std::string wheel_direction;
-
+    std::string drive_type;
     std::string left_joint;
     std::string right_joint;
-
-    std::string wheel_slip_nulling;
 
     NodeParams()
         : controller_loop_rate(10.0),
           wheel_type("firmware_default"),
           wheel_direction("firmware_default"),
+          drive_type("2wd"),
 	  left_joint("left_wheel_joint"),
-	  right_joint("right_wheel_joint"),
-	  wheel_slip_nulling("disabled"){};
+	  right_joint("right_wheel_joint"){};
 
     NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0),
         wheel_type("firmware_default"),
-        wheel_direction("firmware_default") {
+        wheel_direction("firmware_default"),
+        drive_type("2wd") {
         // clang-format off
         controller_loop_rate = getParamOrDefault(
             nh, "controller_loop_rate", controller_loop_rate);
@@ -199,12 +198,12 @@ struct NodeParams {
             nh, "wheel_type", wheel_type);
         wheel_direction = getParamOrDefault(
             nh, "wheel_direction", wheel_direction);
+        drive_type = getParamOrDefault(
+            nh, "drive_type", drive_type);
         left_joint = getParamOrDefault(
             nh, "left_joint", left_joint);
         right_joint = getParamOrDefault(
             nh, "right_joint", right_joint);
-        wheel_slip_nulling = getParamOrDefault(
-            nh, "wheel_slip_nulling", wheel_slip_nulling);
         // clang-format on
     };
 };

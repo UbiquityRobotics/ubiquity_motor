@@ -784,6 +784,11 @@ void MotorHardware::sendParams() {
     }
 }
 
+// Get current battery voltage
+float MotorHardware::getBatteryVoltage(void) {
+    return motor_diag_.battery_voltage;   // We keep battery_voltage in diagnostic context
+}
+
 void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
     std::vector<MotorMessage> commands;
 

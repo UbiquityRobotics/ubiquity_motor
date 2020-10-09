@@ -139,6 +139,7 @@ public:
     void requestFirmwareDate();
     void setParams(FirmwareParams firmware_params);
     void sendParams();
+    float getBatteryVoltage(void);
     void setDeadmanTimer(int32_t deadman);
     void setDeadzoneEnable(int32_t deadzone_enable);
     void setDebugLeds(bool led1, bool led2);
