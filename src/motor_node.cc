@@ -192,6 +192,7 @@ int main(int argc, char* argv[]) {
         mcbStatusPeriodSec.sleep();
     }
 
+
     // Tell the controller board firmware what version the hardware is at this time.
     // TODO: Read from I2C.   At this time we only allow setting the version from ros parameters
     if (robot->firmware_version >= MIN_FW_HW_VERSION_SET) {
@@ -202,6 +203,21 @@ int main(int argc, char* argv[]) {
             firmware_params.controller_board_version);
         mcbStatusPeriodSec.sleep();
     }
+
+    // Certain 4WD robots rely on wheels to skid to reach final positions.
+    // For such robots when loaded down the wheels can get in a state where they cannot skid.
+    // This leads to motor overheating.  This code below sacrifices accurate odometry which
+    // in not achievable in such robots anyway to relieve high wattage static drive currents
+    // at zero velocity that are due to inability of wheels to slip tiny amounts.
+    int32_t wheel_slip_nulling = 0;
+    if ((robot->firmware_version >= MIN_FW_WHEEL_NULL_ERROR) && (node_params.drive_type == "4wd")) {
+        wheel_slip_nulling = 1;
+        ROS_INFO_ONCE("Wheel slip nulling will be enabled for this 4wd system when velocity remains at zero.");
+    }
+
+    wheel_slip_nulling = 1;   // !!! DEBUG HACK !!! Force to 1 for avalon code till param flows to here
+    ROS_INFO("DEBUG: FORCING Chassis drive_type to 4wd till ROS param works");
+    // Use when ROS Param works ROS_INFO("Chassis drive_type is set to '%s'", node_params.drive_type.c_str());
 
     // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
     // We could re-read periodically but perhaps only every 5-10 sec but should do it from main loop
@@ -253,6 +269,8 @@ int main(int argc, char* argv[]) {
     double leftWheelPos  = 0.0;
     double rightWheelPos = 0.0;
     robot-> getWheelJointPositions(leftLastWheelPos, rightWheelPos);
+    ros::Duration zeroVelocityTime(0.0);
+    ros::Duration wheelSlipNullingPeriod(5.0);
 
     ROS_INFO("Starting motor control node now");
 
@@ -291,6 +309,24 @@ int main(int argc, char* argv[]) {
 
             // Publish motor state at this time
             robot->publishMotorState();
+
+            // Implement static wheel slippage relief
+            // Deal with auto-null of MCB wheel setpoints if wheel slip nulling is enabled
+            if (wheel_slip_nulling != 0) {
+                if (robot->areWheelSpeedsLower(0.01) != 0) {
+                    zeroVelocityTime += jointUpdatePeriod;   // add to time at zero velocity
+                    if (zeroVelocityTime > wheelSlipNullingPeriod) {
+                        // null wheel error if at zero velocity for the nulling check period
+                        // OPTION: We could also just null wheels at high wheel power   
+                        ROS_INFO("Applying wheel slip relief  now");
+                        robot->nullWheelErrors();
+                        zeroVelocityTime = ros::Duration(0.0);   // reset time we have been at zero velocity
+                    }
+                } else {
+                    zeroVelocityTime = ros::Duration(0.0);   // reset time we have been at zero velocity
+                }
+            }
+
         }
 
         robot->readInputs();
@@ -314,9 +350,10 @@ int main(int argc, char* argv[]) {
             mcbStatusPeriodSec.sleep();
             last_sys_maint_time = ros::Time::now();
 
-            // Periodic Status message. This can improve over time such as cpu load, %mem left
-            ROS_INFO("Motor controller running. MCB System events 0x%x  Wheel type is '%s'", 
-                robot->system_events, (wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
+            // Post a status message for MCB state periodically. This may be nice to do more on as required
+            ROS_INFO("Battery = %5.2f volts, MCB system events 0x%x, Wheel type '%s'",
+                robot->getBatteryVoltage(), robot->system_events, 
+                (wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
 
             // If we detect a power-on of MCB we should re-initialize MCB
             if ((robot->system_events & MotorMessage::SYS_EVENT_POWERON) != 0) {
@@ -336,6 +373,7 @@ int main(int argc, char* argv[]) {
                 mcbStatusPeriodSec.sleep();
             }
         }
+
 
         // Update motor controller speeds.
         if (robot->getEstopState()) {

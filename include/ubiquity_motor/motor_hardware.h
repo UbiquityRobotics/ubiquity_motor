@@ -134,10 +134,12 @@ public:
     void readInputs();
     void writeSpeeds();
     void writeSpeedsInRadians(double  left_radians, double  right_radians);
+    int  areWheelSpeedsLower(double wheelSpeedRadPerSec);
     void requestFirmwareVersion();
     void requestFirmwareDate();
     void setParams(FirmwareParams firmware_params);
     void sendParams();
+    float getBatteryVoltage(void);
     void setDeadmanTimer(int32_t deadman);
     void setDeadzoneEnable(int32_t deadzone_enable);
     void setDebugLeds(bool led1, bool led2);
@@ -149,6 +151,7 @@ public:
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
     void setWheelType(int32_t wheel_type);
+    void nullWheelErrors(void);
     void setWheelDirection(int32_t wheel_direction);
     void getMotorCurrents(double &currentLeft, double &currentRight);
     int  getOptionSwitch(void);
@@ -200,6 +203,12 @@ private:
 
         Joint() : position(0), velocity(0), effort(0), velocity_command(0) {}
     } joints_[2];
+
+    // MessageTypes enum for refering to motor or wheel number
+    enum MotorOrWheelNumber {
+        Motor_M1 = 1,
+        Motor_M2 = 2
+    };
 
     // MessageTypes enum in class to avoid global namespace pollution
     enum WheelJointLocation {

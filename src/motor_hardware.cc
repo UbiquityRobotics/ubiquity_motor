@@ -457,6 +457,24 @@ void MotorHardware::writeSpeeds() {
     writeSpeedsInRadians(left_radians, right_radians);
 }
 
+// areWheelSpeedsZero()  Determine if all wheel joint speeds are below given threshold
+//
+int MotorHardware::areWheelSpeedsLower(double wheelSpeedRadPerSec) {
+    int retCode = 0;
+
+    // This call pulls in speeds from the joints array maintained by other layers
+
+    double  left_radians  = joints_[WheelJointLocation::Left].velocity_command;
+    double  right_radians = joints_[WheelJointLocation::Right].velocity_command;
+
+    if ((std::abs(left_radians)  < wheelSpeedRadPerSec) && 
+        (std::abs(right_radians) < wheelSpeedRadPerSec)) {
+        retCode = 1;
+    }
+        
+    return retCode;
+}
+
 void MotorHardware::requestFirmwareVersion() {
     MotorMessage fw_version_msg;
     fw_version_msg.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
@@ -546,6 +564,17 @@ void MotorHardware::setWheelType(int32_t wheel_type) {
     mm.setRegister(MotorMessage::REG_WHEEL_TYPE);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(wheel_type);
+    motor_serial_->transmitCommand(mm);
+}
+
+// Do a one time NULL of the wheel setpoint based on current position error
+// This allows to relieve stress in static situation where wheels cannot slip to match setpoint
+void MotorHardware::nullWheelErrors(void) {
+    ROS_INFO("Nulling MCB wheel errors using current wheel positions");
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_WHEEL_NULL_ERR);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(MotorOrWheelNumber::Motor_M1|MotorOrWheelNumber::Motor_M2);
     motor_serial_->transmitCommand(mm);
 }
 
@@ -753,6 +782,11 @@ void MotorHardware::sendParams() {
     if (commands.size() != 0) {
         motor_serial_->transmitCommands(commands);
     }
+}
+
+// Get current battery voltage
+float MotorHardware::getBatteryVoltage(void) {
+    return motor_diag_.battery_voltage;   // We keep battery_voltage in diagnostic context
 }
 
 void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
