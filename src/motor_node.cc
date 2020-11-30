@@ -250,6 +250,13 @@ int main(int argc, char* argv[]) {
         mcbStatusPeriodSec.sleep();
     }
 
+    // Setup PID control bits if supported in firmware
+    if ((robot->firmware_version >= MIN_FW_PID_CONTROL_REV2) && (robot->pid_control != 0)) {
+        robot->setPidControl(robot->pid_control);
+        mcbStatusPeriodSec.sleep();
+    }
+
+
     // Send out the refreshable firmware parameters, most are the PID terms
     // We must be sure num_fw_params is set to the modulo used in sendParams()
     for (int i = 0; i < robot->num_fw_params; i++) {

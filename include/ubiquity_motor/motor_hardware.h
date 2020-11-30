@@ -151,6 +151,7 @@ public:
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
     void setWheelType(int32_t wheel_type);
+    void setPidControl(int32_t pid_control);
     void nullWheelErrors(void);
     void setWheelDirection(int32_t wheel_direction);
     void getMotorCurrents(double &currentLeft, double &currentRight);
@@ -170,6 +171,7 @@ public:
     int max_speed_fwd;
     int max_speed_rev;
     int max_pwm;
+    int pid_control;
     int deadman_enable;
     int system_events;
 

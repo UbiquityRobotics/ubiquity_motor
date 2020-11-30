@@ -567,6 +567,16 @@ void MotorHardware::setWheelType(int32_t wheel_type) {
     motor_serial_->transmitCommand(mm);
 }
 
+// Setup the PID control options. Overrides modes in use on hardware  
+void MotorHardware::setPidControl(int32_t pid_control_word) {
+    ROS_INFO_ONCE("setting MCB pid control word to 0x%x", (int)pid_control_word);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_PID_CONTROL);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(pid_control_word);
+    motor_serial_->transmitCommand(mm);
+}
+
 // Do a one time NULL of the wheel setpoint based on current position error
 // This allows to relieve stress in static situation where wheels cannot slip to match setpoint
 void MotorHardware::nullWheelErrors(void) {

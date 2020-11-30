@@ -57,6 +57,7 @@ typedef boost::array<uint8_t, 8> RawMotorMessage;
 #define MIN_FW_PID_RDY_REGS       37
 #define MIN_FW_WHEEL_DIRECTION    38
 #define MIN_FW_WHEEL_NULL_ERROR   38
+#define MIN_FW_PID_CONTROL_REV2   39
 
 // It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
 // In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose
@@ -101,7 +102,7 @@ public:
         REG_RIGHT_CURRENT = 0x0F,       // Electrical Current readback for M2 motor
 
         REG_WHEEL_TYPE = 0x10,          // The type of wheel-motor in use
-        REG_5V_MAIN_ERROR = 0x11,       // Deprecated
+        REG_PID_ERROR_CAP = 0x11,       // An error term cap used only if out of wack mode is active [v39]
         REG_OPTION_SWITCH = 0x12,       // Setting of MCB option jumpers and rev
         REG_PWM_OVERRIDE = 0x13,
         REG_PID_CONTROL = 0x14,         // A write to this register controls Pid param setup and calculations

@@ -50,6 +50,7 @@ struct FirmwareParams {
     int32_t pid_velocity;
     int32_t pid_denominator;
     int32_t pid_moving_buffer_size;
+    int32_t pid_control;
     int32_t controller_board_version;
     int32_t estop_detection;
     int32_t estop_pid_threshold;
@@ -73,6 +74,7 @@ struct FirmwareParams {
           pid_velocity(0),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
+          pid_control(0),
           controller_board_version(49),
           estop_detection(1),
           estop_pid_threshold(1500),
@@ -96,6 +98,7 @@ struct FirmwareParams {
           pid_velocity(0),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
+          pid_control(0),
           controller_board_version(49),
           estop_detection(1),
           estop_pid_threshold(1500),
@@ -123,6 +126,8 @@ struct FirmwareParams {
             nh, "pid_velocity", pid_velocity);
         pid_denominator = getParamOrDefault(
             nh, "pid_denominator", pid_denominator);
+        pid_control = getParamOrDefault(
+            nh, "pid_control", pid_control);
         pid_moving_buffer_size = getParamOrDefault(
             nh, "window_size", pid_moving_buffer_size);
         controller_board_version = getParamOrDefault(
