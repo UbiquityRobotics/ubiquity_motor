@@ -65,6 +65,7 @@ struct MotorDiagnostics {
     int fw_pid_proportional = 0;
     int fw_pid_integral = 0;
     int fw_pid_derivative = 0;
+    int fw_pid_control = 0;
     int fw_pid_velocity = 0;
     int fw_pid_denominator = 0;
     int fw_pid_moving_buffer_size = 0;
@@ -156,6 +157,7 @@ public:
     void setWheelDirection(int32_t wheel_direction);
     void getMotorCurrents(double &currentLeft, double &currentRight);
     int  getOptionSwitch(void);
+    int  getPidControlWord(void);
     void setOptionSwitchReg(int32_t option_switch);
     void requestSystemEvents();
     void setSystemEvents(int32_t system_events);

@@ -250,13 +250,6 @@ int main(int argc, char* argv[]) {
         mcbStatusPeriodSec.sleep();
     }
 
-    // Setup PID control bits if supported in firmware
-    if ((robot->firmware_version >= MIN_FW_PID_CONTROL_REV2) && (robot->pid_control != 0)) {
-        robot->setPidControl(robot->pid_control);
-        mcbStatusPeriodSec.sleep();
-    }
-
-
     // Send out the refreshable firmware parameters, most are the PID terms
     // We must be sure num_fw_params is set to the modulo used in sendParams()
     for (int i = 0; i < robot->num_fw_params; i++) {
@@ -358,8 +351,8 @@ int main(int argc, char* argv[]) {
             last_sys_maint_time = ros::Time::now();
 
             // Post a status message for MCB state periodically. This may be nice to do more on as required
-            ROS_INFO("Battery = %5.2f volts, MCB system events 0x%x, Wheel type '%s'",
-                robot->getBatteryVoltage(), robot->system_events, 
+            ROS_INFO("Battery = %5.2f V, MCB sys events 0x%x, PidCtrl 0x%x, WheelType '%s'",
+                robot->getBatteryVoltage(), robot->system_events, robot->getPidControlWord(),
                 (wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
 
             // If we detect a power-on of MCB we should re-initialize MCB

@@ -107,7 +107,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsPa
     rightCurrent = nh.advertise<std_msgs::Float32>("right_current", 1);
 
     sendPid_count = 0;
-    num_fw_params = 7;     // number of params sent if any change
+    num_fw_params = 8;     // number of params sent if any change
 
     estop_motor_power_off = false;  // Keeps state of ESTOP switch where true is in ESTOP state
 
@@ -121,6 +121,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsPa
     prev_fw_params.pid_derivative = -1;
     prev_fw_params.pid_velocity = -1;
     prev_fw_params.pid_denominator = -1;
+    prev_fw_params.pid_control = -1;
     prev_fw_params.pid_moving_buffer_size = -1;
     prev_fw_params.max_speed_fwd = -1;
     prev_fw_params.max_speed_rev = -1;
@@ -599,6 +600,13 @@ void MotorHardware::setWheelDirection(int32_t wheel_direction) {
     motor_serial_->transmitCommand(mm);
 }
 
+// A simple fetch of the pid_control word from firmware params
+int MotorHardware::getPidControlWord(void) {
+    int pidControlWord;
+    pidControlWord = motor_diag_.fw_pid_control;
+    return pidControlWord;
+}
+
 // Read the controller board option switch itself that resides on the I2C bus but is on the MCB
 // This call inverts the bits because a shorted option switch is a 0 where we want it as 1
 // If return is negative something went wrong
@@ -687,6 +695,7 @@ void MotorHardware::setParams(FirmwareParams fp) {
     fw_params.pid_denominator = fp.pid_denominator;
     fw_params.pid_moving_buffer_size = fp.pid_moving_buffer_size;
     fw_params.pid_denominator = fp.pid_denominator;
+    fw_params.pid_control = fp.pid_control;
     fw_params.max_pwm = fp.max_pwm;
     fw_params.estop_pid_threshold = fp.estop_pid_threshold;
 }
@@ -786,6 +795,19 @@ void MotorHardware::sendParams() {
         maxpwm.setData(fw_params.max_pwm);
         commands.push_back(maxpwm);
     }
+
+    if (cycle == 7 &&
+        fw_params.pid_control != prev_fw_params.pid_control) {
+        ROS_WARN("Setting PidParam pid_control to %d", fw_params.pid_control);
+        prev_fw_params.pid_control = fw_params.pid_control;
+        motor_diag_.fw_pid_control = fw_params.pid_control;
+        MotorMessage mmsg;
+        mmsg.setRegister(MotorMessage::REG_PID_CONTROL);
+        mmsg.setType(MotorMessage::TYPE_WRITE);
+        mmsg.setData(fw_params.pid_control);
+        commands.push_back(mmsg);
+    }
+
 
     // SUPPORT NOTE!  Adjust max modulo for total parameters in the cycle, be sure no duplicates used!
 
