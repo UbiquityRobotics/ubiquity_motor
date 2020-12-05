@@ -171,8 +171,18 @@ public:
 
     // PID Control values used in special register PID_CONTROL
     enum PidControlActions {
-        PID_CTRL_RESET               = 1,
-        PID_CTRL_PWM_OVERRIDE        = 2
+        PID_CTRL_NO_SPECIAL_MODES      = 0x000,
+        PID_CTRL_RESET                 = 0x001,    // Write this to this reg to do null of position error
+        PID_CTRL_PWM_OVERRIDE          = 0x002,    // When set we can directly set PWM. Used in testing
+        PID_CTRL_P_ONLY_ON_0_VEL       = 0x004,    // When velocity is zero just use P term for PID 
+        PID_CTRL_USE_ONLY_P_TERM       = 0x008,    // Ignores I and D terms in PID calculations
+        PID_CTRL_SQUARED_ERROR         = 0x010,    // Use an error squared term for enhanced low error turns
+        PID_CTRL_CAP_POS_SETPOINT      = 0x020,    // PID ctrl mode that keeps from letting error be too high
+        PID_CTRL_BOOST_P_TERM          = 0x040,    // Boosts Proportional gain if set
+        PID_CTRL_BOOST_P_TURBO         = 0x080,    // If in boost mode this sets even higher gain boost
+        PID_CTRL_AUTOSHIFT_TO_SQUARED  = 0x100,    // Will shift to P squared mode if rotating
+        PID_CTRL_AUTOSHIFT_TO_BOOST_P  = 0x200,    // Will shift to a higher P factor if rotating
+        PID_CTRL_USE_VELOCITY_TERM     = 0x800     // Allow a PID velocity term. IF it is 0 it has no effect
     };
 
     // Bitfield values for hardware options enabled in the firmware

@@ -581,7 +581,7 @@ void MotorHardware::setPidControl(int32_t pid_control_word) {
 // Do a one time NULL of the wheel setpoint based on current position error
 // This allows to relieve stress in static situation where wheels cannot slip to match setpoint
 void MotorHardware::nullWheelErrors(void) {
-    ROS_INFO("Nulling MCB wheel errors using current wheel positions");
+    ROS_DEBUG("Nulling MCB wheel errors using current wheel positions");
     MotorMessage mm;
     mm.setRegister(MotorMessage::REG_WHEEL_NULL_ERR);
     mm.setType(MotorMessage::TYPE_WRITE);

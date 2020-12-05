@@ -318,7 +318,7 @@ int main(int argc, char* argv[]) {
                     if (zeroVelocityTime > wheelSlipNullingPeriod) {
                         // null wheel error if at zero velocity for the nulling check period
                         // OPTION: We could also just null wheels at high wheel power   
-                        ROS_INFO("Applying wheel slip relief  now");
+                        ROS_DEBUG("Applying wheel slip relief  now");
                         robot->nullWheelErrors();
                         zeroVelocityTime = ros::Duration(0.0);   // reset time we have been at zero velocity
                     }
