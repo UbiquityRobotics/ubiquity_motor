@@ -14,7 +14,12 @@ To do a firmware upgrade for the motor controller board please see our instructi
 
 Firmware Revision History
 
-* `v36`  2020-04-12. Planned for release to production in mid 2020
+* `v39`  2020-11-29. Intended as latest qualified Magni release firmware
+    * Adds new modes for advanced wheel control options to improve higher load turning response.
+    * Adds new feedback and registers for indication of wheel currents and control state
+    * Added support for MCB rev 5.3 testpoints.  
+
+* `v37`  2020-06-20. Used as initial code on MCB board production. Not qualified for final product.
     * Contains built in selftest ability including a wheel test.
     * Contains runtime checks for power supply and main battery levels
 
