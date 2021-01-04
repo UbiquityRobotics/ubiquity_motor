@@ -1,22 +1,23 @@
 /*
   MCB Controller That Runs On The Arduino Platform for debug or very very simple controllers
 
-  Some basic MCB speed control for the Ubiquity Robotics Magni Robot is implemented
-  This code is meant for the Arduino Nano model.
+  A basic MCB speed control for the Ubiquity Robotics Magni Robot is implemented
+  This code is meant for the Arduino Nano model but because of how IDE works can easily be used
+  on other processors as supported by the Arduino IDE board support packages. .
 
-  This code could be used to build upon a far more complex robot based on the Arduino platform
-  or other platform supported by the Arduino IDE libraries.
+  This is meant as a debug tool for board bringup as well as example code showing how to send 
+  Magni commands with the way we do checksum and transmission over serial.
 
-  As a minimum the Arduino 5V level TX signal goes to MCB board P508  RX pin and Arduino Ground goes to P508 ground.
-  Optionally you can power the Arduino all from P508 because there is 5V VCC on P508 as well.
+  User needs to power up his Arduino Nano from a usb power source or directly from Magni P508  GND and VCC
+  The Arduino 5V level TX pin goes to the P508 5V RX pin and Arduino Ground goes to P508 ground.
+  Optionally you can power the Arduino all from P508 because there is 5V VCC on P508 as well to go to Nano +5 line.
   (Note that to do that you must tie MCB Vcc on P508 to Arduino 5V power because the spec for VIN is for 6V or more)
 
   Usage Instructions
-  - Ground the ENABLE_SPEED_PIN
-  - Connect tow 1k to 20k pots with each of the ends on GND and Vcc.  
-    Center tap of one pot to A1, center tap of other pot to A2.
-    Default with no jumpers is for each pot to separately control a single wheel.
-  - Optionally ground the ENABLE_JOYSTICK pin to interprit two pots as joystick
+  - Connect two 1k to 20k linear taper pots with each of the ends on GND and Vcc.  
+    Center tap of one pot to Arduino A1 and the center tap of the other pot to Arduino A2.
+  - Default with no jumpers is for each pot to separately control a single wheel.
+  - Optionally ground the ENABLE_JOYSTICK pin to interprit two pots as a simple joystick
   - Optionally a normaly closed switch from ground to ENABLE_SPEED_PIN for switch that must close to run motors
     When the ENABLE_SPEED_PIN is floating motors are enabled. When it goes to ground motors stop
 
