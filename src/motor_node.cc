@@ -30,12 +30,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <dynamic_reconfigure/server.h>
 #include <ros/ros.h>
+#include "std_msgs/String.h"
 #include <time.h>
 #include <ubiquity_motor/PIDConfig.h>
 #include <ubiquity_motor/motor_hardware.h>
 #include <ubiquity_motor/motor_message.h>
 #include <ubiquity_motor/motor_parameters.h>
 #include <boost/thread.hpp>
+#include <iostream>
 #include <string>
 #include "controller_manager/controller_manager.h"
 
@@ -44,6 +46,13 @@ static const double BILLION = 1000000000.0;
 static FirmwareParams g_firmware_params;
 static CommsParams    g_serial_params;
 static NodeParams     g_node_params;
+
+// We need to find an include file for these which have system wide usage
+#define ROS_TOPIC_SYSTEM_CONTROL  "system_control"    // A topic for system level control commands
+#define MOTOR_CONTROL_CMD      "motor_control"        // A mnumonic for a motor control system command
+#define MOTOR_CONTROL_ENABLE   "enable"               // Parameter for MOTOR_CONTROL_CMD to enable control
+#define MOTOR_CONTROL_DISABLE  "disable"              // Parameter for MOTOR_CONTROL_CMD to enable control
+int g_mcbEnabled = 1;
 
 // Until we have a holdoff for MCB message overruns we do this delay to be cautious
 // Twice the period for status reports from MCB
@@ -73,6 +82,25 @@ void PID_update_callback(const ubiquity_motor::PIDConfig& config,
     } else {
         ROS_ERROR("Unsupported dynamic_reconfigure level %u", level);
     }
+}
+
+// The system_control topic is used to be able to stop or start communications from the MCB
+// and thus allow live firmware updates or other direct MCB serial communications to happen
+// without the main control code trying to talk to the MCB
+void SystemControlCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_INFO("System control msg with content: '%s']", msg->data.c_str());
+
+    if ( msg->data.find(MOTOR_CONTROL_CMD) >= 0) {
+        // This is a motor control command.  See if it matches our known commands
+        if (msg->data.find(MOTOR_CONTROL_ENABLE) >= 0) {
+            ROS_INFO("System control msg to ENABLE control to MCB");
+            g_mcbEnabled = 1;
+        }
+        if (msg->data.find(MOTOR_CONTROL_ENABLE) >= 0) {
+            ROS_INFO("System control msg to DISABLtr control to MCB");
+            g_mcbEnabled = 0;
+        }
+     }
 }
 
 //  initMcbParameters()
@@ -186,6 +214,8 @@ int main(int argc, char* argv[]) {
 
     ros::Rate ctrlLoopDelay(g_node_params.controller_loop_rate);
 
+    int lastMcbEnabled = 1;
+
     std::unique_ptr<MotorHardware> robot = nullptr;
     // Keep trying to open serial
     {
@@ -204,6 +234,9 @@ int main(int argc, char* argv[]) {
     }
 
     controller_manager::ControllerManager cm(robot.get(), nh);
+
+    // Subscribe to the topic with overall system control ability
+    ros::Subscriber sub = nh.subscribe(ROS_TOPIC_SYSTEM_CONTROL, 1000, SystemControlCallback);
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
@@ -298,6 +331,24 @@ int main(int argc, char* argv[]) {
         current_time = ros::Time::now();
         elapsed_loop_time = current_time - last_loop_time;
         last_loop_time = current_time;
+
+        // If motor control is disabled skip the entire loop
+        if (g_mcbEnabled == 0) {
+            lastMcbEnabled = 0;
+            ctrlLoopDelay.sleep();        // Allow controller to process command
+            continue;
+        }
+        if (lastMcbEnabled == 0) {        // Were disabled but re-enabled so re-setup mcb
+            lastMcbEnabled = 1;
+            ROS_WARN("Motor controller went from offline to online!");
+            robot->setSystemEvents(0);  // Clear entire system events register
+            robot->system_events = 0;
+            mcbStatusPeriodSec.sleep();
+              
+            // Setup MCB parameters that are defined by host parameters in most cases
+            initMcbParameters(robot);
+            ROS_WARN("Motor controller has been re-initialized as we go back online");
+        }
 
         // Determine and set wheel velocities in rad/sec from hardware positions in rads
         ros::Duration elapsed_time = current_time - last_joint_time;
