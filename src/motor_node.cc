@@ -88,16 +88,14 @@ void PID_update_callback(const ubiquity_motor::PIDConfig& config,
 // and thus allow live firmware updates or other direct MCB serial communications to happen
 // without the main control code trying to talk to the MCB
 void SystemControlCallback(const std_msgs::String::ConstPtr& msg) {
-    ROS_INFO("System control msg with content: '%s']", msg->data.c_str());
+    ROS_DEBUG("System control msg with content: '%s']", msg->data.c_str());
 
-    if ( msg->data.find(MOTOR_CONTROL_CMD) >= 0) {
-        // This is a motor control command.  See if it matches our known commands
-        if (msg->data.find(MOTOR_CONTROL_ENABLE) >= 0) {
-            ROS_INFO("System control msg to ENABLE control to MCB");
+    if (msg->data.find(MOTOR_CONTROL_CMD) != std::string::npos) {
+        if (msg->data.find(MOTOR_CONTROL_ENABLE) != std::string::npos) {;
+            ROS_INFO("Received System control msg to ENABLE control of the MCB");
             g_mcbEnabled = 1;
-        }
-        if (msg->data.find(MOTOR_CONTROL_ENABLE) >= 0) {
-            ROS_INFO("System control msg to DISABLtr control to MCB");
+        } else if (msg->data.find(MOTOR_CONTROL_DISABLE) != std::string::npos) {
+            ROS_INFO("Received System control msg to DISABLE control of the MCB");
             g_mcbEnabled = 0;
         }
      }
