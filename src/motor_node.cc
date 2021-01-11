@@ -111,7 +111,7 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
     robot->forcePidParamUpdates();
 
     // Determine hardware options that can be set by the host to override firmware defaults
-    int32_t wheel_type = 0;
+    int32_t wheel_type = MotorMessage::OPT_WHEEL_TYPE_STANDARD;
     if (g_node_params.wheel_type == "firmware_default") {
         // Here there is no specification so the firmware default will be used
         ROS_INFO("Firmware default wheel_type will be used.");
@@ -383,9 +383,15 @@ int main(int argc, char* argv[]) {
             mcbStatusPeriodSec.sleep();
             last_sys_maint_time = ros::Time::now();
 
+			// See if we are in a low battery voltage state
+			std::string batStatus = "OK";
+			if (robot->getBatteryVoltage() < g_firmware_params.battery_voltage_low_level) {
+			    batStatus = "LOW!";
+			}
+
             // Post a status message for MCB state periodically. This may be nice to do more on as required
-            ROS_INFO("Battery = %5.2f volts, MCB system events 0x%x, Wheel type '%s'",
-                robot->getBatteryVoltage(), robot->system_events, 
+            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x, Wheel type '%s'",
+                robot->getBatteryVoltage(), batStatus.c_str(), robot->system_events, 
                 (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
 
             // If we detect a power-on of MCB we should re-initialize MCB
