@@ -160,8 +160,8 @@ void MotorHardware::closePort() {
 }
 
 // After we have given up the MCB we open serial port again using current instance of Serial
-void MotorHardware::openPort() {
-    motor_serial_->openPort();
+bool MotorHardware::openPort() {
+    return motor_serial_->openPort();
 }
 
 void MotorHardware::clearCommands() {

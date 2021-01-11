@@ -118,7 +118,7 @@ public:
                   FirmwareParams firmware_params);
     virtual ~MotorHardware();
     void closePort();
-    void openPort();
+    bool openPort();
     void clearCommands();
     void readInputs();
     void writeSpeeds();

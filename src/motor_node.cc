@@ -343,16 +343,22 @@ int main(int argc, char* argv[]) {
         }
 
         if (lastMcbEnabled == 0) {        // Were disabled but re-enabled so re-setup mcb
+            bool portOpenStatus;
             lastMcbEnabled = 1;
             ROS_WARN("Motor controller went from offline to online!");
-            robot->openPort();          // Must re-open serial port
-            robot->setSystemEvents(0);  // Clear entire system events register
-            robot->system_events = 0;
-            mcbStatusPeriodSec.sleep();
+            portOpenStatus = robot->openPort();  // Must re-open serial port
+            if (portOpenStatus == true) {
+                robot->setSystemEvents(0);  // Clear entire system events register
+                robot->system_events = 0;
+                mcbStatusPeriodSec.sleep();
               
-            // Setup MCB parameters that are defined by host parameters in most cases
-            initMcbParameters(robot);
-            ROS_WARN("Motor controller has been re-initialized as we go back online");
+                // Setup MCB parameters that are defined by host parameters in most cases
+                initMcbParameters(robot);
+                ROS_WARN("Motor controller has been re-initialized as we go back online");
+            } else {
+                // We do not have recovery from this situation and it seems not possible
+                ROS_ERROR("ERROR in re-opening of the Motor controller!");
+            }
         }
 
         // Determine and set wheel velocities in rad/sec from hardware positions in rads
