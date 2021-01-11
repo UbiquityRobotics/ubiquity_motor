@@ -330,15 +330,22 @@ int main(int argc, char* argv[]) {
         elapsed_loop_time = current_time - last_loop_time;
         last_loop_time = current_time;
 
-        // If motor control is disabled skip the entire loop
+        // Speical handling if motor control is disabled.  skip the entire loop
         if (g_mcbEnabled == 0) {
+            // Check for if we are just starting to go into idle mode and release MCB
+            if (lastMcbEnabled == 1) {
+                ROS_WARN("Motor controller going offline and closing MCB serial port");
+                robot->closePort();
+            }
             lastMcbEnabled = 0;
             ctrlLoopDelay.sleep();        // Allow controller to process command
             continue;
         }
+
         if (lastMcbEnabled == 0) {        // Were disabled but re-enabled so re-setup mcb
             lastMcbEnabled = 1;
             ROS_WARN("Motor controller went from offline to online!");
+            robot->openPort();          // Must re-open serial port
             robot->setSystemEvents(0);  // Clear entire system events register
             robot->system_events = 0;
             mcbStatusPeriodSec.sleep();

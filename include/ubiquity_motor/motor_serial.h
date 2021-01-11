@@ -51,6 +51,8 @@ public:
 
     MotorMessage receiveCommand();
     int commandAvailable();
+    void closePort();
+    int  openPort();
 
     MotorSerial(MotorSerial const&) = delete;
     MotorSerial& operator=(MotorSerial const&) = delete;

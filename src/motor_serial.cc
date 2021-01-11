@@ -75,6 +75,14 @@ int MotorSerial::commandAvailable() { return !output.fast_empty(); }
 
 void MotorSerial::appendOutput(MotorMessage command) { output.push(command); }
 
+void MotorSerial::closePort() { return motors.close(); }
+
+// After we have been offine this is called to re-open serial port
+int MotorSerial::openPort()  { 
+    //  TODO:  May need to be a bit clever here to do the   motors.open();
+    return 0;
+}
+
 void MotorSerial::SerialThread() {
     try {
         while (motors.isOpen()) {

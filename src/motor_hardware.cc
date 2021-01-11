@@ -153,6 +153,17 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
 
+// Close of the serial port is used in a special case of suspending the motor controller
+// so that another service can load firmware or do direct MCB diagnostics
+void MotorHardware::closePort() {
+    motor_serial_->closePort();
+}
+
+// After we have given up the MCB we open serial port again using current instance of Serial
+void MotorHardware::openPort() {
+    motor_serial_->openPort();
+}
+
 void MotorHardware::clearCommands() {
     for (size_t i = 0; i < sizeof(joints_) / sizeof(joints_[0]); i++) {
         joints_[i].velocity_command = 0;
