@@ -30,12 +30,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <dynamic_reconfigure/server.h>
 #include <ros/ros.h>
+#include "std_msgs/String.h"
 #include <time.h>
 #include <ubiquity_motor/PIDConfig.h>
 #include <ubiquity_motor/motor_hardware.h>
 #include <ubiquity_motor/motor_message.h>
 #include <ubiquity_motor/motor_parameters.h>
 #include <boost/thread.hpp>
+#include <iostream>
 #include <string>
 #include "controller_manager/controller_manager.h"
 
@@ -44,6 +46,13 @@ static const double BILLION = 1000000000.0;
 static FirmwareParams g_firmware_params;
 static CommsParams    g_serial_params;
 static NodeParams     g_node_params;
+
+// We need to find an include file for these which have system wide usage
+#define ROS_TOPIC_SYSTEM_CONTROL  "system_control"    // A topic for system level control commands
+#define MOTOR_CONTROL_CMD      "motor_control"        // A mnumonic for a motor control system command
+#define MOTOR_CONTROL_ENABLE   "enable"               // Parameter for MOTOR_CONTROL_CMD to enable control
+#define MOTOR_CONTROL_DISABLE  "disable"              // Parameter for MOTOR_CONTROL_CMD to enable control
+int g_mcbEnabled = 1;
 
 // Until we have a holdoff for MCB message overruns we do this delay to be cautious
 // Twice the period for status reports from MCB
@@ -75,6 +84,23 @@ void PID_update_callback(const ubiquity_motor::PIDConfig& config,
     }
 }
 
+// The system_control topic is used to be able to stop or start communications from the MCB
+// and thus allow live firmware updates or other direct MCB serial communications to happen
+// without the main control code trying to talk to the MCB
+void SystemControlCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_DEBUG("System control msg with content: '%s']", msg->data.c_str());
+
+    if (msg->data.find(MOTOR_CONTROL_CMD) != std::string::npos) {
+        if (msg->data.find(MOTOR_CONTROL_ENABLE) != std::string::npos) {;
+            ROS_INFO("Received System control msg to ENABLE control of the MCB");
+            g_mcbEnabled = 1;
+        } else if (msg->data.find(MOTOR_CONTROL_DISABLE) != std::string::npos) {
+            ROS_INFO("Received System control msg to DISABLE control of the MCB");
+            g_mcbEnabled = 0;
+        }
+     }
+}
+
 //  initMcbParameters()
 //
 //  Setup MCB parameters that are from host level options or settings
@@ -85,7 +111,7 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
     robot->forcePidParamUpdates();
 
     // Determine hardware options that can be set by the host to override firmware defaults
-    int32_t wheel_type = 0;
+    int32_t wheel_type = MotorMessage::OPT_WHEEL_TYPE_STANDARD;
     if (g_node_params.wheel_type == "firmware_default") {
         // Here there is no specification so the firmware default will be used
         ROS_INFO("Firmware default wheel_type will be used.");
@@ -186,6 +212,8 @@ int main(int argc, char* argv[]) {
 
     ros::Rate ctrlLoopDelay(g_node_params.controller_loop_rate);
 
+    int lastMcbEnabled = 1;
+
     std::unique_ptr<MotorHardware> robot = nullptr;
     // Keep trying to open serial
     {
@@ -204,6 +232,9 @@ int main(int argc, char* argv[]) {
     }
 
     controller_manager::ControllerManager cm(robot.get(), nh);
+
+    // Subscribe to the topic with overall system control ability
+    ros::Subscriber sub = nh.subscribe(ROS_TOPIC_SYSTEM_CONTROL, 1000, SystemControlCallback);
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
@@ -299,6 +330,37 @@ int main(int argc, char* argv[]) {
         elapsed_loop_time = current_time - last_loop_time;
         last_loop_time = current_time;
 
+        // Speical handling if motor control is disabled.  skip the entire loop
+        if (g_mcbEnabled == 0) {
+            // Check for if we are just starting to go into idle mode and release MCB
+            if (lastMcbEnabled == 1) {
+                ROS_WARN("Motor controller going offline and closing MCB serial port");
+                robot->closePort();
+            }
+            lastMcbEnabled = 0;
+            ctrlLoopDelay.sleep();        // Allow controller to process command
+            continue;
+        }
+
+        if (lastMcbEnabled == 0) {        // Were disabled but re-enabled so re-setup mcb
+            bool portOpenStatus;
+            lastMcbEnabled = 1;
+            ROS_WARN("Motor controller went from offline to online!");
+            portOpenStatus = robot->openPort();  // Must re-open serial port
+            if (portOpenStatus == true) {
+                robot->setSystemEvents(0);  // Clear entire system events register
+                robot->system_events = 0;
+                mcbStatusPeriodSec.sleep();
+              
+                // Setup MCB parameters that are defined by host parameters in most cases
+                initMcbParameters(robot);
+                ROS_WARN("Motor controller has been re-initialized as we go back online");
+            } else {
+                // We do not have recovery from this situation and it seems not possible
+                ROS_ERROR("ERROR in re-opening of the Motor controller!");
+            }
+        }
+
         // Determine and set wheel velocities in rad/sec from hardware positions in rads
         ros::Duration elapsed_time = current_time - last_joint_time;
         if (elapsed_time > jointUpdatePeriod) {
@@ -334,9 +396,15 @@ int main(int argc, char* argv[]) {
             mcbStatusPeriodSec.sleep();
             last_sys_maint_time = ros::Time::now();
 
+			// See if we are in a low battery voltage state
+			std::string batStatus = "OK";
+			if (robot->getBatteryVoltage() < g_firmware_params.battery_voltage_low_level) {
+			    batStatus = "LOW!";
+			}
+
             // Post a status message for MCB state periodically. This may be nice to do more on as required
-            ROS_INFO("Battery = %5.2f volts, MCB system events 0x%x, Wheel type '%s'",
-                robot->getBatteryVoltage(), robot->system_events, 
+            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x, Wheel type '%s'",
+                robot->getBatteryVoltage(), batStatus.c_str(), robot->system_events, 
                 (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
 
             // If we detect a power-on of MCB we should re-initialize MCB

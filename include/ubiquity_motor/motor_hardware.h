@@ -117,6 +117,8 @@ public:
     MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
                   FirmwareParams firmware_params);
     virtual ~MotorHardware();
+    void closePort();
+    bool openPort();
     void clearCommands();
     void readInputs();
     void writeSpeeds();

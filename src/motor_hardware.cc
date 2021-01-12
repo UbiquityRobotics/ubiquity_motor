@@ -153,6 +153,17 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
 
+// Close of the serial port is used in a special case of suspending the motor controller
+// so that another service can load firmware or do direct MCB diagnostics
+void MotorHardware::closePort() {
+    motor_serial_->closePort();
+}
+
+// After we have given up the MCB we open serial port again using current instance of Serial
+bool MotorHardware::openPort() {
+    return motor_serial_->openPort();
+}
+
 void MotorHardware::clearCommands() {
     for (size_t i = 0; i < sizeof(joints_) / sizeof(joints_[0]); i++) {
         joints_[i].velocity_command = 0;
@@ -485,13 +496,21 @@ void MotorHardware::setMaxFwdSpeed(int32_t max_speed_fwd) {
 // Setup the Wheel Type. Overrides mode in use on hardware
 // This used to only be standard but THIN_WHEELS were added in Jun 2020
 void MotorHardware::setWheelType(int32_t new_wheel_type) {
-    ROS_INFO_ONCE("setting MCB wheel type %d", (int)wheel_type);
-    wheel_type = new_wheel_type;
+
     MotorMessage ho;
-    ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
-    ho.setType(MotorMessage::TYPE_WRITE);
-    ho.setData(wheel_type);
-    motor_serial_->transmitCommand(ho);
+    switch(new_wheel_type) {
+        case MotorMessage::OPT_WHEEL_TYPE_STANDARD:
+        case MotorMessage::OPT_WHEEL_TYPE_THIN:
+            ROS_INFO_ONCE("setting MCB wheel type %d", (int)new_wheel_type);
+            wheel_type = new_wheel_type;
+            ho.setRegister(MotorMessage::REG_WHEEL_TYPE);
+            ho.setType(MotorMessage::TYPE_WRITE);
+            ho.setData(wheel_type);
+            motor_serial_->transmitCommand(ho);
+            break;
+        default:
+            ROS_ERROR("Illegal MCB wheel type 0x%x will not be set!", (int)new_wheel_type);
+    }
 }
 
 // Setup the Wheel direction. Overrides mode in use on hardware
