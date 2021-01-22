@@ -110,11 +110,12 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
     // Force future calls to sendParams() to update current pid parametes on the MCB
     robot->forcePidParamUpdates();
 
-    // Determine hardware options that can be set by the host to override firmware defaults
+    // Determine the wheel type to be used by the robot base 
     int32_t wheel_type = MotorMessage::OPT_WHEEL_TYPE_STANDARD;
     if (g_node_params.wheel_type == "firmware_default") {
         // Here there is no specification so the firmware default will be used
-        ROS_INFO("Firmware default wheel_type will be used.");
+        ROS_INFO("Default wheel_type of 'standard' will be used.");
+        wheel_type = MotorMessage::OPT_WHEEL_TYPE_STANDARD;
     } else {
         // Any other setting leads to host setting the wheel type
         if (g_node_params.wheel_type == "standard") {
@@ -129,10 +130,11 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
             g_node_params.wheel_type = "standard";
             wheel_type = MotorMessage::OPT_WHEEL_TYPE_STANDARD;
         }
-        // Write out the wheel type setting to hardware layer
-        robot->setWheelType(wheel_type);
-        mcbStatusPeriodSec.sleep();
     }
+    // Write out the wheel type setting to hardware layer
+    robot->setWheelType(wheel_type);
+    robot->wheel_type = wheel_type;
+    mcbStatusPeriodSec.sleep();
 
     int32_t wheel_direction = 0;
     if (g_node_params.wheel_direction == "firmware_default") {
@@ -251,11 +253,6 @@ int main(int argc, char* argv[]) {
     // wait for reply then we know firmware version
     mcbStatusPeriodSec.sleep();
 
-    if (robot->firmware_version >= MIN_FW_FIRMWARE_DATE) {
-        ROS_INFO("Request the firmware daycode");
-        robot->requestFirmwareDate();
-    }
-
     // Make sure firmware is listening
     {
         robot->diag_updater.broadcast(0, "Establishing communication with motors");
@@ -273,6 +270,7 @@ int main(int argc, char* argv[]) {
 
     if (robot->firmware_version >= MIN_FW_FIRMWARE_DATE) {
         // If supported by firmware also request date code for this version
+        ROS_INFO("Requesting Firmware daycode ");
         robot->requestFirmwareDate();
     }
 
