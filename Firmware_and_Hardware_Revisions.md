@@ -14,7 +14,10 @@ To do a firmware upgrade for the motor controller board please see our instructi
 
 Firmware Revision History
 
-* `v39`  2020-11-29. Intended as latest qualified Magni release firmware
+* `v40`  20201209.  Our most current Magni release candidate firmware. This has been looking very good as of Jan 2021
+    * Just about the same as v39 but has proper defaults for a shipping Magni Products. Has everything discussed for v29
+
+* `v39`  2020-11-29. NOT A MAGNI Compatible Release! Custom build for a 4 wheel drive architecture in development
     * Adds new modes for advanced wheel control options to improve higher load turning response.
     * Adds new feedback and registers for indication of wheel currents and control state
     * Added support for MCB rev 5.3 testpoints.  
