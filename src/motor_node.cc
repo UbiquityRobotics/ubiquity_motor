@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <dynamic_reconfigure/server.h>
 #include <ros/ros.h>
+#include "std_msgs/String.h"
 #include <time.h>
 #include <ubiquity_motor/PIDConfig.h>
 #include <ubiquity_motor/motor_hardware.h>
@@ -46,6 +47,11 @@ static CommsParams    g_serial_params;
 static NodeParams     g_node_params;
 
 // We had to deal with special MCB state control so need state values below
+// We need to find an include file for these which have system wide usage
+#define ROS_TOPIC_SYSTEM_CONTROL  "system_control"    // A topic for system level control commands
+#define MOTOR_CONTROL_CMD      "motor_control"        // A mnumonic for a motor control system command
+#define MOTOR_CONTROL_ENABLE   "enable"               // Parameter for MOTOR_CONTROL_CMD to enable control
+#define MOTOR_CONTROL_DISABLE  "disable"              // Parameter for MOTOR_CONTROL_CMD to enable control
 int    g_mcbEnabled = 1;
 int    g_wheel_slip_nulling = 0;
 
@@ -77,6 +83,23 @@ void PID_update_callback(const ubiquity_motor::PIDConfig& config,
     } else {
         ROS_ERROR("Unsupported dynamic_reconfigure level %u", level);
     }
+}
+
+// The system_control topic is used to be able to stop or start communications from the MCB
+// and thus allow live firmware updates or other direct MCB serial communications to happen
+// without the main control code trying to talk to the MCB
+void SystemControlCallback(const std_msgs::String::ConstPtr& msg) {
+    ROS_DEBUG("System control msg with content: '%s']", msg->data.c_str());
+
+    if (msg->data.find(MOTOR_CONTROL_CMD) != std::string::npos) {
+        if (msg->data.find(MOTOR_CONTROL_ENABLE) != std::string::npos) {;
+            ROS_INFO("Received System control msg to ENABLE control of the MCB");
+            g_mcbEnabled = 1;
+        } else if (msg->data.find(MOTOR_CONTROL_DISABLE) != std::string::npos) {
+            ROS_INFO("Received System control msg to DISABLE control of the MCB");
+            g_mcbEnabled = 0;
+        }
+     }
 }
 
 //  initMcbParameters()
@@ -232,6 +255,9 @@ int main(int argc, char* argv[]) {
     }
 
     controller_manager::ControllerManager cm(robot.get(), nh);
+
+    // Subscribe to the topic with overall system control ability
+    ros::Subscriber sub = nh.subscribe(ROS_TOPIC_SYSTEM_CONTROL, 1000, SystemControlCallback);
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
