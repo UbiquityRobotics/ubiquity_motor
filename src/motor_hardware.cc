@@ -157,6 +157,17 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsPa
 
 MotorHardware::~MotorHardware() { delete motor_serial_; }
 
+// Close of the serial port is used in a special case of suspending the motor controller
+// so that another service can load firmware or do direct MCB diagnostics
+void MotorHardware::closePort() {
+    motor_serial_->closePort();
+}
+
+// After we have given up the MCB we open serial port again using current instance of Serial
+bool MotorHardware::openPort() {
+    return motor_serial_->openPort();
+}
+
 void MotorHardware::clearCommands() {
     for (size_t i = 0; i < sizeof(joints_) / sizeof(joints_[0]); i++) {
         joints_[i].velocity_command = 0;
@@ -698,6 +709,21 @@ void MotorHardware::setParams(FirmwareParams fp) {
     fw_params.pid_control = fp.pid_control;
     fw_params.max_pwm = fp.max_pwm;
     fw_params.estop_pid_threshold = fp.estop_pid_threshold;
+}
+
+// Forces next calls to sendParams() to always update each parameter.
+// KEEP THIS IN SYNC WITH CHANGES TO sendParams()
+void MotorHardware::forcePidParamUpdates() {
+
+    // Reset each of the flags that causes parameters to be  sent to MCB by sendParams()
+    prev_fw_params.pid_proportional = -1;
+    prev_fw_params.pid_integral = -1;
+    prev_fw_params.pid_derivative = -1;
+    prev_fw_params.pid_velocity = -1;
+    prev_fw_params.pid_denominator = -1;
+    prev_fw_params.pid_moving_buffer_size = -1;
+    prev_fw_params.max_pwm = -1;
+    prev_fw_params.pid_control = 1;;
 }
 
 void MotorHardware::sendParams() {

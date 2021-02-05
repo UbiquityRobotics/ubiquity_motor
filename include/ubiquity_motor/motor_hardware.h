@@ -131,6 +131,8 @@ public:
     MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsParams serial_params,
                   FirmwareParams firmware_params);
     virtual ~MotorHardware();
+    void closePort();
+    bool openPort();
     void clearCommands();
     void readInputs();
     void writeSpeeds();
@@ -140,6 +142,7 @@ public:
     void requestFirmwareDate();
     void setParams(FirmwareParams firmware_params);
     void sendParams();
+    void forcePidParamUpdates();
     float getBatteryVoltage(void);
     void setDeadmanTimer(int32_t deadman);
     void setDeadzoneEnable(int32_t deadzone_enable);
@@ -176,6 +179,7 @@ public:
     int pid_control;
     int deadman_enable;
     int system_events;
+    int wheel_type;
 
     diagnostic_updater::Updater diag_updater;
 private:
