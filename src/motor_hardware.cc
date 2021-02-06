@@ -87,7 +87,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsPa
     // Insert a delay prior to serial port setup to avoid a race defect.
     // We see soemtimes the OS sets the port to 115200 baud just after we set it
     ROS_INFO("Delay before MCB serial port initialization");
-    ros::Duration(3.0).sleep();
+    ros::Duration(5.0).sleep();
     ROS_INFO("Initialize MCB serial port '%s' for %d baud",
         serial_params.serial_port.c_str(), serial_params.baud_rate);
 

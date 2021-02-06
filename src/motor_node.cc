@@ -171,20 +171,23 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
         mcbStatusPeriodSec.sleep();
     }
 
+    // Setup the chassis wheel drive_type. Magni uses 2wd but 4wd robots must act differently on drive_type
+    g_node_params.drive_type = "2wd";
+    if (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) {
+        // Use when ROS Param works ROS_INFO("Chassis drive_type is set to '%s'", g_node_params.drive_type.c_str());
+        ROS_INFO("Wheel chassis drive_type will be set to 4wd");
+        g_node_params.drive_type = "4wd";
+    }
+
     // Certain 4WD robots rely on wheels to skid to reach final positions.
     // For such robots when loaded down the wheels can get in a state where they cannot skid.
     // This leads to motor overheating.  This code below sacrifices accurate odometry which
-    // in not achievable in such robots anyway to relieve high wattage static drive currents
-    // at zero velocity that are due to inability of wheels to slip tiny amounts.
+    // in not achievable in such robots anyway to relieve high wattage drive power when zero velocity.
     g_wheel_slip_nulling = 0;
     if ((robot->firmware_version >= MIN_FW_WHEEL_NULL_ERROR) && (g_node_params.drive_type == "4wd")) {
         g_wheel_slip_nulling = 1;
-        ROS_INFO_ONCE("Wheel slip nulling will be enabled for this 4wd system when velocity remains at zero.");
+        ROS_INFO("Wheel slip nulling will be enabled for this 4wd system when velocity remains at zero.");
     }
-
-    g_wheel_slip_nulling = 1;   // !!! DEBUG HACK !!! Force to 1 for avalon code till param flows to here
-    ROS_INFO("DEBUG: FORCING Chassis drive_type to 4wd till ROS param works");
-    // Use when ROS Param works ROS_INFO("Chassis drive_type is set to '%s'", g_node_params.drive_type.c_str());
 
     // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
     // We could re-read periodically but perhaps only every 5-10 sec but should do it from main loop
@@ -331,7 +334,10 @@ int main(int argc, char* argv[]) {
     double rightWheelPos = 0.0;
     robot-> getWheelJointPositions(leftLastWheelPos, rightWheelPos);
     ros::Duration zeroVelocityTime(0.0);
-    ros::Duration wheelSlipNullingPeriod(5.0);
+
+    // Define a period where if wheels are under stress for this long we back off stress
+    ros::Duration wheelSlipNullingPeriod(2.0);
+    int wheelSlipEvents = 0;
 
     ROS_INFO("Starting motor control node now");
 
@@ -341,7 +347,7 @@ int main(int argc, char* argv[]) {
 
     // Setup to be able to do periodic operations based on elapsed times
     ros::Time current_time;
-    ros::Duration sysMaintPeriod(60.0);     // A periodic MCB maintenance operation
+    ros::Duration sysMaintPeriod(30.0);     // A periodic MCB maintenance operation
     ros::Duration jointUpdatePeriod(0.10);  // A periodic time to update joint velocity
 
     ros::Time last_loop_time = ros::Time::now();
@@ -411,7 +417,9 @@ int main(int argc, char* argv[]) {
                     if (zeroVelocityTime > wheelSlipNullingPeriod) {
                         // null wheel error if at zero velocity for the nulling check period
                         // OPTION: We could also just null wheels at high wheel power   
-                        ROS_DEBUG("Applying wheel slip relief  now");
+                        ROS_DEBUG("Applying wheel slip relief now with slip period of %4.1f sec ",
+                            wheelSlipNullingPeriod.toSec());
+                        wheelSlipEvents += 1;
                         robot->nullWheelErrors();
                         zeroVelocityTime = ros::Duration(0.0);   // reset time we have been at zero velocity
                     }
@@ -443,9 +451,10 @@ int main(int argc, char* argv[]) {
             last_sys_maint_time = ros::Time::now();
 
             // Post a status message for MCB state periodically. This may be nice to do more on as required
-            ROS_INFO("Battery = %5.2f V, MCB sys events 0x%x, PidCtrl 0x%x, WheelType '%s'",
+            ROS_INFO("Battery = %5.2f V, MCB sys events 0x%x, PidCtrl 0x%x, WheelType '%s' DriveType '%s' %s",
                 robot->getBatteryVoltage(), robot->system_events, robot->getPidControlWord(),
-                (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
+                (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard",
+                g_node_params.drive_type.c_str(), (wheelSlipEvents > 0) ? " [WheelSlip]" : " ");
 
             // If we detect a power-on of MCB we should re-initialize MCB
             if ((robot->system_events & MotorMessage::SYS_EVENT_POWERON) != 0) {
