@@ -33,6 +33,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ros/ros.h>
 
+// These defines are for a high level topic for control of the motor node at a system level
+#define ROS_TOPIC_SYSTEM_CONTROL  "system_control"    // A topic for system level control commands
+#define MOTOR_CONTROL_CMD         "motor_control"     // A mnumonic for a motor control system command
+#define MOTOR_CONTROL_ENABLE      "enable"            // Parameter for MOTOR_CONTROL_CMD to enable control
+#define MOTOR_CONTROL_DISABLE     "disable"           // Parameter for MOTOR_CONTROL_CMD to enable control
+#define MOTOR_SPEED_CONTROL_CMD   "speed_control"     // A mnumonic for disable of speed to avoid colision
+
 template <typename T>
 T getParamOrDefault(ros::NodeHandle nh, std::string parameter_name,
                     T default_val) {
@@ -176,10 +183,16 @@ struct NodeParams {
     std::string wheel_type;
     std::string wheel_direction;
 
-    NodeParams() : controller_loop_rate(10.0), wheel_type("firmware_default"), wheel_direction("firmware_default"){};
+    int mcbControlEnabled;    // State to allow suspension of MCB serial control for diagnostic purposes
+    int mcbSpeedEnabled;      // State to allow zero speed override for safety reasons
+
+    NodeParams() : controller_loop_rate(10.0), wheel_type("firmware_default"), wheel_direction("firmware_default"),
+        mcbControlEnabled(1), mcbSpeedEnabled(1){};
     NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0),
         wheel_type("firmware_default"),
-        wheel_direction("firmware_default") {
+        wheel_direction("firmware_default"),
+        mcbControlEnabled(1),
+        mcbSpeedEnabled(1) {
         // clang-format off
         controller_loop_rate = getParamOrDefault(
             nh, "ubiquity_motor/controller_loop_rate", controller_loop_rate);
