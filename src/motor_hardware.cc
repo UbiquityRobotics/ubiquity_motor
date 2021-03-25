@@ -370,6 +370,19 @@ void MotorHardware::readInputs() {
 		    estop_message.data = !estop_motor_power_off;
 		    motor_power_active.publish(estop_message);
                 }
+
+                case MotorMessage::REG_TINT_BOTH_WHLS: {   // As of v41 show time between wheel enc edges
+                    int32_t data = mm.getData();
+                    uint16_t m1TicInterval = (data >> 16) & 0xffff;
+                    uint16_t m2TicInterval = data & 0xffff;
+
+                    // TODO: Here ws should consider publication to a topic.
+
+                    if (data > 1) {     // Optionally show the intervals for debug
+                        ROS_DEBUG("Tic Ints M1 %d [0x%x]  M2 %d [0x%x]",  
+                            m1TicInterval, m1TicInterval, m2TicInterval, m2TicInterval);
+                    }
+                }
                 default:
                     break;
             }
