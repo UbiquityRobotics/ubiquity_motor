@@ -97,8 +97,11 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
      ROS_INFO("MCB serial port initialized");
 
+    // For motor tunning and other uses we publish details for each wheel
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
+    leftTicInterval  = nh.advertise<std_msgs::Int32>("left_tic_interval", 1);
+    rightTicInterval = nh.advertise<std_msgs::Int32>("right_tic_interval", 1);
 
     battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
     motor_power_active = nh.advertise<std_msgs::Bool>("motor_power_active", 1);
@@ -373,14 +376,23 @@ void MotorHardware::readInputs() {
 
                 case MotorMessage::REG_TINT_BOTH_WHLS: {   // As of v41 show time between wheel enc edges
                     int32_t data = mm.getData();
-                    uint16_t m1TicInterval = (data >> 16) & 0xffff;
-                    uint16_t m2TicInterval = data & 0xffff;
+                    uint16_t leftTicSpacing = (data >> 16) & 0xffff;
+                    uint16_t rightTicSpacing = data & 0xffff;
 
-                    // TODO: Here ws should consider publication to a topic.
+                    // Publish the two wheel tic intervals
+                    std_msgs::Int32 leftInterval;
+                    std_msgs::Int32 rightInterval;
 
+                    leftInterval.data  = leftTicSpacing;
+                    rightInterval.data = rightTicSpacing;
+
+                    // Only publish the tic intervals when wheels are moving
                     if (data > 1) {     // Optionally show the intervals for debug
+                        leftTicInterval.publish(leftInterval);
+                        rightTicInterval.publish(rightInterval);
+
                         ROS_DEBUG("Tic Ints M1 %d [0x%x]  M2 %d [0x%x]",  
-                            m1TicInterval, m1TicInterval, m2TicInterval, m2TicInterval);
+                            leftTicSpacing, leftTicSpacing, rightTicSpacing, rightTicSpacing);
                     }
                 }
                 default:
