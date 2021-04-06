@@ -378,6 +378,10 @@ void MotorHardware::readInputs() {
                     int32_t data = mm.getData();
                     uint16_t leftTicSpacing = (data >> 16) & 0xffff;
                     uint16_t rightTicSpacing = data & 0xffff;
+                    uint16_t ticCap = 2000;    // We can cap the max value to make dynamic plots not auto-scale
+
+                    if ((ticCap > 0) && (leftTicSpacing  > ticCap)) { leftTicSpacing  = ticCap; }
+                    if ((ticCap > 0) && (rightTicSpacing > ticCap)) { rightTicSpacing = ticCap; }
 
                     // Publish the two wheel tic intervals
                     std_msgs::Int32 leftInterval;
