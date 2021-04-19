@@ -378,7 +378,7 @@ void MotorHardware::readInputs() {
                     int32_t data = mm.getData();
                     uint16_t leftTickSpacing = (data >> 16) & 0xffff;
                     uint16_t rightTickSpacing = data & 0xffff;
-                    uint16_t tickCap = 2000;    // We can cap the max value to make dynamic plots not auto-scale
+                    uint16_t tickCap = 0;    // We can cap the max value if desired
 
                     if ((tickCap > 0) && (leftTickSpacing  > tickCap)) { leftTickSpacing  = tickCap; }
                     if ((tickCap > 0) && (rightTickSpacing > tickCap)) { rightTickSpacing = tickCap; }
