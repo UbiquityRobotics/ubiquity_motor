@@ -200,8 +200,8 @@ private:
 
     ros::Publisher leftError;
     ros::Publisher rightError;
-    ros::Publisher leftTicInterval;
-    ros::Publisher rightTicInterval;
+    ros::Publisher leftTickInterval;
+    ros::Publisher rightTickInterval;
 
     ros::Publisher battery_state;
     ros::Publisher motor_power_active;
