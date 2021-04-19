@@ -97,8 +97,11 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
 
      ROS_INFO("MCB serial port initialized");
 
+    // For motor tunning and other uses we publish details for each wheel
     leftError = nh.advertise<std_msgs::Int32>("left_error", 1);
     rightError = nh.advertise<std_msgs::Int32>("right_error", 1);
+    leftTickInterval  = nh.advertise<std_msgs::Int32>("left_tick_interval", 1);
+    rightTickInterval = nh.advertise<std_msgs::Int32>("right_tick_interval", 1);
 
     battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
     motor_power_active = nh.advertise<std_msgs::Bool>("motor_power_active", 1);
@@ -369,6 +372,32 @@ void MotorHardware::readInputs() {
 		    std_msgs::Bool estop_message;
 		    estop_message.data = !estop_motor_power_off;
 		    motor_power_active.publish(estop_message);
+                }
+
+                case MotorMessage::REG_TINT_BOTH_WHLS: {   // As of v41 show time between wheel enc edges
+                    int32_t data = mm.getData();
+                    uint16_t leftTickSpacing = (data >> 16) & 0xffff;
+                    uint16_t rightTickSpacing = data & 0xffff;
+                    uint16_t tickCap = 0;    // We can cap the max value if desired
+
+                    if ((tickCap > 0) && (leftTickSpacing  > tickCap)) { leftTickSpacing  = tickCap; }
+                    if ((tickCap > 0) && (rightTickSpacing > tickCap)) { rightTickSpacing = tickCap; }
+
+                    // Publish the two wheel tic intervals
+                    std_msgs::Int32 leftInterval;
+                    std_msgs::Int32 rightInterval;
+
+                    leftInterval.data  = leftTickSpacing;
+                    rightInterval.data = rightTickSpacing;
+
+                    // Only publish the tic intervals when wheels are moving
+                    if (data > 1) {     // Optionally show the intervals for debug
+                        leftTickInterval.publish(leftInterval);
+                        rightTickInterval.publish(rightInterval);
+
+                        ROS_DEBUG("Tic Ints M1 %d [0x%x]  M2 %d [0x%x]",  
+                            leftTickSpacing, leftTickSpacing, rightTickSpacing, rightTickSpacing);
+                    }
                 }
                 default:
                     break;

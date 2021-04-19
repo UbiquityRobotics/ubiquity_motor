@@ -76,85 +76,85 @@ public:
 
     // Registers enum in class to avoid global namespace pollution
     enum Registers {
-        REG_STOP_START = 0x00,          // Deprecated
-        REG_BRAKE_STOP = 0x01,
-        REG_SYSTEM_EVENTS = 0x02,	// This register can set event bits such as a power on has happened
+        REG_STOP_START       = 0x00,  // Deprecated
+        REG_BRAKE_STOP       = 0x01,
+        REG_SYSTEM_EVENTS    = 0x02,  // Indicates event bits such as a power on has happened.     [v37]
 
-        REG_LEFT_PWM = 0x03,            // ReadOnly: M1 motor PWM setting
-        REG_RIGHT_PWM = 0x04,           // ReadOnly: M2 motor PWM setting
+        REG_LEFT_PWM         = 0x03,  // ReadOnly: Current M1 motor PWM setting. Right wheel, U101  rev 5.2
+        REG_RIGHT_PWM        = 0x04,  // ReadOnly: Current M2 motor PWM setting  Left  wheel, U1101 rev 5.2
 
         // skip 0x05 and 0x06
 
-        REG_LEFT_SPEED_SET = 0x07,      // Deprecated
-        REG_RIGHT_SPEED_SET = 0x08,     // Deprecated
+        REG_PWM_BOTH_WHLS    = 0x07,  // ReadOnly: Both Motor PWM packed as two 16-bit ints. M1 upper word
+        REG_TINT_BOTH_WHLS   = 0x08,  // ReadOnly: Both Motor Tic Interval packed as two 16-bit ints. M1 upper word
 
-        REG_LEFT_RAMP = 0x09,           // Deprecated
-        REG_RIGHT_RAMP = 0x0A,          // Deprecated
+        REG_LEFT_RAMP        = 0x09,  // Deprecated
+        REG_RIGHT_RAMP       = 0x0A,  // Deprecated
 
-        REG_LEFT_ODOM = 0x0B,           // Deprecated
-        REG_WHEEL_DIR = 0x0C,           // Set wheels to go in reverse if set for OPT_WHEEL_DIR_REVERSE
+        REG_WHEEL_NULL_ERR   = 0x0b,  // Resets current wheel(s) PID target of by current erro     [v38]
+        REG_WHEEL_DIR        = 0x0C,  // Reverses wheel direction if not zero                      [v38]
 
-        REG_DEADMAN = 0x0D,             // Deadman timer (VERY TRICKY VALUE, USE WITH CARE!)
+        REG_DEADMAN          = 0x0D,  // Deadman timer (VERY TRICKY VALUE, USE WITH CARE!)
 
-        REG_LEFT_CURRENT = 0x0E,        // Electrical Current readback for M1 motor
-        REG_RIGHT_CURRENT = 0x0F,       // Electrical Current readback for M2 motor
+        REG_LEFT_CURRENT     = 0x0E,  // Electrical Current readback for M1 motor
+        REG_RIGHT_CURRENT    = 0x0F,  // Electrical Current readback for M2 motor
 
-        REG_WHEEL_TYPE = 0x10,          // The type of wheel-motor in use
-        REG_5V_MAIN_ERROR = 0x11,       // Deprecated
-        REG_OPTION_SWITCH = 0x12,       // Setting of MCB option jumpers and rev
-        REG_PWM_OVERRIDE = 0x13,
-        REG_PID_CONTROL = 0x14,         // A write to this register controls Pid param setup and calculations
+        REG_WHEEL_TYPE       = 0x10,  // Wheel type.  Standard or as of 6-2020 Thin                [v37]
+        REG_PID_ERROR_CAP    = 0x11,  // An error term cap used only if out of wack mode is active [v39]
+        REG_OPTION_SWITCH    = 0x12,  // Option switch bits read by host, returned to here.        [v37]
+        REG_PWM_OVERRIDE     = 0x13,  // Override for PWM setting. Activated by a PID_CONTROL bit. [v36]
+        REG_PID_CONTROL      = 0x14,  // Control Pid param setup and calculations.                 [v36]
 
         // The PID parameters below are setup without impacting the PID loop then all made active at once
-        REG_PARAM_V_RDY = 0x15,         // PID loop V factor being made ready but not in use yet
-        REG_PARAM_P_RDY = 0x16,         // PID loop P factor being made ready but not in use yet
-        REG_PARAM_I_RDY = 0x17,         // PID loop I factor being made ready but not in use yet
-        REG_PARAM_D_RDY = 0x18,         // PID loop D factor being made ready but not in use yet
-        REG_PARAM_C_RDY = 0x19,         // PID loop C factor being made ready but not in use yet
+        REG_PARAM_V_RDY      = 0x15,  // PID loop V factor being made ready but not in use yet     [v37]
+        REG_PARAM_P_RDY      = 0x16,  // PID loop P factor being made ready but not in use yet     [v37]
+        REG_PARAM_I_RDY      = 0x17,  // PID loop I factor being made ready but not in use yet     [v37]
+        REG_PARAM_D_RDY      = 0x18,  // PID loop D factor being made ready but not in use yet     [v37]
+        REG_PARAM_C_RDY      = 0x19,  // PID loop C factor being made ready but not in use yet     [v37]
 
         // The PID parameters below are active values and they get set one register at a time
-        REG_PARAM_V = 0x1A,             // PID loop V factor
-        REG_PARAM_P = 0x1B,             // PID loop P factor
-        REG_PARAM_I = 0x1C,             // PID loop I factor
-        REG_PARAM_D = 0x1D,             // PID loop D factor
-        REG_PARAM_C = 0x1E,             // PID loop C factor
+        REG_PARAM_V          = 0x1A,  // PID loop V factor
+        REG_PARAM_P          = 0x1B,  // PID loop P factor
+        REG_PARAM_I          = 0x1C,  // PID loop I factor
+        REG_PARAM_D          = 0x1D,  // PID loop D factor
+        REG_PARAM_C          = 0x1E,  // PID loop C factor
 
-        REG_LED_1 = 0x1F,
-        REG_LED_2 = 0x20,
+        REG_LED_1            = 0x1F,
+        REG_LED_2            = 0x20,
 
-        REG_HARDWARE_VERSION = 0x21,    // Hardware version BUT is settable from HOST!
-        REG_FIRMWARE_VERSION = 0x22,    // ReadOnly: Firmware version reported to HOST
+        REG_HARDWARE_VERSION = 0x21,  // Hardware version BUT is settable from HOST!
+        REG_FIRMWARE_VERSION = 0x22,  // ReadOnly: Firmware version reported to HOST
 
-        REG_BATTERY_VOLTAGE = 0x23,     // Electrical voltage of main battery
-        REG_5V_MAIN_CURRENT = 0x24,     // Electrical current in use on  5 Volt Main supply
-        REG_MAINV_TPOINT = 0x25,        // TP. Indicates 5V, 12V main power and used for selftests (MCB 5.2)
-        REG_12V_MAIN_CURRENT = 0x26,    // Electrical current in use on 12 Volt Main supply
-        REG_AUXV_TPOINT = 0x27,         // TP. Indicates 5V, 12V aux power and used for selftests
+        REG_BATTERY_VOLTAGE  = 0x23,  // Electrical voltage of main battery
+        REG_5V_MAIN_CURRENT  = 0x24,  // Electrical current in use on  5 Volt Main supply
+        REG_MAINV_TPOINT     = 0x25,  // TP. Indicates 5V, 12V main power and used for selftests.   [v36]
+        REG_12V_MAIN_CURRENT = 0x26,  // Electrical current in use on 12 Volt Main supply
+        REG_AUXV_TPOINT      = 0x27,  // TP. Indicates 5V, 12V aux power and used for selftests.    [v36]
 
-        REG_BATT_VOL_LOW = 0x28,        // Battery divider ADC counts when battery is low
-        REG_VBUF_SIZ = 0x29,            // Velocity averaging buffer length
+        REG_BATT_VOL_LOW     = 0x28,  // Battery divider ADC counts when battery is low
+        REG_VBUF_SIZ         = 0x29,  // Velocity averaging buffer length                           [v35]
 
-        REG_BOTH_SPEED_SET = 0x2A,      // Speed setting: Two signed 16-bit speeds set by user. Upper=left
-        REG_MOVING_BUF_SIZE = 0x2B,     // PID loop moving average count. This caps at 100
+        REG_BOTH_SPEED_SET   = 0x2A,  // Speed setting: Two signed 16-bit speeds set by user. Upper=left
+        REG_MOVING_BUF_SIZE  = 0x2B,  // PID loop moving average count. This caps at 100
 
-        REG_LIMIT_REACHED = 0x2C,       // Holds bits showing if some sort of limit was hit
-        REG_BOTH_ERROR = 0x2D,          // Two 16-bit signed error values for PID loop current Error value
-        REG_BOTH_ODOM = 0x30,           // Two 16-bit signed ODOM values
-        REG_ROBOT_ID = 0x31,	        // Type of robot. 0 for Magni or 1 for Loki 
+        REG_LIMIT_REACHED    = 0x2C,  // Holds bits showing if some sort of limit was hit
+        REG_BOTH_ERROR       = 0x2D,  // Two 16-bit signed error values for PID loop current Error value
+        REG_BOTH_ODOM        = 0x30,  // Two 16-bit signed ODOM values
+        REG_ROBOT_ID         = 0x31,  // Type of robot. 0 for Magni or 1 for Loki 
 
-        REG_MOT_PWR_ACTIVE = 0x32,      // Indicates if motor power is active (ESTOP not active)
-        REG_ESTOP_ENABLE   = 0x33,      // Normally non 0. If 0 forces motor controller firmware to NOT all ESTOP logic
-        REG_PID_MAX_ERROR  = 0x34,      // Used in pre rev 5.0 board crude ESTOP logic only. NOT rev 5
+        REG_MOT_PWR_ACTIVE   = 0x32,  // Indicates if motor power is active (ESTOP not active)
+        REG_ESTOP_ENABLE     = 0x33,  // Normally non 0. If 0 forces motor controller firmware to NOT all ESTOP logic
+        REG_PID_MAX_ERROR    = 0x34,  // Used in pre rev 5.0 board crude ESTOP logic only. NOT rev 5
 
-        REG_MAX_SPEED_FWD  = 0x35,      // Caps the max forward speed settable by user
-        REG_MAX_SPEED_REV  = 0x36,      // Caps the max reverse speed settable by user
-        REG_MAX_PWM        = 0x37,      // Caps max PWM value that will be used due to PID loop
+        REG_MAX_SPEED_FWD    = 0x35,  // Caps the max forward speed settable by user
+        REG_MAX_SPEED_REV    = 0x36,  // Caps the max reverse speed settable by user
+        REG_MAX_PWM          = 0x37,  // Caps max PWM value that will be used due to PID loop
 
-        REG_HW_OPTIONS     = 0x38,      // ReadOnly: Indicates options such as 3 or 6 state enc or motor type
-        REG_DEADZONE       = 0x39,      // When non-zero enables speed deadzone at zero speed
-        REG_FIRMWARE_DATE  = 0x3a,      // ReadOnly: Hex encoded daycode such as 20190703 for July 3 2019
-        REG_STEST_REQUEST  = 0x3b,      // Set to non-zero to request tests.  Cleared after tests done
-        REG_STEST_RESULTS  = 0x3c,      // Last Selftest result bits are left in this register. 0=ok
+        REG_HW_OPTIONS       = 0x38,  // ReadOnly: Shows options such as 3 or 6 state enc             [v35]
+        REG_DEADZONE         = 0x39,  // When non-zero enables speed deadzone at zero speed
+        REG_FIRMWARE_DATE    = 0x3a,  // Hex encoded daycode such as 20190703 for July 3 2019         [v35]
+        REG_STEST_REQUEST    = 0x3b,  // Set to non-zero to request tests.  Cleared after tests done. [v36]
+        REG_STEST_RESULTS    = 0x3c,  // Last Selftest result bits are left in this register. 0=ok    [v36]
 
         DEBUG_50 = 0x50,
         DEBUG_51 = 0x51,

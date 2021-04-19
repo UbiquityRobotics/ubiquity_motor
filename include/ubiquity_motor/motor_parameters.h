@@ -91,10 +91,13 @@ struct FirmwareParams {
           hw_options(0),
           option_switch(0),
           system_events(0),
-          battery_voltage_multiplier(0.05057),
-          battery_voltage_offset(0.40948),
-          battery_voltage_low_level(22.5),
-          battery_voltage_critical(21.0){};
+
+          // ADC uses Vcc/2 for 2048 counts. We feed in battery with a 1/21 ratio
+          // So for 5.00V mult=0.05127  When Vcc=5.16V (Pi4 mod) mult = 0.0529
+          battery_voltage_multiplier(0.05127),
+          battery_voltage_offset(0.0),
+          battery_voltage_low_level(23.2),
+          battery_voltage_critical(22.5){};
 
     FirmwareParams(ros::NodeHandle nh)
         : pid_proportional(4000),
@@ -114,10 +117,10 @@ struct FirmwareParams {
           hw_options(0),
           option_switch(0),
           system_events(0),
-          battery_voltage_multiplier(0.05057),
-          battery_voltage_offset(0.40948), 
-          battery_voltage_low_level(22.5),
-          battery_voltage_critical(21.0)
+          battery_voltage_multiplier(0.05127),   // See note above for this multiplier
+          battery_voltage_offset(0.0), 
+          battery_voltage_low_level(23.2),
+          battery_voltage_critical(22.5)
         {
         // clang-format off
         pid_proportional = getParamOrDefault(
