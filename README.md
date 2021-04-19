@@ -29,6 +29,7 @@ A text string with a commnad followed by parameter such as `enable` or `disable`
     motor_control disable      Stops the MCB control over serial (used for firmware load)
     motor_control enable       Re-attaches the MCB control over serial for normal operation
 
+
     speed_control disable      Stops the robot so no speed control is used for collision avoiance
     speed_control enable       Re-enables the motor node to respond to cmd_vel speed messages
       
@@ -51,12 +52,16 @@ The value of `cmd_vel` after limits were applied. Available if the `publish_cmd`
 The state of motor power being active is published.  This follows the ESTOP switch within about a half second.
 
 `left_error` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
+The error in expected left wheel position relative to current left wheel position is published for diagnostics purposes.
+
 `right_error` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
-The error in expected wheel position relative to current wheel position is published for the left and right wheels for usage in diagnostics and tuning of the MCB speed control parameters
+The error in expected right wheel position relative to current right wheel position is published for diagnostics purposes.
 
 `left_tick_interval` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
+A value that is proportional to the time between left wheel encoder ticks for usage in diagnostics. This unsigned value is only published when velocity is non zero.
+
 `right_tick_interval` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
-A value that is proportional to the wheel speed in a units of wheel encoder ticks per fixed time period is published for the left and right wheels for usage in diagnostics. This unsigned value is only published when velocity is non zero.
+A value that is proportional to the time between right wheel encoder ticks for usage in diagnostics. This unsigned value is only published when velocity is non zero.
 
 ### Parameters
 
