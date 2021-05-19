@@ -99,11 +99,8 @@ TEST(MotorMessageTest, motor_message_register_values) {
     mc.setRegister(static_cast<MotorMessage::Registers>(0x01));
     ASSERT_EQ(MotorMessage::REG_BRAKE_STOP, mc.getRegister());
 
-    mc.setRegister(static_cast<MotorMessage::Registers>(0x10));
-    ASSERT_EQ(MotorMessage::REG_ERROR_COUNT, mc.getRegister());
-
-    mc.setRegister(static_cast<MotorMessage::Registers>(0x0B));
-    ASSERT_EQ(MotorMessage::REG_LEFT_ODOM, mc.getRegister());
+    mc.setRegister(static_cast<MotorMessage::Registers>(0x30));
+    ASSERT_EQ(MotorMessage::REG_BOTH_ODOM, mc.getRegister());
 }
 
 TEST(MotorMessageTest, motor_message_register_invalid) {
@@ -192,9 +189,9 @@ TEST(MotorMessageTest, motor_message_serialize) {
     MotorMessage mc;
     mc.setData(300);
     mc.setType(MotorMessage::TYPE_WRITE);
-    mc.setRegister(MotorMessage::REG_LEFT_SPEED_SET);
+    mc.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
 
-    RawMotorMessage expect = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
+    RawMotorMessage expect = {0x7E, 0x3B, 0x2A, 0x00, 0x00, 0x01, 0x2C, 0x6D};
 
     ASSERT_EQ(expect, mc.serialize());
 }
@@ -203,23 +200,23 @@ TEST(MotorMessageTest, motor_message_deserialize_good) {
     MotorMessage mc;
 
     // Test good message
-    RawMotorMessage input = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x2C, 0x90};
+    RawMotorMessage input = {0x7E, 0x3B, 0x2A, 0x00, 0x00, 0x01, 0x2C, 0x6D};
 
     ASSERT_EQ(0, mc.deserialize(input));
     ASSERT_EQ(300, mc.getData());
     ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
-    ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
+    ASSERT_EQ(MotorMessage::REG_BOTH_SPEED_SET, mc.getRegister());
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_delimeter_in_data) {
     MotorMessage mc;
 
-    RawMotorMessage input = {0x7E, 0x3B, 0x07, 0x00, 0x00, 0x01, 0x7E, 0x3E};
+    RawMotorMessage input = {0x7E, 0x3B, 0x2A, 0x00, 0x00, 0x01, 0x7E, 0x1B};
 
     ASSERT_EQ(0, mc.deserialize(input));
     ASSERT_EQ(382, mc.getData());
     ASSERT_EQ(MotorMessage::TYPE_WRITE, mc.getType());
-    ASSERT_EQ(MotorMessage::REG_LEFT_SPEED_SET, mc.getRegister());
+    ASSERT_EQ(MotorMessage::REG_BOTH_SPEED_SET, mc.getRegister());
 }
 
 TEST(MotorMessageTest, motor_message_deserialize_bad_delimeter) {
