@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <ros/ros.h>
-#include <ubiquity_motor/motor_parmeters.h>
+#include <ubiquity_motor/motor_parameters.h>
 
 TEST(MotorParameterTests, getParamOrDefaultTest) {
     ros::NodeHandle nh;
