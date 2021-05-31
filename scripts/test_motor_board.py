@@ -1,4 +1,4 @@
-#!/usr/bin/pythmn -u
+#!/usr/bin/env python
 
 #
 # Command control direct to Ubiquity Robotics Magni Controller Board
@@ -38,7 +38,7 @@ import sys
 import time
 import serial
 import string
-import thread
+import _thread
 import smbus
 
 # simple version string
@@ -123,7 +123,7 @@ def formMagniSpeedMessage(rightSpeed, leftSpeed):
 def runTillKeypress(speed):
     print("runTillKeypress starting using speed ", int(speed))
     keyBuf  = []
-    thread.start_new_thread(keyboard_thread, (keyBuf,))
+    _thread.start_new_thread(keyboard_thread, (keyBuf,))
     logAlways("runTillKeypress drop into loop")
     while not keyBuf:
         logAlways("runTillKeypress do the speed command")
@@ -283,7 +283,7 @@ def fetchReplyLongWord(ser, cmdHex, regHex):
 # utility to set right and left wheel speeds then exit when key is hit
 def setSpeedTillKeypress(ser, speed1, speed2):
     intKeys = []
-    thread.start_new_thread(keyboard_thread, (intKeys,))
+    _thread.start_new_thread(keyboard_thread, (intKeys,))
     while not intKeys:
         cmdPacket = formMagniSpeedMessage(speed1, speed2)
         ser.write(cmdPacket)
@@ -451,7 +451,7 @@ class serCommander():
 
             if input == 'c':          # Cycle from stop to last speed that was set over and over
                 logAlways("Cycle between last speed that was set to zero and back over and over")
-                thread.start_new_thread(keyboard_thread, (intKeys,))
+                _thread.start_new_thread(keyboard_thread, (intKeys,))
                 while not intKeys:
                     loops = 1
                     print("Cycle to the  ON speed for ", cycleOnPeriod, " cycles")
@@ -691,7 +691,7 @@ class serCommander():
                 print("hw revision ", boardRev)
                 time.sleep(0.02)
 
-        except RuntimeError,e: 
+        except RuntimeError as e: 
           logAlways("Exception in magni_cmd: " + e.message)
         except KeyboardInterrupt:
           logAlways("terminated by keyboard interrupt! Zero the motor speed and exit")
@@ -714,7 +714,7 @@ if __name__ == '__main__':
 
     try:
         serCommander()
-    except RuntimeError,e: 
+    except RuntimeError as e: 
         logAlways("Exception in magni_cmd: " + e.message)
     except Exception:
         logAlways("magni_cmd terminated.")
