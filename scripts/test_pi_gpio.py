@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # A test of GPIO Lines on Rapberry Pi that requires loopback connector

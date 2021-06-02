@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # VELOCITY can be positive (driving forward) or negative (driving backward)
 VELOCITY = 0.2
