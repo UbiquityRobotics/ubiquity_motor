@@ -28,7 +28,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include <serial/serial.h>
+#include <boost/asio.hpp>
 #include <ubiquity_motor/motor_message.h>
 
 struct Options {
@@ -96,6 +96,27 @@ Options parse_args(const std::vector<std::string> &args) {
     return op;
 }
 
+// boost::asio doesn't provide a way to flush buffers
+// Flush type for Linux OS:
+//  TCIFLUSH - Flushes/Discards received data, but not read
+//  TCOFLUSH - Flushes/Discards written data, but not transmitted
+//  TCIOFLUSH - Flushes/Discards both
+boost::system::error_code flush(boost::asio::serial_port & port, const int type) {
+    boost::system::error_code ec;
+#if !defined(BOOST_WINDOWS) && !defined(__CYGWIN__) // Windows OS
+    const bool isFlushed =! ::tcflush(port.native_handle(), type);
+    if (!isFlushed) {
+        ec = boost::system::error_code(errno, boost::asio::error::get_system_category());
+    }
+#else // Linux OS
+    const bool isFlushed = ::PurgeComm(port.native_handle(), PURGE_RXABORT | PURGE_RXCLEAR | PURGE_TXABORT | PURGE_TXCLEAR);
+    if (!isFlushed) {
+        ec = boost::system::error_code(::GetLastError(), boost::asio::error::get_system_category()); 
+    }
+#endif 
+    return ec;
+}
+
 class TimeoutException : public std::exception {
     // Disable copy constructors
     TimeoutException &operator=(const TimeoutException &);
@@ -108,37 +129,38 @@ public:
     virtual const char *what() const throw() { return e_what_.c_str(); }
 };
 
-MotorMessage readRegister(MotorMessage::Registers reg, serial::Serial &robot) {
+MotorMessage readRegister(MotorMessage::Registers reg, boost::asio::serial_port &robot) {
     MotorMessage req;
     req.setRegister(reg);
     req.setType(MotorMessage::TYPE_READ);
     req.setData(0);
 
     RawMotorMessage out = req.serialize();
-    robot.write(out.c_array(), out.size());
+    boost::asio::write(robot, boost::asio::buffer(out.c_array(), out.size()));
 
-    robot.flush();
+    const boost::system::error_code ec = flush(robot, TCOFLUSH);
+    if (ec) {
+	throw std::runtime_error("failed to flush serial");
+    }
 
     bool timedout = false;
     struct timespec start, current_time;
     clock_gettime(CLOCK_MONOTONIC, &current_time);
     start = current_time;
 
-    while (robot.isOpen() && !timedout) {
-        if (robot.waitReadable()) {
-            RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
+    while (robot.is_open() && !timedout) {
+        RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
 
-            robot.read(innew.c_array(), 1);
-            if (innew[0] != MotorMessage::delimeter) continue;
+	// TODO: Implement timeout, otherwise this will block forever if no character arrives.
+	boost::asio::read(robot, boost::asio::buffer(innew.c_array(), 1));
+        if (innew[0] != MotorMessage::delimeter) continue;
 
-            robot.waitByteTimes(innew.size() - 1);
-            robot.read(&innew.c_array()[1], 7);
+	boost::asio::read(robot, boost::asio::buffer(&innew.c_array()[1], 7));
 
-            MotorMessage rsp;
-            if (!rsp.deserialize(innew)) {
-                if (rsp.getType() == MotorMessage::TYPE_RESPONSE && rsp.getRegister() == reg) {
-                    return rsp;
-                }
+        MotorMessage rsp;
+        if (!rsp.deserialize(innew)) {
+            if (rsp.getType() == MotorMessage::TYPE_RESPONSE && rsp.getRegister() == reg) {
+                return rsp;
             }
         }
 
@@ -196,7 +218,11 @@ int main(int argc, char const *argv[]) {
     }
 
     try {
-        serial::Serial robot(op.serial_port, op.baud_rate, serial::Timeout::simpleTimeout(100));
+	boost::asio::io_service io; // TODO: What is this?
+	boost::asio::serial_port robot(io);
+	robot.open(op.serial_port);
+	robot.set_option(boost::asio::serial_port_base::baud_rate(op.baud_rate));
+	// TODO: Timeout ~ https://www.ridgesolutions.ie/index.php/2012/12/13/boost-c-read-from-serial-port-with-timeout-example/
 
         if (op.robot) {
             try {
@@ -232,7 +258,7 @@ int main(int argc, char const *argv[]) {
                 ret_code = 2;
             }
         }
-    } catch (const serial::IOException &e) {
+    } catch (const std::exception &e) {
         if (op.verbose) {
             fprintf(stderr, "Error opening Serial Port %s\n", op.serial_port.c_str());
         }

@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <ros/ros.h>
-#include <serial/serial.h>
+#include <exception>
 #include <ubiquity_motor/motor_serial.h>
 
 MotorSerial::MotorSerial(const std::string& port, uint32_t baud_rate)
@@ -89,13 +89,13 @@ bool MotorSerial::openPort()  {
     //  Port was closed so must open it using info from prior open()
     try {
         motors.open();
-    } catch (const serial::IOException& e) {
+    } catch (const std::exception& e) {
         ROS_ERROR("%s", e.what());
         retCode = false;
-    } catch (const std::invalid_argument) {
+    } catch (const std::invalid_argument &) {
         ROS_ERROR("MotorSerial::openPort Invalid argument");
         retCode = false;
-    } catch (const serial::SerialException& e) {
+    } catch (const std::exception& e) {
         ROS_ERROR("%s", e.what());
         retCode = false;
     } catch (...) {
@@ -153,9 +153,9 @@ void MotorSerial::SerialThread() {
 
     } catch (const boost::thread_interrupted& e) {
         motors.close();
-    } catch (const serial::IOException& e) {
+    } catch (const std::exception& e) {
         ROS_ERROR("%s", e.what());
-    } catch (const serial::PortNotOpenedException& e) {
+    } catch (const std::exception& e) {
         ROS_ERROR("%s", e.what());
     } catch (...) {
         ROS_ERROR("Unknown Error");

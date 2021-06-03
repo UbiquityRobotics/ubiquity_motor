@@ -243,7 +243,7 @@ int main(int argc, char* argv[]) {
             try {
                 robot.reset(new MotorHardware(nh, g_serial_params, g_firmware_params));
             }
-            catch (const serial::IOException& e) {
+            catch (const std::exception& e) {
                 if (times % 30 == 0)
                     ROS_FATAL("Error opening serial port %s, trying again", g_serial_params.serial_port.c_str());
             }
