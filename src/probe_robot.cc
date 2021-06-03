@@ -88,7 +88,7 @@ Options parse_args(const std::vector<std::string> &args) {
 
     try {
         op.baud_rate = get_option(args, "-B", 38400);
-    } catch (std::invalid_argument e) {
+    } catch (std::invalid_argument &e) {
         fprintf(stderr, "%s\n", "Expected integer for option -B");
         throw e;
     }
@@ -209,7 +209,7 @@ int main(int argc, char const *argv[]) {
                 } else {
                     printf("%s\n", "unknown");
                 }
-            } catch (TimeoutException e) {
+            } catch (TimeoutException &e) {
                 printf("%s\n", "none");
                 ret_code = 2;
             }
@@ -218,7 +218,7 @@ int main(int argc, char const *argv[]) {
             try {
                 MotorMessage firmware = readRegister(MotorMessage::REG_FIRMWARE_VERSION, robot);
                 printf("%d\n", firmware.getData());
-            } catch (TimeoutException e) {
+            } catch (TimeoutException &e) {
                 fprintf(stderr, "%s\n", "Timeout getting firmware version");
                 ret_code = 2;
             }
@@ -227,7 +227,7 @@ int main(int argc, char const *argv[]) {
             try {
                 MotorMessage hardware = readRegister(MotorMessage::REG_HARDWARE_VERSION, robot);
                 printf("%d\n", hardware.getData());
-            } catch (TimeoutException e) {
+            } catch (TimeoutException &e) {
                 fprintf(stderr, "%s\n", "Timeout getting hardware version");
                 ret_code = 2;
             }
