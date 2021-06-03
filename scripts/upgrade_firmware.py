@@ -228,8 +228,8 @@ class Packet:
     def send(self):
         self.is_sent = True
         init_bytes = [chr(0x1), self.cmd, 
-                      chr((len(self.out) / 0o001) % 256),
-                      chr((len(self.out) / 0o256) % 256)]
+                      chr((len(self.out) / 1) % 256),
+                      chr((len(self.out) / 256) % 256)]
         init_bytes.extend(self.out)
 
         if DEBUG: print("-"*120)
@@ -240,10 +240,10 @@ class Packet:
         if DEBUG: print("Packet without end and checksum is", cstr(ib_buf))
 
         checksum = compute_checksum(ib_buf)
-        if DEBUG: print("Checksum is", checksum, "LSB", (checksum / 0o001) % 256, "MSB", (checksum / 256) % 256)
+        if DEBUG: print("Checksum is", checksum, "LSB", (checksum / 1) % 256, "MSB", (checksum / 256) % 256)
 
-        ib_buf += chr((checksum / 0o001) % 256)
-        ib_buf += chr((checksum / 0o256) % 256)
+        ib_buf += chr((checksum / 1) % 256)
+        ib_buf += chr((checksum / 256) % 256)
         ib_buf += chr(0x17)
 
         self.ser.write(ib_buf)
