@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_hardware.h>
 #include <ubiquity_motor/motor_message.h>
 #include <boost/assign.hpp>
+#include <boost/asio.hpp>
 
 #include <boost/math/special_functions/round.hpp>
 
@@ -92,8 +93,9 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     ROS_INFO("Initialize MCB serial port '%s' for %d baud",
         serial_params.serial_port.c_str(), serial_params.baud_rate);
 
+    boost::asio::io_service io;
     motor_serial_ =
-        new MotorSerial(serial_params.serial_port, serial_params.baud_rate);
+        new MotorSerial(io, serial_params.serial_port, serial_params.baud_rate);
 
      ROS_INFO("MCB serial port initialized");
 

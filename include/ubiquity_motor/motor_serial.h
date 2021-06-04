@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MOTORSERIAL_H
 
 #include <ros/ros.h>
-#include <serial/serial.h>
+#include <boost/asio.hpp>
 #include <ubiquity_motor/motor_message.h>
 #include <ubiquity_motor/shared_queue.h>
 #include <boost/thread.hpp>
@@ -42,8 +42,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class MotorSerial {
 public:
-    MotorSerial(const std::string& port = "/dev/ttyUSB0",
-                uint32_t baud_rate = 9600);
+    MotorSerial(boost::asio::io_service &io,
+		const std::string& port = "/dev/ttyUSB0",
+             	uint32_t baud_rate = 9600);
     ~MotorSerial();
 
     int transmitCommand(MotorMessage command);
@@ -58,7 +59,8 @@ public:
     MotorSerial& operator=(MotorSerial const&) = delete;
 
 private:
-    serial::Serial motors;
+    boost::asio::serial_port motors;
+    const std::string device;
 
     shared_queue<MotorMessage> output;
 
