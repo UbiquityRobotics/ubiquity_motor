@@ -88,13 +88,19 @@ TEST_F(MotorSerialTests, goodReadWorks) {
     ASSERT_NE(-1, write(master_fd, test, 8));
 
     while (!motors->commandAvailable()) {
+	    std::cout << "whiling" << std::endl;
     }
+    std::cout << "out of while" << std::endl;
 
     MotorMessage mm;
     mm = motors->receiveCommand();
+    std::cout << "receivedCommand" << std::endl;
     ASSERT_EQ(300, mm.getData());
+    std::cout << "getData" << std::endl;
     ASSERT_EQ(MotorMessage::TYPE_WRITE, mm.getType());
+    std::cout << "getTyoe" << std::endl;
     ASSERT_EQ(MotorMessage::REG_BOTH_SPEED_SET, mm.getRegister());
+    std::cout << "getRegister" << std::endl;
 }
 
 TEST_F(MotorSerialTests, misalignedOneGoodReadWorks) {

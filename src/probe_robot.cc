@@ -218,7 +218,7 @@ int main(int argc, char const *argv[]) {
     }
 
     try {
-	boost::asio::io_service io; // TODO: What is this?
+	boost::asio::io_service io; 
 	boost::asio::serial_port robot(io);
 	robot.open(op.serial_port);
 	robot.set_option(boost::asio::serial_port_base::baud_rate(op.baud_rate));

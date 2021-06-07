@@ -114,7 +114,12 @@ void MotorSerial::SerialThread() {
             boost::this_thread::interruption_point();
             RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
 
+	    std::cout << "thread" << std::endl;
+	    // Call belows block without timeout!
+	    // TODO: Implement asyn_read (non-blocking)
+	    // https://stackoverflow.com/questions/456042/how-do-i-perform-a-nonblocking-read-using-asio
 	    boost::asio::read(motors, boost::asio::buffer(innew.c_array(), 1));
+	    std::cout << "threadX" << std::endl;
             if (innew[0] != MotorMessage::delimeter) {
                 // The first byte was not the delimiter, so re-loop
                 if (++serial_errors > error_threshold) {
@@ -122,6 +127,7 @@ void MotorSerial::SerialThread() {
                 }
                 continue;
             }
+	    std::cout << "thread1" << std::endl;
 
             // Read in next 7 bytes
 	    boost::asio::read(motors, boost::asio::buffer(&innew.c_array()[1], 7));
@@ -129,6 +135,7 @@ void MotorSerial::SerialThread() {
                       innew[1], innew[2], innew[3], innew[4], innew[5],
                       innew[6], innew[7]);
 
+	    std::cout << "thread2" << std::endl;
             MotorMessage mc;
             int error_code = mc.deserialize(innew);
             if (error_code == 0) {
