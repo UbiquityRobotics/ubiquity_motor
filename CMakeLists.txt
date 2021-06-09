@@ -174,8 +174,8 @@ if(CATKIN_ENABLE_TESTING)
 	target_link_libraries(motor_param_test ubiquity_motor ${catkin_LIBRARIES})
 
 	#add_rostest_gtest(motor_hardware_test 
-		#	test/rostest/motor_hardware.test 
-		#	test/motor_hardware_test.cc )
+	#		test/rostest/motor_hardware.test 
+	#		test/motor_hardware_test.cc )
 	#target_link_libraries(motor_hardware_test ubiquity_motor util ${catkin_LIBRARIES})
 
 endif()

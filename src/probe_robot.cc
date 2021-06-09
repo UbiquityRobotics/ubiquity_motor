@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <ubiquity_motor/motor_message.h>
 
 struct Options {
@@ -47,6 +49,10 @@ bool find_switch(const std::vector<std::string> &args, const std::string &short_
     bool has_long = (std::find(args.cbegin(), args.cend(), long_sw)) != args.cend();
 
     return (has_long || has_short);
+}
+
+void set_result_pr(const boost::system::error_code, std::size_t bytes_transferred) {
+    std::cout << "set_result" << std::endl;
 }
 
 std::string get_option(const std::vector<std::string> &args, const std::string &option,
@@ -135,8 +141,13 @@ MotorMessage readRegister(MotorMessage::Registers reg, boost::asio::serial_port 
     req.setType(MotorMessage::TYPE_READ);
     req.setData(0);
 
+    std::cout << "serialize" << std::endl;
     RawMotorMessage out = req.serialize();
-    boost::asio::write(robot, boost::asio::buffer(out.c_array(), out.size()));
+    std::cout << "start write" << std::endl;
+    boost::asio::async_write(robot, 
+		    	     boost::asio::buffer(out.c_array(), out.size()),
+			     boost::bind(set_result_pr, _1, _2));
+    std::cout << "end write" << std::endl;
 
     const boost::system::error_code ec = flush(robot, TCOFLUSH);
     if (ec) {
@@ -148,14 +159,23 @@ MotorMessage readRegister(MotorMessage::Registers reg, boost::asio::serial_port 
     clock_gettime(CLOCK_MONOTONIC, &current_time);
     start = current_time;
 
+    std::cout << "start deadline" << std::endl;
+    boost::asio::deadline_timer timeout(robot.get_executor());
+    std::cout << "end deadline" << std::endl;
+
     while (robot.is_open() && !timedout) {
         RawMotorMessage innew = {0, 0, 0, 0, 0, 0, 0, 0};
 
 	// TODO: Implement timeout, otherwise this will block forever if no character arrives.
+	std::cout << "start of async" << std::endl;
+	timeout.expires_from_now(boost::posix_time::seconds(5));
 	boost::asio::read(robot, boost::asio::buffer(innew.c_array(), 1));
+	std::cout << "end of async" << std::endl;
+
         if (innew[0] != MotorMessage::delimeter) continue;
 
-	boost::asio::read(robot, boost::asio::buffer(&innew.c_array()[1], 7));
+	timeout.expires_from_now(boost::posix_time::seconds(5));
+	boost::asio::async_read(robot, boost::asio::buffer(&innew.c_array()[1], 7));
 
         MotorMessage rsp;
         if (!rsp.deserialize(innew)) {

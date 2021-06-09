@@ -49,6 +49,7 @@ public:
 
     int transmitCommand(MotorMessage command);
     int transmitCommands(const std::vector<MotorMessage>& commands);
+    size_t completion_condition(const boost::system::error_code& error, std::size_t bytes_transferred);
 
     MotorMessage receiveCommand();
     int commandAvailable();
@@ -57,9 +58,10 @@ public:
 
     MotorSerial(MotorSerial const&) = delete;
     MotorSerial& operator=(MotorSerial const&) = delete;
+    boost::asio::serial_port motors;
 
 private:
-    boost::asio::serial_port motors;
+    boost::asio::deadline_timer timeout;
     const std::string device;
 
     shared_queue<MotorMessage> output;

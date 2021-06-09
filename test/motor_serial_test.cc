@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_message.h>
 #include <ubiquity_motor/motor_serial.h>
 #include <boost/asio.hpp>
+#include <boost/chrono.hpp>
 
 #include <string>
 
@@ -60,7 +61,10 @@ protected:
         motors = new MotorSerial(io, std::string(name), 9600);
     }
 
-    virtual void TearDown() { delete motors; }
+    virtual void TearDown() { 
+	    std::cout << "killing motor" << std::endl;
+	    motors->motors.close(); // closes serial port
+	    delete motors; }
 
     MotorSerial *motors;
     int master_fd;
@@ -78,20 +82,21 @@ TEST_F(MotorSerialTests, serialClosedOnInterupt) {
     ASSERT_EQ(true, motors->motors.is_open());
     motors->serial_thread.interrupt();
     sleep(1);
-    ASSERT_EQ(false, motors->motors.is_open()); // TODO: Sometimes fails ?
+    ASSERT_EQ(false, motors->motors.is_open());
 }
 
-/*
 TEST_F(MotorSerialTests, goodReadWorks) {
     uint8_t test[] = {0x7E, 0x3B, 0x2A, 0x00, 0x00, 0x01, 0x2C, 0x6D};
     // char test[]= {0x0E, 0x2C, 0x01, 0x00, 0x00, 0x07, 0xBB, 0x02, 0x7E};
+    std::cout << "wrtie" << std::endl;
     ASSERT_NE(-1, write(master_fd, test, 8));
+    std::cout << "end" << std::endl;
 
     while (!motors->commandAvailable()) {
 	    std::cout << "whiling" << std::endl;
+	    sleep(1);
     }
     std::cout << "out of while" << std::endl;
-
     MotorMessage mm;
     mm = motors->receiveCommand();
     std::cout << "receivedCommand" << std::endl;
@@ -362,7 +367,6 @@ TEST_F(MotorSerialTests, writeMultipleOutputs) {
 
     ASSERT_EQ(expected, input);
 }
-*/
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
