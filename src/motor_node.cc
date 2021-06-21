@@ -46,13 +46,6 @@ static FirmwareParams g_firmware_params;
 static CommsParams    g_serial_params;
 static NodeParams     g_node_params;
 
-// We had to deal with special MCB state control so need state values below
-// We need to find an include file for these which have system wide usage
-#define ROS_TOPIC_SYSTEM_CONTROL  "system_control"    // A topic for system level control commands
-#define MOTOR_CONTROL_CMD      "motor_control"        // A mnumonic for a motor control system command
-#define MOTOR_CONTROL_ENABLE   "enable"               // Parameter for MOTOR_CONTROL_CMD to enable control
-#define MOTOR_CONTROL_DISABLE  "disable"              // Parameter for MOTOR_CONTROL_CMD to enable control
-int    g_mcbEnabled = 1;
 int    g_wheel_slip_nulling = 0;
 
 // Until we have a holdoff for MCB message overruns we do this delay to be cautious
@@ -91,13 +84,34 @@ void PID_update_callback(const ubiquity_motor::PIDConfig& config,
 void SystemControlCallback(const std_msgs::String::ConstPtr& msg) {
     ROS_DEBUG("System control msg with content: '%s']", msg->data.c_str());
 
+    // Manage the complete cut-off of all control to the MCB
+    // Typically used for firmware upgrade, but could be used for other diagnostics
     if (msg->data.find(MOTOR_CONTROL_CMD) != std::string::npos) {
         if (msg->data.find(MOTOR_CONTROL_ENABLE) != std::string::npos) {;
-            ROS_INFO("Received System control msg to ENABLE control of the MCB");
-            g_mcbEnabled = 1;
+            if (g_node_params.mcbControlEnabled == 0) {  // Only show message if state changes
+                ROS_INFO("Received System control msg to ENABLE control of the MCB");
+            }
+            g_node_params.mcbControlEnabled = 1;
         } else if (msg->data.find(MOTOR_CONTROL_DISABLE) != std::string::npos) {
-            ROS_INFO("Received System control msg to DISABLE control of the MCB");
-            g_mcbEnabled = 0;
+            if (g_node_params.mcbControlEnabled != 0) {  // Only show message if state changes
+                ROS_INFO("Received System control msg to DISABLE control of the MCB");
+            }
+            g_node_params.mcbControlEnabled = 0;
+        }
+    }
+
+    // Manage a motor speed override used to allow collision detect motor stopping
+    if (msg->data.find(MOTOR_SPEED_CONTROL_CMD) != std::string::npos) {
+        if (msg->data.find(MOTOR_CONTROL_ENABLE) != std::string::npos) {;
+            if (g_node_params.mcbSpeedEnabled == 0) {  // Only show message if state changes
+                ROS_INFO("Received System control msg to ENABLE control of motor speed");
+            }
+            g_node_params.mcbSpeedEnabled = 1;
+        } else if (msg->data.find(MOTOR_CONTROL_DISABLE) != std::string::npos) {
+            if (g_node_params.mcbSpeedEnabled != 0) {  // Only show message if state changes
+                ROS_INFO("Received System control msg to DISABLE control of motor speed");
+            }
+            g_node_params.mcbSpeedEnabled = 0;
         }
      }
 }
@@ -108,6 +122,10 @@ void SystemControlCallback(const std_msgs::String::ConstPtr& msg) {
 //
 void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
 {
+     // A full mcb initialization requires high level system overrides to be disabled
+    g_node_params.mcbControlEnabled = 1;
+    g_node_params.mcbSpeedEnabled   = 1;
+
     // Force future calls to sendParams() to update current pid parametes on the MCB
     robot->forcePidParamUpdates();
 
@@ -362,7 +380,7 @@ int main(int argc, char* argv[]) {
         last_loop_time = current_time;
 
         // Speical handling if motor control is disabled.  skip the entire loop
-        if (g_mcbEnabled == 0) {
+        if (g_node_params.mcbControlEnabled == 0) {
             // Check for if we are just starting to go into idle mode and release MCB
             if (lastMcbEnabled == 1) {
                 ROS_WARN("Motor controller going offline and closing MCB serial port");
@@ -382,7 +400,7 @@ int main(int argc, char* argv[]) {
                 robot->setSystemEvents(0);  // Clear entire system events register
                 robot->system_events = 0;
                 mcbStatusPeriodSec.sleep();
-              
+
                 // Setup MCB parameters that are defined by host parameters in most cases
                 initMcbParameters(robot);
                 ROS_WARN("Motor controller has been re-initialized as we go back online");
@@ -391,7 +409,6 @@ int main(int argc, char* argv[]) {
                 ROS_ERROR("ERROR in re-opening of the Motor controller!");
             }
         }
-
 
         // Determine and set wheel velocities in rad/sec from hardware positions in rads
         ros::Duration elapsed_time = current_time - last_joint_time;
@@ -477,8 +494,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-
-        // Update motor controller speeds.
+        // Update motor controller speeds unless global disable is set, perhaps for colision safety
         if (robot->getEstopState()) {
             robot->writeSpeedsInRadians(0.0, 0.0);    // We send zero velocity when estop is active
             estopReleaseDelay = estopReleaseDeadtime;
@@ -488,7 +504,11 @@ int main(int argc, char* argv[]) {
                 estopReleaseDelay -= (1.0/g_node_params.controller_loop_rate);
                 robot->writeSpeedsInRadians(0.0, 0.0);
             } else {
-                robot->writeSpeeds();   // Normal operation using current system speeds
+                if (g_node_params.mcbSpeedEnabled != 0) {     // A global disable used for safety at node level
+                    robot->writeSpeeds();         // Normal operation using current system speeds
+                } else {
+                    robot->writeSpeedsInRadians(0.0, 0.0);
+                }
             }
         }
 
