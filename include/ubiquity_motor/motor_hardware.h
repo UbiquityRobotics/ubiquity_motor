@@ -122,7 +122,8 @@ public:
     void clearCommands();
     void readInputs();
     void writeSpeeds();
-    void writeSpeedsInRadians(double  left_radians, double  right_radians);
+    void writeSpeedsInRadians(double left_radians, double right_radians);
+    float calculateBatteryPercentage(float voltage, int cells, const float* type);
     void requestFirmwareVersion();
     void requestFirmwareDate();
     void setParams(FirmwareParams firmware_params);
