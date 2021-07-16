@@ -62,6 +62,15 @@ int32_t  g_odomLeft  = 0;
 int32_t  g_odomRight = 0;
 int32_t  g_odomEvent = 0;
 
+// A 4wd robot must skid to turn. This factor approximates the actual rotation done vs what
+// the wheel encoders have indicated.  This only applies if in 4WD mode
+double   g_odom4wdRotationScale = 1.65;
+
+// We sometimes need to know if we are rotating in place due to special ways of dealing with
+// 4WD robot chassis that has to use extensive torque to rotate in place and due to wheel slip has odom scale factor
+int32_t  g_speedLeft  = 0;
+int32_t  g_speedRight = 0;
+
 // This utility opens and reads 1 or more bytes from a device on an I2C bus
 // This method was taken on it's own from a big I2C class we may choose to use later
 static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2cAddr, 
@@ -267,9 +276,45 @@ void MotorHardware::readInputs() {
                     g_odomEvent += 1;
                     //if ((g_odomEvent % 50) == 1) { ROS_ERROR("leftOdom %d rightOdom %d", g_odomLeft, g_odomRight); }
 
+                    // Due to extreme wheel slip that is required to turn a 4WD robot we are doing a scale factor.
+                    // When doing a rotation on the 4WD robot that is in place where linear velocity is zero
+                    // we will adjust the odom values for wheel joint rotation using the scale factor.
+                    double odom4wdRotationScale = 1.0;
+
+                    // Determine if we are rotating then set a scale to account for rotational wheel slip
+                    double near0WheelVel = (double)(0.05);
+                    double leftWheelVel  =  (double)g_speedLeft;  // joints_[WheelJointLocation::Left].velocity;
+                    double rightWheelVel =  (double)g_speedRight; // joints_[WheelJointLocation::Right].velocity;
+
+                    int leftDir  = (leftWheelVel  >= (double)(0.0)) ? 1 : -1;
+                    int rightDir = (rightWheelVel >= (double)(0.0)) ? 1 : -1;
+                    int is4wdMode  = 1;  // FIX THIS !!!  NEED REAL OPTION (fw_params.hw_options & MotorMessage::OPT_WHEEL_TYPE_THIN);
+                    if (
+                        // Is this in 4wd robot mode
+                        (is4wdMode != 0)
+
+                        // Do the joints have Different rotational directions
+                        && ((leftDir + rightDir) == 0)   
+
+                        // Are Both joints not near joint velocity of 0
+                        && ((fabs(leftWheelVel)  > near0WheelVel) && (fabs(rightWheelVel) > near0WheelVel))
+
+                        // Is the difference of the two absolute values of the joint velocities near zero
+                        && ((fabs(leftWheelVel) - fabs(rightWheelVel)) > near0WheelVel) )  {
+
+                        odom4wdRotationScale = g_odom4wdRotationScale;
+                    }
+
+                    if (leftWheelVel > (double)(0.05)) {
+                        ROS_INFO("DEBUG: odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
+                            odom4wdRotationScale, leftWheelVel, rightWheelVel, leftDir, rightDir, fw_params.hw_options, is4wdMode);
+                    }
+
                     // Add or subtract from position in radians using the incremental odom value
-                    joints_[WheelJointLocation::Left].position  += (odomLeft / ticks_per_radian);
-                    joints_[WheelJointLocation::Right].position += (odomRight / ticks_per_radian);
+                    joints_[WheelJointLocation::Left].position  += 
+                        ((double)odomLeft  / (ticks_per_radian * odom4wdRotationScale));
+                    joints_[WheelJointLocation::Right].position += 
+                        ((double)odomRight / (ticks_per_radian * odom4wdRotationScale));
 
 		    motor_diag_.odom_update_status.tick(); // Let diag know we got odom
 
@@ -438,6 +483,9 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
     MotorMessage both;
     both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
     both.setType(MotorMessage::TYPE_WRITE);
+
+    g_speedLeft  = left_radians;
+    g_speedRight = right_radians;
 
     int16_t left_speed  = calculateSpeedFromRadians(left_radians);
     int16_t right_speed = calculateSpeedFromRadians(right_radians);
