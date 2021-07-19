@@ -15,7 +15,6 @@
   <depend>std_msgs</depend>
   <depend>tf</depend>
   <depend>nav_msgs</depend>
-  <depend>serial</depend>
   <depend>hardware_interface</depend>
   <depend>controller_manager</depend>
   <depend>dynamic_reconfigure</depend>
