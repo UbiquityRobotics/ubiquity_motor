@@ -64,7 +64,7 @@ int32_t  g_odomEvent = 0;
 
 // A 4wd robot must skid to turn. This factor approximates the actual rotation done vs what
 // the wheel encoders have indicated.  This only applies if in 4WD mode
-double   g_odom4wdRotationScale = 1.65;
+double   g_odom4wdRotationScale = 1.0;   //  TODO: To enable this use this value:  1.65;
 
 // We sometimes need to know if we are rotating in place due to special ways of dealing with
 // 4WD robot chassis that has to use extensive torque to rotate in place and due to wheel slip has odom scale factor
