@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.13.0 (2021-07-20)
+-------------------
 * Depend on python3 version of requests
 * Hack to vendor serial because it is still unreleased on noetic
 * Merge commit '32b9fad54bb1e54b9fa61f6b5c51f5ec4bf6d547' as 'serial'
