@@ -304,11 +304,11 @@ void MotorHardware::readInputs() {
                         && ((fabs(leftWheelVel) - fabs(rightWheelVel)) < near0WheelVel) )  {
 
                         odom4wdRotationScale = g_odom4wdRotationScale;
-                        ROS_INFO("DEBUG: ROTATIONAL_SCALING_ACTIVE: odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
+                        ROS_DEBUG("ROTATIONAL_SCALING_ACTIVE: odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
                             odom4wdRotationScale, leftWheelVel, rightWheelVel, leftDir, rightDir, fw_params.hw_options, is4wdMode);
                     } else {
                         if (fabs(leftWheelVel) > near0WheelVel) {
-                            ROS_INFO("DEBUG: odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
+                            ROS_DEBUG("odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
                                 odom4wdRotationScale, leftWheelVel, rightWheelVel, leftDir, rightDir, fw_params.hw_options, is4wdMode);
                         }
                     }
