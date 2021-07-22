@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.13.1 (2021-07-22)
+-------------------
 * Migration to Python3.8
 * upgrade_firmware.py migrated
 * test_velocity.py migrated
