@@ -14,7 +14,15 @@ To do a firmware upgrade for the motor controller board please see our instructi
 
 Firmware Revision History
 
-* `v36`  2020-04-12. Planned for release to production in mid 2020
+* `v40`  20201209.  Our most current Magni release candidate firmware. This has been looking very good as of Jan 2021
+    * Just about the same as v39 but has proper defaults for a shipping Magni Products. Has everything discussed for v29
+
+* `v39`  2020-11-29. NOT A MAGNI Compatible Release! Custom build for a 4 wheel drive architecture in development
+    * Adds new modes for advanced wheel control options to improve higher load turning response.
+    * Adds new feedback and registers for indication of wheel currents and control state
+    * Added support for MCB rev 5.3 testpoints.  
+
+* `v37`  2020-06-20. Used as initial code on MCB board production. Not qualified for final product.
     * Contains built in selftest ability including a wheel test.
     * Contains runtime checks for power supply and main battery levels
 
@@ -54,6 +62,17 @@ ALL REVISIONS FROM HERE ON REQUIRE HOST SIDE UPDATE TO Nov 15, 2019 or later
 The MCB hardware revisions start with those board revisions that may have ended up at sites outside of Ubiquity Robotics.   Below is a list in reverse time order of the boards and approximate time of first availability.
 
 To identify the motor controller board you have you can try to read the version very low on the top left side of the board or you can visit our website [HERE](https://learn.ubiquityrobotics.com/PC_Board_RevId)
+
+* `5.3` A modest revision with many improvements and better service features
+    * F701 fuse is a 10 AMP (not 35 amp) fuse and F700 is a new non-loaded fuse to replace rev 5.2 R706 0 ohm jumper which we have learned could lead to failures on hard shorts
+    * use 3 pin back loaded header, P706, with center pin to ground and side pins are TP3 and TP4. This allows jumper usage in testing board.
+    * Just one 25mm standoff for Raspberry Pi support in middle of board. Two standoffs next to P701 removed for assembly reasons.
+    * BOM corrections for C411 (12V Main) and C1411 (12V Aux) 3.5mm lead space 680uf 25V, C312 (5V Aux) and C1312 (5V Main) 3.5mm lead space and will be 1000uf @ 16V
+    * Fix 'WiFi' diode silkscreen (reversed) and make 'WiFi' text larger
+    * Q903 is loaded large topside Mosfet, TI CSD19532KTT, for ECB Main (reliability fix)
+    * R1901 (100k) and Q1904 are now backside loaded parts on the bom and higher current and take the place of topside Q1903. (reliability fix)
+    * R604 and R603 become 0.1 percent to improve accuracy of battery voltage reading for worse case resistor tolerance.
+    * Assorted improvements to silkscreen for easier support and service of the board.
 
 * `5.2` A major revision placed into production in early April 2020.
     * The CAD system was changed to be a full KiCAD based design.  This was a huge change that required renumbering of most all of the part reference designators and of course the goal was after it was done to have an identical board.

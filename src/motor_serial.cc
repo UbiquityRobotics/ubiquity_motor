@@ -75,6 +75,37 @@ int MotorSerial::commandAvailable() { return !output.fast_empty(); }
 
 void MotorSerial::appendOutput(MotorMessage command) { output.push(command); }
 
+void MotorSerial::closePort() { return motors.close(); }
+
+// After we have been offine this is called to re-open serial port
+// This returns true if port was open or if port opened with success
+bool MotorSerial::openPort()  { 
+    bool retCode = true;
+
+    if (motors.isOpen() == true) {
+        return true; 
+    }
+
+    //  Port was closed so must open it using info from prior open()
+    try {
+        motors.open();
+    } catch (const serial::IOException& e) {
+        ROS_ERROR("%s", e.what());
+        retCode = false;
+    } catch (const std::invalid_argument) {
+        ROS_ERROR("MotorSerial::openPort Invalid argument");
+        retCode = false;
+    } catch (const serial::SerialException& e) {
+        ROS_ERROR("%s", e.what());
+        retCode = false;
+    } catch (...) {
+        ROS_ERROR("Unknown Error");
+        retCode = false;
+    }
+
+    return retCode;
+}
+
 void MotorSerial::SerialThread() {
     try {
         while (motors.isOpen()) {

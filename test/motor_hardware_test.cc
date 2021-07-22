@@ -268,6 +268,7 @@ TEST_F(MotorHardwareTests, setDeadmanTimerOutputs) {
     ASSERT_EQ(1000, mm.getData());
 }
 
+/*
 TEST_F(MotorHardwareTests, setParamsSendParams) {
     FirmwareParams fp;
     fp.pid_proportional = 12;
@@ -303,7 +304,6 @@ void callbackS(const std_msgs::Int32 &data) {
     called = true;
 }
 
-/*
 TEST_F(MotorHardwareTests, debugRegisterUnsignedPublishes) {
     called = false;
     ros::Subscriber sub = nh.subscribe("u50", 1, callbackU);

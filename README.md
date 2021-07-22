@@ -22,6 +22,18 @@ Configuration launch files for the _Magni_ robot are in the package [magni_robot
 `cmd_vel` [geometry_msgs/Twist](http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html)
 The command input.
 
+`system_control` [std_msgs/String](http://docs.ros.org/api/std_msgs/html/msg/Sring.html)
+A channel to command the motor node to change mode of operation. 
+A text string with a commnad followed by parameter such as `enable` or `disable` are used.
+
+    motor_control disable      Stops the MCB control over serial (used for firmware load)
+    motor_control enable       Re-attaches the MCB control over serial for normal operation
+
+
+    speed_control disable      Stops the robot so no speed control is used for collision avoiance
+    speed_control enable       Re-enables the motor node to respond to cmd_vel speed messages
+      
+
 ### Published topics
 
 `odom` [nav_msgs/Odometry](http://docs.ros.org/api/nav_msgs/html/msg/Odometry.html)
@@ -35,6 +47,21 @@ Charge state of the robot's batteries.
 
 `publish_cmd` [geometry_msgs/TwistStamped](http://docs.ros.org/api/geometry_msgs/html/msg/TwistStamped.html)
 The value of `cmd_vel` after limits were applied. Available if the `publish_cmd` paramater is set.
+
+`motor_power_active` [std_msgs/Bool](http://docs.ros.org/api/std_msgs/html/msg/Bool.html)
+The state of motor power being active is published.  This follows the ESTOP switch within about a half second.
+
+`left_error` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
+The error in expected left wheel position relative to current left wheel position is published for diagnostics purposes.
+
+`right_error` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
+The error in expected right wheel position relative to current right wheel position is published for diagnostics purposes.
+
+`left_tick_interval` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
+A value that is proportional to the time between left wheel encoder ticks for usage in diagnostics. This unsigned value is only published when velocity is non zero.
+
+`right_tick_interval` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
+A value that is proportional to the time between right wheel encoder ticks for usage in diagnostics. This unsigned value is only published when velocity is non zero.
 
 ### Parameters
 

@@ -1,0 +1,21 @@
+name: ROS Kinetic
+
+on:
+  push:
+    branches: [ kinetic-devel ]
+  pull_request:
+    branches: [ kinetic-devel ]
+
+jobs:     
+  build_docker:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:xenial
+    steps:
+      - uses: ros-tooling/setup-ros@v0.2
+        with:
+          required-ros-distributions: kinetic
+      - uses: ros-tooling/action-ros-ci@v0.2
+        with:
+          package-name: ubiquity_motor
+          target-ros1-distro: kinetic

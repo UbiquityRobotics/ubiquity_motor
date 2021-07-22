@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>ubiquity_motor</name>
-  <version>0.12.0</version>
+  <version>0.13.0</version>
   <description>Provides a ROS interface to Ubiquity Robotics Magni motor controllers</description>
 
   <maintainer email="rohan@aleopile.com">Rohan Agrawal</maintainer>
@@ -15,13 +15,12 @@
   <depend>std_msgs</depend>
   <depend>tf</depend>
   <depend>nav_msgs</depend>
-  <depend>serial</depend>
   <depend>hardware_interface</depend>
   <depend>controller_manager</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>diagnostic_updater</depend>
   <exec_depend>diff_drive_controller</exec_depend>
   <exec_depend>joint_state_controller</exec_depend>
-  <exec_depend>python-requests</exec_depend>
+  <exec_depend>python3-requests</exec_depend>
 
 </package>

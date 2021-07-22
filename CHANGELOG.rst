@@ -2,6 +2,51 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.13.0 (2021-07-20)
+-------------------
+* Depend on python3 version of requests
+* Hack to vendor serial because it is still unreleased on noetic
+* Merge commit '32b9fad54bb1e54b9fa61f6b5c51f5ec4bf6d547' as 'serial'
+* Updated unit tests with new changes so that they pass
+* Adding beta for v41 firmware
+* Add tic interval topics and fix bat volt readings and enhance test_velocity tool (`#126 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/126>`_)
+* Cleanup of the README for better formating and clarity for tick intervals
+* Removed a diagnostic cap on interval of 2000 that was for testing
+* Adding system_control command of speed_control  disable and enable.  Moving the state for both speed control AND earlier added motor control to disable mcb control by motor node both into NodeParams class.    Also move the defines for topic name and both commands into motor_parameters.h which is better place since now mcbSpeedControl and mcbMotorControl are now members of NodeParams which is also defined in motor_parameters.h (`#122 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/122>`_)
+* Add query of pid parameters. Fix issue with the S command where we had to use a second carrage return to enter value before.   Some help menu cleanup
+* Updating to include v40 for latest Magni release candidate
+* Fix init of wheel_type for case of no yaml entry for wheel type so we will use default of standard in that case (`#117 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/117>`_)
+* Merge pull request `#115 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/115>`_ from UbiquityRobotics/addSystemControlForMcbDisable
+  Add system control for mcb disable
+* First working disable of MCB serial to allow firmware upgrade then re-enable motor node.  This has been tested and we can disable - upgrade - re-enable.
+* Now able to have motor_node receive on system_power topic a   motor_control disable and it allows firmware upgrade.  Next the more tricky part is to re-open and re-init MCB.  The final piece is to reopen serial port as the code to re-init mcb is in this branch already
+* More incremental changes to better show battery too low
+* Working version to allow disable and re-enable of MCB on the new /system_control topic.
+* src/motor_node.cc
+* Improved the comments for clearer usage info
+* Adding arduino nano program for simple MCB diagnostics to be used without any Raspberry Pi connected.
+* Adding firmware folder. No impact to any code and is for ability to have revisions available to users to try different versions as required.
+* Adding firmware rev v39 and v37 for firmware descriptions
+* Adding board revision hardware changes done for rev 5.3 MCB
+* Merge pull request `#109 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/109>`_ from UbiquityRobotics/i2c-lock
+  Open i2c device for read-only.
+* Open device for read-only.
+* Reset and reinitialize MCB if we see it has itself been reset (`#103 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/103>`_)
+  Have re-tested today since it has been a while since review start.   Hit MCB reset switch and we re-init from host params.
+  It has been intentially set to an infrequent check because it is likely a very rare event and I wanted to keep I2C traffic to a minimum.
+* Merge pull request `#104 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/104>`_ from UbiquityRobotics/i2c-lock
+  Removing the write() call to PCF8574 in a I2C communication
+* Only read() call.
+* Arbitrary slave register.
+* Compiled version
+* Re-added goto.
+* Some changes
+* WriteRead in one go.
+* Adding wheel joint state velocity to fix ubiquity_motor issue `#59 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/59>`_ (`#101 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/101>`_)
+* Fix wheel direction issues (`#100 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/100>`_)
+* Fix15sec deadman hickup (`#99 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/99>`_)
+* Contributors: Mark Johnston, MoffKalast, Rohan Agrawal, Teodor, 
+
 0.12.0 (2020-07-13)
 -------------------
 * Fixes ODOM bug and modifies way we set wheel type to safer system. (`#87 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/87>`_)
