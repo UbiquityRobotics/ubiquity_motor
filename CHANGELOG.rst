@@ -2,6 +2,15 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Migration to Python3.8
+* upgrade_firmware.py migrated
+* test_velocity.py migrated
+* test_pi_gpio.py migrated
+* test_motor_board.py migrated
+* Contributors: Rohan Agrawal, Teo Podobnik
+
 0.13.0 (2021-07-20)
 -------------------
 * Depend on python3 version of requests
