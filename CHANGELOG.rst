@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.13.2 (2021-07-27)
+-------------------
 * Added ros noetic github action
 * Install the shared lib for our custom serial
 * Check for mininum hardware version before reading option switch
