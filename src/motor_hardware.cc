@@ -480,6 +480,7 @@ void MotorHardware::requestSystemEvents() {
 // The 1st firmware version this is set for is 32, before it was always 1
 void MotorHardware::setHardwareVersion(int32_t hardware_version) {
     ROS_INFO("setting hardware_version to %x", (int)hardware_version);
+    this->hardware_version = hardware_version;
     MotorMessage mm;
     mm.setRegister(MotorMessage::REG_HARDWARE_VERSION);
     mm.setType(MotorMessage::TYPE_WRITE);

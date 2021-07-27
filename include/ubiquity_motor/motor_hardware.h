@@ -50,6 +50,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest_prod.h>
 
+// Mininum hardware versions required for various features
+#define MIN_HW_OPTION_SWITCH 50
+
 struct MotorDiagnostics {
     MotorDiagnostics()
         : odom_update_status(

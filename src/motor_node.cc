@@ -191,7 +191,7 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
 
     // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
     // We could re-read periodically but perhaps only every 5-10 sec but should do it from main loop
-    if (robot->firmware_version >= MIN_FW_OPTION_SWITCH) {
+    if (robot->firmware_version >= MIN_FW_OPTION_SWITCH && robot->hardware_version >= MIN_HW_OPTION_SWITCH) {
         g_firmware_params.option_switch = robot->getOptionSwitch();
         ROS_INFO("Setting firmware option register to 0x%x.", g_firmware_params.option_switch);
         robot->setOptionSwitchReg(g_firmware_params.option_switch);
