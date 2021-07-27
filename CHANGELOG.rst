@@ -2,6 +2,13 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added ros noetic github action
+* Install the shared lib for our custom serial
+* Check for mininum hardware version before reading option switch
+* Contributors: Rohan Agrawal
+
 0.13.1 (2021-07-22)
 -------------------
 * Migration to Python3.8
