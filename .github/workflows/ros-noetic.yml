@@ -1,0 +1,21 @@
+name: ROS Noetic
+
+on:
+  push:
+    branches: [ noetic-devel ]
+  pull_request:
+    branches: [ noetic-devel ]
+
+jobs:     
+  build_docker:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:focal
+    steps:
+      - uses: ros-tooling/setup-ros@v0.2
+        with:
+          required-ros-distributions: noetic
+      - uses: ros-tooling/action-ros-ci@v0.2
+        with:
+          package-name: ubiquity_motor
+          target-ros1-distro: noetic
