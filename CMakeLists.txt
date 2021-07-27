@@ -117,6 +117,14 @@ endif()
 list(APPEND catkin_LIBRARIES ur_serial)
 list(APPEND catkin_INCLUDE_DIRS serial/include)
 
+## Mark executables and/or libraries for installation
+install(TARGETS ur_serial
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+
 #########
 # END SERIAL
 ##########
