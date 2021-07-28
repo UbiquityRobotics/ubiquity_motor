@@ -198,14 +198,14 @@ struct NodeParams {
         : controller_loop_rate(10.0),
           wheel_type("firmware_default"),
           wheel_direction("firmware_default"),
-          drive_type("2wd"),
+          drive_type("firmware_default"),
 	  left_joint("left_wheel_joint"),
 	  right_joint("right_wheel_joint"){};
 
     NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0),
         wheel_type("firmware_default"),
         wheel_direction("firmware_default"),
-        drive_type("2wd") {
+        drive_type("firmware_default") {
         // clang-format off
         controller_loop_rate = getParamOrDefault(
             nh, "controller_loop_rate", controller_loop_rate);

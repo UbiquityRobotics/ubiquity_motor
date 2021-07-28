@@ -58,6 +58,7 @@ typedef boost::array<uint8_t, 8> RawMotorMessage;
 #define MIN_FW_WHEEL_DIRECTION    38
 #define MIN_FW_WHEEL_NULL_ERROR   38
 #define MIN_FW_PID_CONTROL_REV2   39
+#define MIN_FW_DRIVE_TYPE         42   // Separated wheel type from drive type July 2021
 
 // It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
 // In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose
@@ -90,8 +91,8 @@ public:
         REG_BOTH_PWM = 0x07,            // Both wheel PWM drive values in packed 16 bit ints
         REG_RIGHT_SPEED_SET = 0x08,     // Deprecated
 
-        REG_LEFT_RAMP = 0x09,           // Deprecated
-        REG_RIGHT_RAMP = 0x0A,          // Deprecated
+        REG_09 = 0x09,                  // Deprecated
+        REG_DRIVE_TYPE = 0x0A,          // The type of wheel-motor in use
 
         REG_WHEEL_NULL_ERR = 0x0B,      // Specifies a one time null of pid loop position setpoint
         REG_WHEEL_DIR = 0x0C,           // Set wheels to go in reverse if set for OPT_WHEEL_DIR_REVERSE
@@ -190,7 +191,9 @@ public:
         OPT_ENC_6_STATE = 0x01,
         OPT_WHEEL_TYPE_THIN = 0x02,    // As of rev v37 we support a 'thin' wheel type, gearless
         OPT_WHEEL_DIR_REVERSE = 0x04,  // As of rev v38 we support wheels to move in reverse direction
+        OPT_DRIVE_TYPE_4WD = 0x08,     // 4WD is separate option as of late July, 2021
         OPT_WHEEL_TYPE_STANDARD = 0,   // Default original, standard wheels
+        OPT_DRIVE_TYPE_STANDARD = 0,   // Default original magni, 2 wheel drive
         OPT_WHEEL_DIR_STANDARD = 0     // Default original, standard wheels
     };
 

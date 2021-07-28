@@ -223,7 +223,7 @@ void MotorHardware::publishMotorState(void) {
 // The motor controller sends unsolicited messages periodically so we must read the
 // messages to update status in near realtime
 //
-void MotorHardware::readInputs() {
+void MotorHardware::readInputs(uint32_t index) {
 
     while (motor_serial_->commandAvailable()) {
         MotorMessage mm;
@@ -289,7 +289,7 @@ void MotorHardware::readInputs() {
 
                     int leftDir  = (leftWheelVel  >= (double)(0.0)) ? 1 : -1;
                     int rightDir = (rightWheelVel >= (double)(0.0)) ? 1 : -1;
-                    int is4wdMode  = 1;  // FIX THIS !!!  NEED REAL OPTION (fw_params.hw_options & MotorMessage::OPT_WHEEL_TYPE_THIN);
+                    int is4wdMode = (fw_params.hw_options & MotorMessage::OPT_DRIVE_TYPE_4WD);
                     if (
                         // Is this in 4wd robot mode
                         (is4wdMode != 0)
@@ -304,8 +304,10 @@ void MotorHardware::readInputs() {
                         && ((fabs(leftWheelVel) - fabs(rightWheelVel)) < near0WheelVel) )  {
 
                         odom4wdRotationScale = g_odom4wdRotationScale;
-                        ROS_DEBUG("ROTATIONAL_SCALING_ACTIVE: odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
-                            odom4wdRotationScale, leftWheelVel, rightWheelVel, leftDir, rightDir, fw_params.hw_options, is4wdMode);
+                        if ((index % 16) == 1) {   // This throttles the messages for rotational torque enhancement
+                            ROS_INFO("ROTATIONAL_SCALING_ACTIVE: odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
+                                odom4wdRotationScale, leftWheelVel, rightWheelVel, leftDir, rightDir, fw_params.hw_options, is4wdMode);
+                        }
                     } else {
                         if (fabs(leftWheelVel) > near0WheelVel) {
                             ROS_DEBUG("odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
@@ -384,6 +386,14 @@ void MotorHardware::readInputs() {
                     } else {
                         ROS_WARN_ONCE("Wheel type is: 'standard'");
 		    	fw_params.hw_options &= ~MotorMessage::OPT_WHEEL_TYPE_THIN; 
+                    }
+
+                    if (data & MotorMessage::OPT_DRIVE_TYPE_4WD) {
+                        ROS_WARN_ONCE("Drive type is: '4wd'");
+		    	fw_params.hw_options |= MotorMessage::OPT_DRIVE_TYPE_4WD; 
+                    } else {
+                        ROS_WARN_ONCE("Drive type is: '2wd'");
+		    	fw_params.hw_options &= ~MotorMessage::OPT_DRIVE_TYPE_4WD; 
                     }
 
                     if (data & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
@@ -627,6 +637,19 @@ void MotorHardware::setWheelType(int32_t wheel_type) {
     mm.setRegister(MotorMessage::REG_WHEEL_TYPE);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(wheel_type);
+    motor_serial_->transmitCommand(mm);
+}
+
+// Setup the Drive Type. Overrides mode in use on hardware  
+// This used to only be 2WD and use of THIN_WHEELS set 4WD
+// We are not trying to decouple wheel type from drive type
+// This register always existed but was a do nothing till firmware v42
+void MotorHardware::setDriveType(int32_t drive_type) {
+    ROS_INFO_ONCE("setting MCB drive type %d", (int)drive_type);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_DRIVE_TYPE);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(drive_type);
     motor_serial_->transmitCommand(mm);
 }
 
@@ -1071,6 +1094,11 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
         option_descriptions +=  ", Thin gearless wheels";
     } else {
         option_descriptions +=  ", Standard wheels";
+    }
+    if (firmware_options & MotorMessage::OPT_DRIVE_TYPE_4WD) {
+        option_descriptions +=  ", 4 wheel drive";
+    } else {
+        option_descriptions +=  ", 2 wheel drive";
     }
     if (firmware_options & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
         // Only indicate wheel reversal if that has been set as it is non-standard

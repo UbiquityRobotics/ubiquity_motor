@@ -145,6 +145,12 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
         } else if (g_node_params.wheel_type == "thin"){
             wheel_type = MotorMessage::OPT_WHEEL_TYPE_THIN;
             ROS_INFO("Host is specifying wheel_type of '%s'", "thin");
+
+            // If thin wheels and no drive_type is in yaml file we will use 4wd
+            if (g_node_params.drive_type == "firmware_default") {
+                ROS_INFO("Default to drive_type of 4wd when THIN wheels unless option drive_type is set");
+                g_node_params.drive_type = "4wd";    
+            }
         } else {
             ROS_WARN("Invalid wheel_type of '%s' specified! Using wheel type of standard", 
                 g_node_params.wheel_type.c_str());
@@ -156,6 +162,34 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
     robot->setWheelType(wheel_type);
     robot->wheel_type = wheel_type;
     mcbStatusPeriodSec.sleep();
+
+
+    // Determine the drive type to be used by the robot base 
+    int32_t drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
+    if (g_node_params.drive_type == "firmware_default") {
+        // Here there is no specification so the firmware default will be used
+        ROS_INFO("Default drive_type of 'standard' will be used.");
+        drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
+    } else {
+        // Any other setting leads to host setting the drive type
+        if (g_node_params.drive_type == "standard") {
+            drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
+            ROS_INFO("Host is specifying drive_type of '%s'", "standard");
+        } else if (g_node_params.drive_type == "4wd"){
+            drive_type = MotorMessage::OPT_DRIVE_TYPE_4WD;
+            ROS_INFO("Host is specifying drive_type of '%s'", "4wd");
+        } else {
+            ROS_WARN("Invalid drive_type of '%s' specified! Using drive type of standard", 
+                g_node_params.drive_type.c_str());
+            g_node_params.drive_type = "standard";
+            drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
+        }
+    }
+    // Write out the drive type setting to hardware layer
+    robot->setDriveType(drive_type);
+    robot->drive_type = drive_type;
+    mcbStatusPeriodSec.sleep();
+
 
     int32_t wheel_direction = 0;
     if (g_node_params.wheel_direction == "firmware_default") {
@@ -189,14 +223,6 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
         ROS_DEBUG("Controller board version has been set to %d", 
             g_firmware_params.controller_board_version);
         mcbStatusPeriodSec.sleep();
-    }
-
-    // Setup the chassis wheel drive_type. Magni uses 2wd but 4wd robots must act differently on drive_type
-    g_node_params.drive_type = "2wd";
-    if (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) {
-        // Use when ROS Param works ROS_INFO("Chassis drive_type is set to '%s'", g_node_params.drive_type.c_str());
-        ROS_INFO("Wheel chassis drive_type will be set to 4wd");
-        g_node_params.drive_type = "4wd";
     }
 
     // Certain 4WD robots rely on wheels to skid to reach final positions.
@@ -311,7 +337,7 @@ int main(int argc, char* argv[]) {
             if (times % 30 == 0)
                 ROS_ERROR("The Firmware not reporting its version");
                 robot->requestFirmwareVersion();
-            robot->readInputs();
+            robot->readInputs(0);
             mcbStatusPeriodSec.sleep();
             times++;
         }
@@ -375,11 +401,13 @@ int main(int argc, char* argv[]) {
     ros::Time last_sys_maint_time = last_loop_time;
     ros::Time last_joint_time = last_loop_time;
     ctrlLoopDelay.sleep();                  // Do delay to setup periodic loop delays
+    uint32_t loopIdx = 0;
 
     while (ros::ok()) {
         current_time = ros::Time::now();
         elapsed_loop_time = current_time - last_loop_time;
         last_loop_time = current_time;
+        loopIdx += 1;
 
         // Speical handling if motor control is disabled.  skip the entire loop
         if (g_node_params.mcbControlEnabled == 0) {
@@ -448,7 +476,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        robot->readInputs();
+        robot->readInputs(loopIdx);
         if ((minCycleTime < elapsed_loop_time) && (elapsed_loop_time < maxCycleTime)) {
             cm.update(current_time, elapsed_loop_time);
         }
@@ -488,10 +516,15 @@ int main(int argc, char* argv[]) {
             }
 
             // a periodic refresh of wheel type which is a safety net due to it's importance.
-            // This can be removed when a solid message protocol is developed
             if (robot->firmware_version >= MIN_FW_WHEEL_TYPE_THIN) {
                 // Refresh the wheel type setting
                 robot->setWheelType(robot->wheel_type);
+                mcbStatusPeriodSec.sleep();
+            }
+            // a periodic refresh of drive type which is a safety net due to it's importance.
+            if (robot->firmware_version >= MIN_FW_DRIVE_TYPE) {
+                // Refresh the drive type setting
+                robot->setDriveType(robot->drive_type);
                 mcbStatusPeriodSec.sleep();
             }
         }
