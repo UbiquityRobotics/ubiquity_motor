@@ -50,6 +50,7 @@ const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits 
 // 17.2328767123 and  gear ratio of 4.29411764706:1
 #define TICKS_PER_RADIAN_ENC_3_STATE (20.50251516)    // used to read more misleading value of (41.0058030317/2)
 #define QTICKS_PER_RADIAN   (ticks_per_radian*4)      // Quadrature ticks makes code more readable later
+#define HIGH_SPEED_RADIANS (2.0) // This is a threshold were we consider we are turning the wheel very fast'
 
 #define MOTOR_AMPS_PER_ADC_COUNT   ((double)(0.0238)) // 0.1V/Amp  2.44V=1024 count so 41.97 cnt/amp
 
@@ -61,6 +62,11 @@ const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits 
 int32_t  g_odomLeft  = 0;
 int32_t  g_odomRight = 0;
 int32_t  g_odomEvent = 0;
+
+// We sometimes need to know if we are rotating in place due to special ways of dealing with
+// 4WD robot chassis that has to use extensive torque to rotate in place and due to wheel slip has odom scale factor
+double   g_radiansLeft  = 0.0;
+double   g_radiansRight = 0.0;
 
 // This utility opens and reads 1 or more bytes from a device on an I2C bus
 // This method was taken on it's own from a big I2C class we may choose to use later
@@ -438,6 +444,15 @@ void MotorHardware::writeSpeedsInRadians(double  left_radians, double  right_rad
     MotorMessage both;
     both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
     both.setType(MotorMessage::TYPE_WRITE);
+
+    g_radiansLeft  = left_radians;
+    g_radiansRight = right_radians;
+
+    // We are going to implement a warning when robot is moving very fast or rotating very fast
+    if ((left_radians > HIGH_SPEED_RADIANS) || (right_radians > HIGH_SPEED_RADIANS)) {
+        ROS_INFO("Wheel rotation at high radians per sec.  Left %f rad/s Right %f rad/s",
+            left_radians, right_radians);
+    }
 
     int16_t left_speed  = calculateSpeedFromRadians(left_radians);
     int16_t right_speed = calculateSpeedFromRadians(right_radians);
