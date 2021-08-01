@@ -50,7 +50,7 @@ const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits 
 // 17.2328767123 and  gear ratio of 4.29411764706:1
 #define TICKS_PER_RADIAN_ENC_3_STATE (20.50251516)    // used to read more misleading value of (41.0058030317/2)
 #define QTICKS_PER_RADIAN   (ticks_per_radian*4)      // Quadrature ticks makes code more readable later
-#define HIGH_SPEED_RADIANS (2.0) // This is a threshold were we consider we are turning the wheel very fast'
+#define HIGH_SPEED_RADIANS (1.8) // This is a threshold were we consider we are turning the wheel very fast'
 
 #define MOTOR_AMPS_PER_ADC_COUNT   ((double)(0.0238)) // 0.1V/Amp  2.44V=1024 count so 41.97 cnt/amp
 
