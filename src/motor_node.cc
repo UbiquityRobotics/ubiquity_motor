@@ -46,7 +46,7 @@ static FirmwareParams g_firmware_params;
 static CommsParams    g_serial_params;
 static NodeParams     g_node_params;
 
-#define WHEEL_SLIP_THRESHOLD  (0.05)   // Radians per sec below which we null excess wheel torque to reduce heat
+#define WHEEL_SLIP_THRESHOLD  (0.08)   // Radians per sec below which we null excess wheel torque to reduce heat
 int    g_wheel_slip_nulling = 0;
 
 // Until we have a holdoff for MCB message overruns we do this delay to be cautious
