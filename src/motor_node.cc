@@ -46,8 +46,7 @@ static FirmwareParams g_firmware_params;
 static CommsParams    g_serial_params;
 static NodeParams     g_node_params;
 
-#define ROTATE_TORQUE_THRESHOLD  0.1    // Set when high torque will set in.
-
+#define WHEEL_SLIP_THRESHOLD  (0.08)   // Radians per sec below which we null excess wheel torque to reduce heat
 int    g_wheel_slip_nulling = 0;
 
 // Until we have a holdoff for MCB message overruns we do this delay to be cautious
@@ -458,8 +457,10 @@ int main(int argc, char* argv[]) {
 
             // Implement static wheel slippage relief
             // Deal with auto-null of MCB wheel setpoints if wheel slip nulling is enabled
+            // We null wheel torque if wheel speed has been very low for a long time
+            // This would be even better if we only did this when over a certain current is heating the wheel
             if (g_wheel_slip_nulling != 0) {
-                if (robot->areWheelSpeedsLower(ROTATE_TORQUE_THRESHOLD) != 0) {
+                if (robot->areWheelSpeedsLower(WHEEL_SLIP_THRESHOLD) != 0) {
                     zeroVelocityTime += jointUpdatePeriod;   // add to time at zero velocity
                     if (zeroVelocityTime > wheelSlipNullingPeriod) {
                         // null wheel error if at zero velocity for the nulling check period
