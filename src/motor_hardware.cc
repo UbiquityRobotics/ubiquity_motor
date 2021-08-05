@@ -921,7 +921,7 @@ void MotorDiagnostics::motor_max_pwm_status(DiagnosticStatusWrapper &stat) {
 void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
     stat.add("Motor Power", !estop_motor_power_off);
     if (estop_motor_power_off == false) {
-        stat.summary(DiagnosticStatusWrapper::ERROR, "Motor power on");
+        stat.summary(DiagnosticStatusWrapper::OK, "Motor power on");
     }
     else {
         stat.summary(DiagnosticStatusWrapper::WARN, "Motor power off");
