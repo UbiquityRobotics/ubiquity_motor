@@ -64,6 +64,11 @@ int32_t  g_odomRight = 0;
 int32_t  g_odomEvent = 0;
 
 // We sometimes need to know if we are rotating in place due to special ways of dealing with
+// A 4wd robot must skid to turn. This factor approximates the actual rotation done vs what
+// the wheel encoders have indicated.  This only applies if in 4WD mode
+double   g_odom4wdRotationScale = 1.65;
+#define  WHEEL_VELOCITY_NEAR_ZERO   ((double)(0.08))
+
 // 4WD robot chassis that has to use extensive torque to rotate in place and due to wheel slip has odom scale factor
 double   g_radiansLeft  = 0.0;
 double   g_radiansRight = 0.0;
@@ -219,7 +224,7 @@ void MotorHardware::publishMotorState(void) {
 // The motor controller sends unsolicited messages periodically so we must read the
 // messages to update status in near realtime
 //
-void MotorHardware::readInputs() {
+void MotorHardware::readInputs(uint32_t index) {
 
     while (motor_serial_->commandAvailable()) {
         MotorMessage mm;
@@ -273,9 +278,49 @@ void MotorHardware::readInputs() {
                     g_odomEvent += 1;
                     //if ((g_odomEvent % 50) == 1) { ROS_ERROR("leftOdom %d rightOdom %d", g_odomLeft, g_odomRight); }
 
+                    // Due to extreme wheel slip that is required to turn a 4WD robot we are doing a scale factor.
+                    // When doing a rotation on the 4WD robot that is in place where linear velocity is zero
+                    // we will adjust the odom values for wheel joint rotation using the scale factor.
+                    double odom4wdRotationScale = 1.0;
+
+                    // Determine if we are rotating then set a scale to account for rotational wheel slip
+                    double near0WheelVel = (double)(WHEEL_VELOCITY_NEAR_ZERO);
+                    double leftWheelVel  =  g_radiansLeft;  // rotational speed of motor
+                    double rightWheelVel =  g_radiansRight; // rotational speed of motor
+
+                    int leftDir  = (leftWheelVel  >= (double)(0.0)) ? 1 : -1;
+                    int rightDir = (rightWheelVel >= (double)(0.0)) ? 1 : -1;
+                    int is4wdMode = (fw_params.hw_options & MotorMessage::OPT_DRIVE_TYPE_4WD);
+                    if (
+                        // Is this in 4wd robot mode
+                        (is4wdMode != 0)
+
+                        // Do the joints have Different rotational directions
+                        && ((leftDir + rightDir) == 0)   
+
+                        // Are Both joints not near joint velocity of 0
+                        && ((fabs(leftWheelVel)  > near0WheelVel) && (fabs(rightWheelVel) > near0WheelVel))
+
+                        // Is the difference of the two absolute values of the joint velocities near zero
+                        && ((fabs(leftWheelVel) - fabs(rightWheelVel)) < near0WheelVel) )  {
+
+                        odom4wdRotationScale = g_odom4wdRotationScale;
+                        if ((index % 16) == 1) {   // This throttles the messages for rotational torque enhancement
+                            ROS_INFO("ROTATIONAL_SCALING_ACTIVE: odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
+                                odom4wdRotationScale, leftWheelVel, rightWheelVel, leftDir, rightDir, fw_params.hw_options, is4wdMode);
+                        }
+                    } else {
+                        if (fabs(leftWheelVel) > near0WheelVel) {
+                            ROS_DEBUG("odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
+                                odom4wdRotationScale, leftWheelVel, rightWheelVel, leftDir, rightDir, fw_params.hw_options, is4wdMode);
+                        }
+                    }
+
                     // Add or subtract from position in radians using the incremental odom value
-                    joints_[WheelJointLocation::Left].position  += (odomLeft / ticks_per_radian);
-                    joints_[WheelJointLocation::Right].position += (odomRight / ticks_per_radian);
+                    joints_[WheelJointLocation::Left].position  += 
+                        ((double)odomLeft  / (ticks_per_radian * odom4wdRotationScale));
+                    joints_[WheelJointLocation::Right].position += 
+                        ((double)odomRight / (ticks_per_radian * odom4wdRotationScale));
 
 		    motor_diag_.odom_update_status.tick(); // Let diag know we got odom
 
@@ -342,6 +387,14 @@ void MotorHardware::readInputs() {
                     } else {
                         ROS_WARN_ONCE("Wheel type is: 'standard'");
 		    	fw_params.hw_options &= ~MotorMessage::OPT_WHEEL_TYPE_THIN; 
+                    }
+
+                    if (data & MotorMessage::OPT_DRIVE_TYPE_4WD) {
+                        ROS_WARN_ONCE("Drive type is: '4wd'");
+		    	fw_params.hw_options |= MotorMessage::OPT_DRIVE_TYPE_4WD; 
+                    } else {
+                        ROS_WARN_ONCE("Drive type is: '2wd'");
+		    	fw_params.hw_options &= ~MotorMessage::OPT_DRIVE_TYPE_4WD; 
                     }
 
                     if (data & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
@@ -591,6 +644,19 @@ void MotorHardware::setWheelType(int32_t wheel_type) {
     mm.setRegister(MotorMessage::REG_WHEEL_TYPE);
     mm.setType(MotorMessage::TYPE_WRITE);
     mm.setData(wheel_type);
+    motor_serial_->transmitCommand(mm);
+}
+
+// Setup the Drive Type. Overrides mode in use on hardware  
+// This used to only be 2WD and use of THIN_WHEELS set 4WD
+// We are not trying to decouple wheel type from drive type
+// This register always existed but was a do nothing till firmware v42
+void MotorHardware::setDriveType(int32_t drive_type) {
+    ROS_INFO_ONCE("setting MCB drive type %d", (int)drive_type);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_DRIVE_TYPE);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(drive_type);
     motor_serial_->transmitCommand(mm);
 }
 
@@ -1035,6 +1101,11 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
         option_descriptions +=  ", Thin gearless wheels";
     } else {
         option_descriptions +=  ", Standard wheels";
+    }
+    if (firmware_options & MotorMessage::OPT_DRIVE_TYPE_4WD) {
+        option_descriptions +=  ", 4 wheel drive";
+    } else {
+        option_descriptions +=  ", 2 wheel drive";
     }
     if (firmware_options & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
         // Only indicate wheel reversal if that has been set as it is non-standard

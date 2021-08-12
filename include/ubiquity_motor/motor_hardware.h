@@ -134,7 +134,7 @@ public:
     void closePort();
     bool openPort();
     void clearCommands();
-    void readInputs();
+    void readInputs(uint32_t index);
     void writeSpeeds();
     void writeSpeedsInRadians(double  left_radians, double  right_radians);
     int  areWheelSpeedsLower(double wheelSpeedRadPerSec);
@@ -155,6 +155,7 @@ public:
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
     void setWheelType(int32_t wheel_type);
+    void setDriveType(int32_t drive_type);
     void setPidControl(int32_t pid_control);
     void nullWheelErrors(void);
     void setWheelDirection(int32_t wheel_direction);
@@ -180,6 +181,7 @@ public:
     int deadman_enable;
     int system_events;
     int wheel_type;
+    int drive_type;
 
     diagnostic_updater::Updater diag_updater;
 private:
