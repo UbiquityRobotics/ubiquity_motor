@@ -57,6 +57,7 @@ struct FirmwareParams {
     int32_t pid_velocity;
     int32_t pid_denominator;
     int32_t pid_moving_buffer_size;
+    int32_t pid_control;
     int32_t controller_board_version;
     int32_t estop_detection;
     int32_t estop_pid_threshold;
@@ -80,6 +81,7 @@ struct FirmwareParams {
           pid_velocity(0),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
+	  pid_control(0),
           controller_board_version(49),
           estop_detection(1),
           estop_pid_threshold(1500),
@@ -106,6 +108,7 @@ struct FirmwareParams {
           pid_velocity(0),
           pid_denominator(1000),
           pid_moving_buffer_size(10),
+	  pid_control(0),
           controller_board_version(49),
           estop_detection(1),
           estop_pid_threshold(1500),
@@ -133,6 +136,8 @@ struct FirmwareParams {
             nh, "ubiquity_motor/pid_velocity", pid_velocity);
         pid_denominator = getParamOrDefault(
             nh, "ubiquity_motor/pid_denominator", pid_denominator);
+	pid_control = getParamOrDefault(
+            nh, "ubiquity_motor/pid_control", pid_control);
         pid_moving_buffer_size = getParamOrDefault(
             nh, "ubiquity_motor/window_size", pid_moving_buffer_size);
         controller_board_version = getParamOrDefault(
@@ -185,15 +190,22 @@ struct NodeParams {
     double controller_loop_rate;
     std::string wheel_type;
     std::string wheel_direction;
+    std::string drive_type;
 
     int mcbControlEnabled;    // State to allow suspension of MCB serial control for diagnostic purposes
     int mcbSpeedEnabled;      // State to allow zero speed override for safety reasons
 
-    NodeParams() : controller_loop_rate(10.0), wheel_type("firmware_default"), wheel_direction("firmware_default"),
-        mcbControlEnabled(1), mcbSpeedEnabled(1){};
+    NodeParams() : controller_loop_rate(10.0),
+	           wheel_type("firmware_default"), 
+		   wheel_direction("firmware_default"),
+		   drive_type("firmware_default"),
+                   mcbControlEnabled(1),
+		   mcbSpeedEnabled(1){};
+
     NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0),
         wheel_type("firmware_default"),
         wheel_direction("firmware_default"),
+	drive_type("firmware_default"),
         mcbControlEnabled(1),
         mcbSpeedEnabled(1) {
         // clang-format off
@@ -203,6 +215,8 @@ struct NodeParams {
             nh, "ubiquity_motor/wheel_type", wheel_type);
         wheel_direction = getParamOrDefault(
             nh, "ubiquity_motor/wheel_direction", wheel_direction);
+	drive_type = getParamOrDefault(
+            nh, "ubiquity_motor/drive_type", drive_type);
         // clang-format on
     };
 };
