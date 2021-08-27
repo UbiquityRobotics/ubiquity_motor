@@ -47,6 +47,9 @@ static FirmwareParams g_firmware_params;
 static CommsParams    g_serial_params;
 static NodeParams     g_node_params;
 
+// TODO: Enhancement - Make WHEEL_SLIP_THRESHOLD be a ROS param
+#define WHEEL_SLIP_THRESHOLD  (0.08)   // Rotation below which we null excess wheel torque in 4wd drive_type
+int    g_wheel_slip_nulling = 0;
 
 // Until we have a holdoff for MCB message overruns we do this delay to be cautious
 // Twice the period for status reports from MCB
@@ -143,6 +146,12 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
         } else if (g_node_params.wheel_type == "thin"){
             wheel_type = MotorMessage::OPT_WHEEL_TYPE_THIN;
             ROS_INFO("Host is specifying wheel_type of '%s'", "thin");
+
+	    // If thin wheels and no drive_type is in yaml file we will use 4wd
+            if (g_node_params.drive_type == "firmware_default") {
+                ROS_INFO("Default to drive_type of 4wd when THIN wheels unless option drive_type is set");
+                g_node_params.drive_type = "4wd";
+            }
         } else {
             ROS_WARN("Invalid wheel_type of '%s' specified! Using wheel type of standard", 
                 g_node_params.wheel_type.c_str());
@@ -153,6 +162,32 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
     // Write out the wheel type setting to hardware layer
     robot->setWheelType(wheel_type);
     robot->wheel_type = wheel_type;
+    mcbStatusPeriodSec.sleep();
+
+    // Determine the drive type to be used by the robot base
+    int32_t drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
+    if (g_node_params.drive_type == "firmware_default") {
+        // Here there is no specification so the firmware default will be used
+        ROS_INFO("Default drive_type of 'standard' will be used.");
+        drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
+    } else {
+        // Any other setting leads to host setting the drive type
+        if (g_node_params.drive_type == "standard") {
+            drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
+            ROS_INFO("Host is specifying drive_type of '%s'", "standard");
+        } else if (g_node_params.drive_type == "4wd"){
+            drive_type = MotorMessage::OPT_DRIVE_TYPE_4WD;
+            ROS_INFO("Host is specifying drive_type of '%s'", "4wd");
+        } else {
+            ROS_WARN("Invalid drive_type of '%s' specified! Using drive type of standard",
+                g_node_params.drive_type.c_str());
+            g_node_params.drive_type = "standard";
+            drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
+        }
+    }
+    // Write out the drive type setting to hardware layer
+    robot->setDriveType(drive_type);
+    robot->drive_type = drive_type;
     mcbStatusPeriodSec.sleep();
 
     int32_t wheel_direction = 0;
@@ -187,6 +222,16 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
         ROS_DEBUG("Controller board version has been set to %d", 
             g_firmware_params.controller_board_version);
         mcbStatusPeriodSec.sleep();
+    }
+
+    // Certain 4WD robots rely on wheels to skid to reach final positions.
+    // For such robots when loaded down the wheels can get in a state where they cannot skid.
+    // This leads to motor overheating.  This code below sacrifices accurate odometry which
+    // in not achievable in such robots anyway to relieve high wattage drive power when zero velocity.
+    g_wheel_slip_nulling = 0;
+    if ((robot->firmware_version >= MIN_FW_WHEEL_NULL_ERROR) && (g_node_params.drive_type == "4wd")) {
+        g_wheel_slip_nulling = 1;
+        ROS_INFO("Wheel slip nulling will be enabled for this 4wd system when velocity remains at zero.");
     }
 
     // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
@@ -235,13 +280,17 @@ int main(int argc, char* argv[]) {
 
     int lastMcbEnabled = 1;
 
+    // Until we have a holdoff for MCB message overruns we do this delay to be cautious
+    // Twice the period for status reports from MCB
+    ros::Duration mcbStatusPeriodSec(0.02);
+
     std::unique_ptr<MotorHardware> robot = nullptr;
     // Keep trying to open serial
     {
         int times = 0;
         while (ros::ok() && robot.get() == nullptr) {
             try {
-                robot.reset(new MotorHardware(nh, g_serial_params, g_firmware_params));
+                robot.reset(new MotorHardware(nh, g_node_params, g_serial_params, g_firmware_params));
             }
             catch (const serial::IOException& e) {
                 if (times % 30 == 0)
@@ -281,7 +330,7 @@ int main(int argc, char* argv[]) {
             if (times % 30 == 0)
                 ROS_ERROR("The Firmware not reporting its version");
                 robot->requestFirmwareVersion();
-            robot->readInputs();
+            robot->readInputs(0);
             mcbStatusPeriodSec.sleep();
             times++;
         }
@@ -324,6 +373,11 @@ int main(int argc, char* argv[]) {
     double leftWheelPos  = 0.0;
     double rightWheelPos = 0.0;
     robot-> getWheelJointPositions(leftLastWheelPos, rightWheelPos);
+    ros::Duration zeroVelocityTime(0.0);
+
+    // Define a period where if wheels are under stress for this long we back off stress
+    ros::Duration wheelSlipNullingPeriod(2.0);
+    int wheelSlipEvents = 0;
 
     ROS_INFO("Starting motor control node now");
 
@@ -341,11 +395,13 @@ int main(int argc, char* argv[]) {
     ros::Time last_sys_maint_time = last_loop_time;
     ros::Time last_joint_time = last_loop_time;
     ctrlLoopDelay.sleep();                  // Do delay to setup periodic loop delays
+    uint32_t loopIdx = 0;
 
     while (ros::ok()) {
         current_time = ros::Time::now();
         elapsed_loop_time = current_time - last_loop_time;
         last_loop_time = current_time;
+	loopIdx += 1;
 
         // Speical handling if motor control is disabled.  skip the entire loop
         if (g_node_params.mcbControlEnabled == 0) {
@@ -390,9 +446,33 @@ int main(int argc, char* argv[]) {
             robot-> setWheelJointVelocities(leftWheelVel, rightWheelVel); // rad/sec
             leftLastWheelPos  = leftWheelPos;
             rightLastWheelPos = rightWheelPos;
+
+	    // Publish motor state at this time
+            robot->publishMotorState();
+
+            // Implement static wheel slippage relief
+            // Deal with auto-null of MCB wheel setpoints if wheel slip nulling is enabled
+            // We null wheel torque if wheel speed has been very low for a long time
+            // This would be even better if we only did this when over a certain current is heating the wheel
+            if (g_wheel_slip_nulling != 0) {
+                if (robot->areWheelSpeedsLower(WHEEL_SLIP_THRESHOLD) != 0) {
+                    zeroVelocityTime += jointUpdatePeriod;   // add to time at zero velocity
+                    if (zeroVelocityTime > wheelSlipNullingPeriod) {
+                        // null wheel error if at zero velocity for the nulling check period
+                        // OPTION: We could also just null wheels at high wheel power
+                        ROS_DEBUG("Applying wheel slip relief now with slip period of %4.1f sec ",
+                            wheelSlipNullingPeriod.toSec());
+                        wheelSlipEvents += 1;
+                        robot->nullWheelErrors();
+                        zeroVelocityTime = ros::Duration(0.0);   // reset time we have been at zero velocity
+                    }
+                } else {
+                    zeroVelocityTime = ros::Duration(0.0);   // reset time we have been at zero velocity
+                }
+            }
         }
 
-        robot->readInputs();
+        robot->readInputs(loopIdx);
         if ((minCycleTime < elapsed_loop_time) && (elapsed_loop_time < maxCycleTime)) {
             cm.update(current_time, elapsed_loop_time);
         }
@@ -420,9 +500,10 @@ int main(int argc, char* argv[]) {
 			}
 
             // Post a status message for MCB state periodically. This may be nice to do more on as required
-            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x, Wheel type '%s'",
-                robot->getBatteryVoltage(), batStatus.c_str(), robot->system_events, 
-                (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard");
+            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x,  PidCtrl 0x%x, Wheel type '%s' DriveType '%s' %s",
+                robot->getBatteryVoltage(), batStatus.c_str(), robot->system_events, robot->getPidControlWord(),
+                (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard",
+                g_node_params.drive_type.c_str());
 
             // If we detect a power-on of MCB we should re-initialize MCB
             if ((robot->system_events & MotorMessage::SYS_EVENT_POWERON) != 0) {
@@ -441,6 +522,12 @@ int main(int argc, char* argv[]) {
             if (robot->firmware_version >= MIN_FW_WHEEL_TYPE_THIN) {
                 // Refresh the wheel type setting
                 robot->setWheelType(robot->wheel_type);
+                mcbStatusPeriodSec.sleep();
+            }
+	    // a periodic refresh of drive type which is a safety net due to it's importance.
+            if (robot->firmware_version >= MIN_FW_DRIVE_TYPE) {
+                // Refresh the drive type setting
+                robot->setDriveType(robot->drive_type);
                 mcbStatusPeriodSec.sleep();
             }
         }
