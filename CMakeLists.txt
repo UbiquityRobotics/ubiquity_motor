@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 14) # use C++14
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
+	message_generation
 	roscpp 
 	geometry_msgs  
 	std_msgs  
@@ -139,7 +140,9 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 add_library(ubiquity_motor
   src/motor_message.cc src/motor_serial.cc src/motor_hardware.cc
 )
-add_dependencies(ubiquity_motor ${PROJECT_NAME}_generate_messages_cpp)
+
+# cmake blows up on this with "ubiquity_motor" does not exist
+# add_dependencies(ubiquity_motor ${PROJECT_NAME}_generate_messages_cpp)
 
 target_link_libraries(ubiquity_motor
  ${catkin_LIBRARIES}
@@ -148,7 +151,11 @@ target_link_libraries(ubiquity_motor
 
 ## Declare a cpp executable
 add_executable(motor_node src/motor_node.cc)
-add_dependencies(motor_node ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_generate_messages_cpp)
+
+# cmake blows up on this with "ubiquity_motor" does not exist
+# add_dependencies(motor_node ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(motor_node ${PROJECT_NAME}_gencfg)
+
 target_link_libraries(motor_node
  ubiquity_motor
  ${catkin_LIBRARIES}
