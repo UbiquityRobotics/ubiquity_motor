@@ -40,6 +40,8 @@ generate_dynamic_reconfigure_options(
 #   Leds.msg
 # )
 
+add_message_files(DIRECTORY msg FILES MotorState.msg)
+
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
@@ -137,6 +139,8 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 add_library(ubiquity_motor
   src/motor_message.cc src/motor_serial.cc src/motor_hardware.cc
 )
+add_dependencies(ubiquity_motor ${PROJECT_NAME}_generate_messages_cpp)
+
 target_link_libraries(ubiquity_motor
  ${catkin_LIBRARIES}
  ${Boost_LIBRARIES}
@@ -144,7 +148,7 @@ target_link_libraries(ubiquity_motor
 
 ## Declare a cpp executable
 add_executable(motor_node src/motor_node.cc)
-add_dependencies(motor_node ${PROJECT_NAME}_gencfg)
+add_dependencies(motor_node ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(motor_node
  ubiquity_motor
  ${catkin_LIBRARIES}

@@ -345,7 +345,7 @@ void MotorHardware::readInputs(uint32_t index) {
                     break;
                 }
 
-		case MotorMessage::REG_BOTH_PWM: {
+		case MotorMessage::REG_PWM_BOTH_WHLS: {
                     int32_t bothPwm = mm.getData();
                     motor_diag_.motorPwmDriveLeft  = (bothPwm >> 16) & 0xffff;
                     motor_diag_.motorPwmDriveRight = bothPwm & 0xffff;
