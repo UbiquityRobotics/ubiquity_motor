@@ -82,7 +82,7 @@ double   g_radiansRight = 0.0;
 static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2cAddr,
                           uint8_t* pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead);
 
-MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
+MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsParams serial_params,
                              FirmwareParams firmware_params) {
     ros::V_string joint_names =
         boost::assign::list_of("left_wheel_joint")("right_wheel_joint");

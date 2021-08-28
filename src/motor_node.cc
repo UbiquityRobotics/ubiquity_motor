@@ -500,7 +500,7 @@ int main(int argc, char* argv[]) {
 			}
 
             // Post a status message for MCB state periodically. This may be nice to do more on as required
-            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x,  PidCtrl 0x%x, Wheel type '%s' DriveType '%s' %s",
+            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x,  PidCtrl 0x%x, Wheel type '%s' DriveType '%s'",
                 robot->getBatteryVoltage(), batStatus.c_str(), robot->system_events, robot->getPidControlWord(),
                 (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard",
                 g_node_params.drive_type.c_str());
