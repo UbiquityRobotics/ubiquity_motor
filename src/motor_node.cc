@@ -147,7 +147,7 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
             wheel_type = MotorMessage::OPT_WHEEL_TYPE_THIN;
             ROS_INFO("Host is specifying wheel_type of '%s'", "thin");
 
-	    // If thin wheels and no drive_type is in yaml file we will use 4wd
+            // If thin wheels and no drive_type is in yaml file we will use 4wd
             if (g_node_params.drive_type == "firmware_default") {
                 ROS_INFO("Default to drive_type of 4wd when THIN wheels unless option drive_type is set");
                 g_node_params.drive_type = "4wd";
@@ -227,7 +227,7 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
     // Certain 4WD robots rely on wheels to skid to reach final positions.
     // For such robots when loaded down the wheels can get in a state where they cannot skid.
     // This leads to motor overheating.  This code below sacrifices accurate odometry which
-    // in not achievable in such robots anyway to relieve high wattage drive power when zero velocity.
+    // is not achievable in such robots anyway to relieve high wattage drive power when zero velocity.
     g_wheel_slip_nulling = 0;
     if ((robot->firmware_version >= MIN_FW_WHEEL_NULL_ERROR) && (g_node_params.drive_type == "4wd")) {
         g_wheel_slip_nulling = 1;
@@ -447,7 +447,7 @@ int main(int argc, char* argv[]) {
             leftLastWheelPos  = leftWheelPos;
             rightLastWheelPos = rightWheelPos;
 
-	    // Publish motor state at this time
+            // Publish motor state at this time
             robot->publishMotorState();
 
             // Implement static wheel slippage relief
@@ -493,11 +493,11 @@ int main(int argc, char* argv[]) {
             mcbStatusPeriodSec.sleep();
             last_sys_maint_time = ros::Time::now();
 
-			// See if we are in a low battery voltage state
-			std::string batStatus = "OK";
-			if (robot->getBatteryVoltage() < g_firmware_params.battery_voltage_low_level) {
-			    batStatus = "LOW!";
-			}
+            // See if we are in a low battery voltage state
+            std::string batStatus = "OK";
+            if (robot->getBatteryVoltage() < g_firmware_params.battery_voltage_low_level) {
+                batStatus = "LOW!";
+            }
 
             // Post a status message for MCB state periodically. This may be nice to do more on as required
             ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x,  PidCtrl 0x%x, Wheel type '%s' DriveType '%s'",
@@ -524,7 +524,7 @@ int main(int argc, char* argv[]) {
                 robot->setWheelType(robot->wheel_type);
                 mcbStatusPeriodSec.sleep();
             }
-	    // a periodic refresh of drive type which is a safety net due to it's importance.
+            // a periodic refresh of drive type which is a safety net due to it's importance.
             if (robot->firmware_version >= MIN_FW_DRIVE_TYPE) {
                 // Refresh the drive type setting
                 robot->setDriveType(robot->drive_type);

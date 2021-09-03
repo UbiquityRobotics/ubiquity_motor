@@ -196,16 +196,16 @@ struct NodeParams {
     int mcbSpeedEnabled;      // State to allow zero speed override for safety reasons
 
     NodeParams() : controller_loop_rate(10.0),
-	           wheel_type("firmware_default"), 
-		   wheel_direction("firmware_default"),
-		   drive_type("firmware_default"),
-                   mcbControlEnabled(1),
-		   mcbSpeedEnabled(1){};
+        wheel_type("firmware_default"), 
+        wheel_direction("firmware_default"),
+        drive_type("firmware_default"),
+        mcbControlEnabled(1),
+        mcbSpeedEnabled(1){};
 
     NodeParams(ros::NodeHandle nh) : controller_loop_rate(10.0),
         wheel_type("firmware_default"),
         wheel_direction("firmware_default"),
-	drive_type("firmware_default"),
+        drive_type("firmware_default"),
         mcbControlEnabled(1),
         mcbSpeedEnabled(1) {
         // clang-format off
@@ -215,7 +215,7 @@ struct NodeParams {
             nh, "ubiquity_motor/wheel_type", wheel_type);
         wheel_direction = getParamOrDefault(
             nh, "ubiquity_motor/wheel_direction", wheel_direction);
-	drive_type = getParamOrDefault(
+        drive_type = getParamOrDefault(
             nh, "ubiquity_motor/drive_type", drive_type);
         // clang-format on
     };

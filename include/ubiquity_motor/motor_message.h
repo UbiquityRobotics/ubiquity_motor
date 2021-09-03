@@ -92,7 +92,7 @@ public:
         REG_TINT_BOTH_WHLS   = 0x08,  // ReadOnly: Both Motor Tic Interval packed as two 16-bit ints. M1 upper word
 
         REG_09               = 0x09,  // Deprecated
-	REG_DRIVE_TYPE       = 0x0A,  // The type of wheel-motor in use                            [v42]
+        REG_DRIVE_TYPE       = 0x0A,  // The type of wheel-motor in use                            [v42]
         REG_RIGHT_RAMP       = 0x0A,  // Deprecated
 
         REG_WHEEL_NULL_ERR   = 0x0b,  // Resets current wheel(s) PID target of by current erro     [v38]
