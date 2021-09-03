@@ -1,0 +1,9 @@
+Header header
+float64 leftPosition
+float64 rightPosition
+float64 leftRotateRate
+float64 rightRotateRate
+float32 leftCurrent
+float32 rightCurrent
+int32 leftPwmDrive
+int32 rightPwmDrive
