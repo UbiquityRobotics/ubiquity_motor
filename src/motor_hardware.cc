@@ -689,6 +689,19 @@ void MotorHardware::setWheelType(int32_t new_wheel_type) {
     }
 }
 
+// Setup the local Wheel gear ratio so the motor hardware layer can adjust wheel odom reporting
+// This gear ratio was introduced for a new version of the standard wheels in late 2021 production
+void MotorHardware::setWheelGearRatio(double new_wheel_gear_ratio) {
+    // This gear ratio is not used by the firmware so it is a simple state element in this module
+    wheel_gear_ratio = new_wheel_gear_ratio;
+}
+
+// A simple fetch of the wheel_gear_ratio 
+double MotorHardware::getWheelGearRatio(void) {
+    return wheel_gear_ratio;;
+}
+
+
 // Setup the Drive Type. Overrides mode in use on hardware
 // This used to only be 2WD and use of THIN_WHEELS set 4WD
 // We are not trying to decouple wheel type from drive type

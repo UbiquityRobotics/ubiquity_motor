@@ -164,6 +164,12 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
     robot->wheel_type = wheel_type;
     mcbStatusPeriodSec.sleep();
 
+    // Determine the wheel gear ratio to be used by the robot base 
+    // Firmware does not use this setting so no message to firmware is required
+    // This gear ratio is contained in the hardware layer so if this node got new setting update hardware layer
+    robot->setWheelGearRatio(g_node_params.wheel_gear_ratio);
+    ROS_INFO("Wheel gear ratio of %5.3f will be used.", g_node_params.wheel_gear_ratio);
+
     // Determine the drive type to be used by the robot base
     int32_t drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
     if (g_node_params.drive_type == "firmware_default") {
