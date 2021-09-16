@@ -43,6 +43,7 @@ const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits 
 
 //#define SENSOR_DISTANCE 0.002478
 
+
 // For experimental purposes users will see that the wheel encoders are three phases
 // of very neaar 43 pulses per revolution or about 43*3 edges so we see very about 129 ticks per rev
 // This leads to 129/(2*Pi)  or about 20.53 ticks per radian experimentally.
