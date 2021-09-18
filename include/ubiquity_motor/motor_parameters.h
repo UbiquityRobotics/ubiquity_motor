@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // The gear ratio defaults for wheels shipped with Magni
 #define WHEEL_GEAR_RATIO_1        ((double)(4.294))   // Default original motor gear ratio for Magni
-#define WHEEL_GEAR_RATIO_2        ((double)(5.17))    // 2nd version standard Magni wheels gear ratio
+#define WHEEL_GEAR_RATIO_2        ((double)(5.170))   // 2nd version standard Magni wheels gear ratio
 
 template <typename T>
 T getParamOrDefault(ros::NodeHandle nh, std::string parameter_name,
