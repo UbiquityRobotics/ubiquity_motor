@@ -75,6 +75,8 @@ Baud rate for serial communication with motor controller hardware.
 
 #### Firmware parameters
 
+These parameters are in the `ubiquity_motor` section.
+
 `pid_proportional` (int, default: 5000)
 The `P` paramater for the motor controller's `PID` controller.
 
@@ -101,8 +103,19 @@ Used to calculate battery voltage from motor controller messages.
 
 #### Node parameters
 
+These parameters are in the `ubiquity_motor` section.
+
 `controller_loop_rate` (double, default: 20.0)
 Rate (in Hz) at which to send commands to the motor controller hardware.
+
+`wheel_type` (string, default: standard)
+The type of wheels in use. The original silver hub cap Magni wheels are the `standard` type.  the black metal hubcap wheels that are thinner are the `thin` type.
+
+`wheel_gear_ratio` (double, default: 4.294)
+This is the gear ratio in the wheel for the standard wheels.  This may change at some point.)
+
+`drive_type` (string, default: standard)
+The original 2 wheel drive is considered `standard` drive type.  Some special order units are of type `4wd`
 
 #### diff_drive_controller paramaters
 
