@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 #
 # A test of GPIO Lines on Rapberry Pi that requires loopback connector
@@ -74,7 +74,7 @@ def blinkLed( ledGpioLine, numBlinks, timeOfBlinks, finalLedState ):
     GPIO.output(ledGpioLine, finalLedState)
 
 def printUsage():
-    print 'usage:  python testPiGpio.py'
+    print('usage:  python testPiGpio.py')
 
 # -----------------------------   Start Main ----------------------------------
 #
@@ -90,7 +90,7 @@ logLine(os.path.basename(__file__) + ' version ' + scriptVersion + ' test starti
 try:
     opts, args = getopt.getopt(sys.argv[1:], "hrsf")
 except getopt.GetoptError as err:
-    print str(err)  # will print something like "option -a not recognized"
+    print(str(err))  # will print something like "option -a not recognized"
     printUsage()
     logLine(os.path.basename(__file__) + ' Pi Connector test exiting due to bad option entererd.')
     sys.exit(2)

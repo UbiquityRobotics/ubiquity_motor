@@ -7,11 +7,12 @@ set(CMAKE_CXX_STANDARD 14) # use C++14
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
+	message_generation
 	roscpp 
+        rospy
 	geometry_msgs  
 	std_msgs  
 	nav_msgs 
-	serial 
 	hardware_interface 
 	controller_manager
 	diagnostic_updater
@@ -41,6 +42,8 @@ generate_dynamic_reconfigure_options(
 #   Leds.msg
 # )
 
+add_message_files(DIRECTORY msg FILES MotorState.msg)
+
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
@@ -49,10 +52,10 @@ generate_dynamic_reconfigure_options(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs # Or other packages containing msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -64,6 +67,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
+  CATKIN_DEPENDS std_msgs message_runtime
 #  LIBRARIES ubiquity_motor
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
@@ -72,7 +76,64 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-   	
+
+
+###########
+# SERIAL LIBRARY
+# Remove once serial is released into noetic
+###########
+
+if(APPLE)
+	find_library(IOKIT_LIBRARY IOKit)
+	find_library(FOUNDATION_LIBRARY Foundation)
+endif()
+
+## Sources
+set(serial_SRCS
+    serial/src/serial.cc
+    serial/include/serial/serial.h
+    serial/include/serial/v8stdint.h
+)
+if(APPLE)
+    # If OSX
+    list(APPEND serial_SRCS serial/src/impl/unix.cc)
+    list(APPEND serial_SRCS serial/src/impl/list_ports/list_ports_osx.cc)
+elseif(UNIX)
+    # If unix
+    list(APPEND serial_SRCS serial/src/impl/unix.cc)
+    list(APPEND serial_SRCS serial/src/impl/list_ports/list_ports_linux.cc)
+else()
+    # If windows
+    list(APPEND serial_SRCS serial/src/impl/win.cc)
+    list(APPEND serial_SRCS serial/src/impl/list_ports/list_ports_win.cc)
+endif()
+
+## Add serial library
+add_library(ur_serial ${serial_SRCS})
+if(APPLE)
+	target_link_libraries(ur_serial ${FOUNDATION_LIBRARY} ${IOKIT_LIBRARY})
+elseif(UNIX)
+	target_link_libraries(ur_serial rt pthread)
+else()
+	target_link_libraries(ur_serial setupapi)
+endif()
+
+##H HACK to contain all serial stuff in here
+list(APPEND catkin_LIBRARIES ur_serial)
+list(APPEND catkin_INCLUDE_DIRS serial/include)
+
+## Mark executables and/or libraries for installation
+install(TARGETS ur_serial
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+
+#########
+# END SERIAL
+##########
+
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
@@ -81,6 +142,10 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 add_library(ubiquity_motor
   src/motor_message.cc src/motor_serial.cc src/motor_hardware.cc
 )
+
+# enable message generation for ubiquity_motor
+add_dependencies(ubiquity_motor ${PROJECT_NAME}_generate_messages_cpp)
+
 target_link_libraries(ubiquity_motor
  ${catkin_LIBRARIES}
  ${Boost_LIBRARIES}
@@ -88,7 +153,10 @@ target_link_libraries(ubiquity_motor
 
 ## Declare a cpp executable
 add_executable(motor_node src/motor_node.cc)
-add_dependencies(motor_node ${PROJECT_NAME}_gencfg)
+
+# enable message generation for motor_node
+add_dependencies(motor_node ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_generate_messages_cpp)
+
 target_link_libraries(motor_node
  ubiquity_motor
  ${catkin_LIBRARIES}

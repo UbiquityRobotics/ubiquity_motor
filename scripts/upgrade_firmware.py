@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python3
 import requests
 
 import time
@@ -7,7 +7,7 @@ import os, sys, subprocess
 
 import argparse
 
-print """-------------------------------------------------------------
+print("""-------------------------------------------------------------
 Welcome to the Ubiquity Robotics Firmware Updater!
 
 Please make sure that you are not running any ROS nodes.
@@ -15,7 +15,7 @@ Please make sure that you are not running any ROS nodes.
 
 Note: Updating the firmware requires access to the internet.
 -------------------------------------------------------------
-"""
+""")
 
 TMP_FILE_PATH = '/tmp/firmware'
 
@@ -28,10 +28,10 @@ args = parser.parse_args()
 serial_port = args.device
 
 if (subprocess.call(['fuser','-v', serial_port], stdout=None) == 0):
-    print ""
-    print "Another process is using the serial port, cannot upgrade firmware"
-    print "Make sure you stopped any running ROS nodes. To stop default nodes:"
-    print "sudo systemctl stop magni-base"
+    print("")
+    print("Another process is using the serial port, cannot upgrade firmware")
+    print("Make sure you stopped any running ROS nodes. To stop default nodes:")
+    print("sudo systemctl stop magni-base")
     sys.exit(1)
 
 if args.file:
@@ -40,22 +40,22 @@ if args.file:
 else:
     path_to_file = TMP_FILE_PATH
 
-    email = raw_input("Please enter your email address: ").strip()
+    email = input("Please enter your email address: ").strip()
 
     if email != "":
         r = requests.post('https://api.ubiquityrobotics.com/token/', json = {'email': email}) 
 
         if r.status_code == 500:
-            print "Error: 500 Internal Server Error. Something went wrong, try again in a few minutes. If the error persists, contact support."
+            print("Error: 500 Internal Server Error. Something went wrong, try again in a few minutes. If the error persists, contact support.")
         elif r.status_code != 200:
-                print "Error with requesting a token %d" % r.status_code
+                print("Error with requesting a token %d" % r.status_code)
                 sys.exit(1)
 
-    print "An access token was sent to your email address"
+    print("An access token was sent to your email address")
 
-    token = raw_input("Please enter your access token: ").strip()
+    token = input("Please enter your access token: ").strip()
 
-    version = raw_input("What version would you like (press enter for latest): ").strip()
+    version = input("What version would you like (press enter for latest): ").strip()
 
     if version == "":
         version = "latest"
@@ -64,21 +64,21 @@ else:
     r = requests.get('https://api.ubiquityrobotics.com/firmware/%s' % version, headers=auth_headers)
 
     if r.status_code == 401:
-        print "Error: 401 Unauthorized. Please make sure that your token is valid and entered correctly."
+        print("Error: 401 Unauthorized. Please make sure that your token is valid and entered correctly.")
         sys.exit(1)
     elif r.status_code == 404:
-        print "Error: 404 Not Found. The firmware version that you requested was not found."
+        print("Error: 404 Not Found. The firmware version that you requested was not found.")
     elif r.status_code == 500:
-        print "Error: 500 Internal Server Error. Something went wrong, try again in a few minutes. If the error persists, contact support."
+        print("Error: 500 Internal Server Error. Something went wrong, try again in a few minutes. If the error persists, contact support.")
     elif r.status_code != 200:
-        print "Error downloading firmware %d" % r.status_code
+        print("Error downloading firmware %d" % r.status_code)
         sys.exit(1)
 
     with open(path_to_file, 'w+b') as fd:
         for chunk in r.iter_content(chunk_size=128):
             fd.write(chunk)
 
-print "\nUpdating firmware now. Do not power off the robot. This is expected to take less than a minute."
+print("\nUpdating firmware now. Do not power off the robot. This is expected to take less than a minute.")
 
 
 # Begin the code firmware uploading code
@@ -228,21 +228,21 @@ class Packet:
     def send(self):
         self.is_sent = True
         init_bytes = [chr(0x1), self.cmd, 
-                      chr((len(self.out) / 001) % 256),
+                      chr((len(self.out) / 1) % 256),
                       chr((len(self.out) / 256) % 256)]
         init_bytes.extend(self.out)
 
-        if DEBUG: print "-"*120
-        if DEBUG: print "Send packet: " + cstr(self.out)
+        if DEBUG: print("-"*120)
+        if DEBUG: print("Send packet: " + cstr(self.out))
 
         ib_buf = ""
         for c in init_bytes: ib_buf += c
-        if DEBUG: print "Packet without end and checksum is", cstr(ib_buf)
+        if DEBUG: print("Packet without end and checksum is", cstr(ib_buf))
 
         checksum = compute_checksum(ib_buf)
-        if DEBUG: print "Checksum is", checksum, "LSB", (checksum / 001) % 256, "MSB", (checksum / 256) % 256
+        if DEBUG: print("Checksum is", checksum, "LSB", (checksum / 1) % 256, "MSB", (checksum / 256) % 256)
 
-        ib_buf += chr((checksum / 001) % 256)
+        ib_buf += chr((checksum / 1) % 256)
         ib_buf += chr((checksum / 256) % 256)
         ib_buf += chr(0x17)
 
@@ -262,7 +262,7 @@ class Packet:
             raise Exception("Packet did not start with valid status, instead: " + cstr(status_code) + " -- header: " + cstr(header))
         data_length_raw = header[2:4]
         data_length = (ord(data_length_raw[0])) + (ord(data_length_raw[1])) * 256
-        if DEBUG: print "Read in", data_length, "from", cstr(data_length_raw)
+        if DEBUG: print("Read in", data_length, "from", cstr(data_length_raw))
         self.inp = self.ser.read(data_length)
         if len(self.inp) != data_length:
             raise Exception("We tried to read: " + str(data_length) + " but instead read: " + str(len(self.inp)) + " -- header: " + cstr(header))
@@ -409,16 +409,16 @@ def convert_checksum(checksum, flash_id, row_number, row_size):
     r = add8(r, row_number >> 8)
     r = add8(r, row_size)
     r = add8(r, row_size >> 8)
-    if DEBUG: print "Checksum convert:", checksum, flash_id, row_number, row_size, "out:", r
+    if DEBUG: print("Checksum convert:", checksum, flash_id, row_number, row_size, "out:", r)
     return r
 
 hex_stream = None
 try:
     hex_stream = load_hex(path_to_file)
 except IOError:
-    print "Unable to open file: ", path_to_file
+    print("Unable to open file: ", path_to_file)
 except InvalidFileException:
-    print "File is not of the correct format"
+    print("File is not of the correct format")
 print("Encryption:", hex_stream.is_encrypted())
 
 ser = serial.Serial(serial_port, 38400, timeout=1, bytesize=8,
@@ -448,14 +448,14 @@ last_percent = 0.0
 while hex_stream.is_open():
     if not hex_stream.is_encrypted():
         flash_id, row_number, data_length, data, checksum = read__flash_line(hex_stream)
-        print "Writing row", row_number, "for", flash_id, "process at", ("%.2f" % last_percent), "percent completion"
+        print("Writing row", row_number, "for", flash_id, "process at", ("%.2f" % last_percent), "percent completion")
         last_percent = (100.0 * hex_stream.get_position()) / hex_stream.get_size()
 
         real_checksum = convert_checksum(checksum, flash_id, row_number, len(data))
-        if DEBUG: print "Write", flash_id, row_number, data_length, len(data), checksum, "->", real_checksum
+        if DEBUG: print("Write", flash_id, row_number, data_length, len(data), checksum, "->", real_checksum)
 
         flash_first_row, flash_last_row = send__get_flash_size(ser, flash_id)
-        if DEBUG: print "Flash: ", flash_first_row, flash_last_row
+        if DEBUG: print("Flash: ", flash_first_row, flash_last_row)
         if row_number < flash_first_row or row_number > flash_last_row:
             raise Exception("Invalid row: must be between " + str(flash_first_row)
                             + " and " + str(flash_last_row) + " but is " + str(row_number))
@@ -469,22 +469,22 @@ while hex_stream.is_open():
             data_next = data_strip[0:bytes_at_a_time]
             data_strip = data_strip[bytes_at_a_time:]
             data_sent += bytes_at_a_time
-            if DEBUG: print "Sending", len(data_next), "Sent: ", data_sent, "Left: ", len(data_strip)
+            if DEBUG: print("Sending", len(data_next), "Sent: ", data_sent, "Left: ", len(data_strip))
             if data_strip == [] or data_strip == "":
                 #Program write
-                if DEBUG: print "Last packet"
+                if DEBUG: print("Last packet")
                 send__program_row(ser, flash_id, row_number, data_next)
                 comp_checksum = send__verify_row(ser, flash_id, row_number)
                 if real_checksum != comp_checksum:
                     raise Exception("Checksum error at " + flash_id + " " + row_number 
                                     + ". We wanted " + cstr(real_checksum) + " but we got " + cstr(comp_checksum))
                 else:
-                    if DEBUG: print "Checksum valid", flash_id, row_number, "->", real_checksum, "==", comp_checksum
+                    if DEBUG: print("Checksum valid", flash_id, row_number, "->", real_checksum, "==", comp_checksum)
             else:
                 send__data(ser, data_next)
     else:
         flash_id, row_number, data_length, data = read__encrypted_flash_line(hex_stream)
-        print "Writing row", row_number, "for", flash_id, "process at", ("%.2f" % last_percent), "percent completion"
+        print("Writing row", row_number, "for", flash_id, "process at", ("%.2f" % last_percent), "percent completion")
         last_percent = (100.0 * hex_stream.get_position()) / hex_stream.get_size()
         assert len(data) < 256
         send__encrypted_program_row(ser, flash_id, row_number, data)
@@ -501,4 +501,4 @@ send__exit_bootloader(ser)
 
 ser.close()
 
-print "Finished upgrading firmware!"
+print("Finished upgrading firmware!")

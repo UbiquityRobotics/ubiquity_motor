@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This is a test tool to drive forever open-loop under computer control.
 #
@@ -59,16 +59,16 @@ last_t = None
 last_pos = None
 
 if SWITCH_TIME > 0.0:
-    print ("""    -------------------------------------------------------------
+    print("""    -------------------------------------------------------------
     Auto-reverse velocity mode 
     -------------------------------------------------------------
     """)
 else:
-    print ("""    -------------------------------------------------------------
+    print("""    -------------------------------------------------------------
     Odometer consistency check
     -------------------------------------------------------------
     """)
-    print ("Using velocity of " + str(VELOCITY))
+    print("Using velocity of " + str(VELOCITY))
 
 def odometry_callback(msg):
 
@@ -84,8 +84,8 @@ def odometry_callback(msg):
     if last_pos and (SWITCH_TIME == 0.0):
         pos_distance = ((cur_pos.x-last_pos.x)**2 + (cur_pos.y-last_pos.y)**2)**0.5
         t_distance = VELOCITY*(now-last_t)
-        print "Velocity error: {}%".format(round(abs(msg.twist.twist.linear.x-VELOCITY)/VELOCITY*100,2)),\
-               "  Position error: {}%".format(round(abs(pos_distance-t_distance)/t_distance*100,2))
+        print("Velocity error: {}%".format(round(abs(msg.twist.twist.linear.x-VELOCITY)/VELOCITY*100,2)),\
+               "  Position error: {}%".format(round(abs(pos_distance-t_distance)/t_distance*100,2)))
     
     last_pos = cur_pos
     last_t = now
@@ -145,7 +145,7 @@ def slow_motion():
 
 if __name__ == '__main__':
     if abs(VELOCITY)<0.000001:
-        print ("VELOCITY must be different from zero")
+        print("VELOCITY must be different from zero")
     else:
 
         try:
