@@ -159,6 +159,9 @@ public:
     void setMaxRevSpeed(int32_t max_speed_rev);
     void setMaxPwm(int32_t max_pwm);
     void setWheelType(int32_t wheel_type);
+    void setWheelGearRatio(double wheel_gear_ratio);
+    double getWheelGearRatio(void);
+    double getWheelTicksPerRadian(void);
     void setDriveType(int32_t drive_type);
     void setPidControl(int32_t pid_control);
     void nullWheelErrors(void);
@@ -185,6 +188,7 @@ public:
     int deadman_enable;
     int system_events;
     int wheel_type;
+    double wheel_gear_ratio;
     int drive_type;
 
 
@@ -193,8 +197,8 @@ private:
     void _addOdometryRequest(std::vector<MotorMessage>& commands) const;
     void _addVelocityRequest(std::vector<MotorMessage>& commands) const;
 
-    int16_t calculateSpeedFromRadians(double radians) const;
-    double calculateRadiansFromTicks(int16_t ticks) const;
+    int16_t calculateSpeedFromRadians(double radians);
+    double calculateRadiansFromTicks(int16_t ticks);
 
     hardware_interface::JointStateInterface joint_state_interface_;
     hardware_interface::VelocityJointInterface velocity_joint_interface_;

@@ -164,6 +164,12 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
     robot->wheel_type = wheel_type;
     mcbStatusPeriodSec.sleep();
 
+    // Determine the wheel gear ratio to be used by the robot base 
+    // Firmware does not use this setting so no message to firmware is required
+    // This gear ratio is contained in the hardware layer so if this node got new setting update hardware layer
+    robot->setWheelGearRatio(g_node_params.wheel_gear_ratio);
+    ROS_INFO("Wheel gear ratio of %5.3f will be used.", g_node_params.wheel_gear_ratio);
+
     // Determine the drive type to be used by the robot base
     int32_t drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
     if (g_node_params.drive_type == "firmware_default") {
@@ -443,7 +449,7 @@ int main(int argc, char* argv[]) {
             robot-> getWheelJointPositions(leftWheelPos, rightWheelPos);
             leftWheelVel  = (leftWheelPos  - leftLastWheelPos)  / elapsed_time.toSec();
             rightWheelVel = (rightWheelPos - rightLastWheelPos) / elapsed_time.toSec();
-            robot-> setWheelJointVelocities(leftWheelVel, rightWheelVel); // rad/sec
+            robot->setWheelJointVelocities(leftWheelVel, rightWheelVel); // rad/sec
             leftLastWheelPos  = leftWheelPos;
             rightLastWheelPos = rightWheelPos;
 
@@ -500,10 +506,10 @@ int main(int argc, char* argv[]) {
             }
 
             // Post a status message for MCB state periodically. This may be nice to do more on as required
-            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x,  PidCtrl 0x%x, Wheel type '%s' DriveType '%s'",
+            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x,  PidCtrl 0x%x, WheelType '%s' DriveType '%s' GearRatio %6.3f",
                 robot->getBatteryVoltage(), batStatus.c_str(), robot->system_events, robot->getPidControlWord(),
                 (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard",
-                g_node_params.drive_type.c_str());
+                g_node_params.drive_type.c_str(), robot->getWheelGearRatio());
 
             // If we detect a power-on of MCB we should re-initialize MCB
             if ((robot->system_events & MotorMessage::SYS_EVENT_POWERON) != 0) {
