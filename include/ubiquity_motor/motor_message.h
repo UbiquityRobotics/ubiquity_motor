@@ -56,6 +56,9 @@ typedef boost::array<uint8_t, 8> RawMotorMessage;
 #define MIN_FW_OPTION_SWITCH      37
 #define MIN_FW_PID_RDY_REGS       37
 #define MIN_FW_WHEEL_DIRECTION    38
+#define MIN_FW_WHEEL_NULL_ERROR   38
+#define MIN_FW_PID_CONTROL_REV2   39
+#define MIN_FW_DRIVE_TYPE         42   // Separated wheel type from drive type July 2021
 
 // It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
 // In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose
@@ -88,7 +91,8 @@ public:
         REG_PWM_BOTH_WHLS    = 0x07,  // ReadOnly: Both Motor PWM packed as two 16-bit ints. M1 upper word
         REG_TINT_BOTH_WHLS   = 0x08,  // ReadOnly: Both Motor Tic Interval packed as two 16-bit ints. M1 upper word
 
-        REG_LEFT_RAMP        = 0x09,  // Deprecated
+        REG_09               = 0x09,  // Deprecated
+        REG_DRIVE_TYPE       = 0x0A,  // The type of wheel-motor in use                            [v42]
         REG_RIGHT_RAMP       = 0x0A,  // Deprecated
 
         REG_WHEEL_NULL_ERR   = 0x0b,  // Resets current wheel(s) PID target of by current erro     [v38]
@@ -169,8 +173,18 @@ public:
 
     // PID Control values used in special register PID_CONTROL
     enum PidControlActions {
-        PID_CTRL_RESET               = 1,
-        PID_CTRL_PWM_OVERRIDE        = 2
+        PID_CTRL_NO_SPECIAL_MODES      = 0x000,
+        PID_CTRL_RESET                 = 0x001,    // Write this to this reg to do null of position error
+        PID_CTRL_PWM_OVERRIDE          = 0x002,    // When set we can directly set PWM. Used in testing
+        PID_CTRL_P_ONLY_ON_0_VEL       = 0x004,    // When velocity is zero just use P term for PID
+        PID_CTRL_USE_ONLY_P_TERM       = 0x008,    // Ignores I and D terms in PID calculations
+        PID_CTRL_SQUARED_ERROR         = 0x010,    // Use an error squared term for enhanced low error turns
+        PID_CTRL_CAP_POS_SETPOINT      = 0x020,    // PID ctrl mode that keeps from letting error be too high
+        PID_CTRL_BOOST_P_TERM          = 0x040,    // Boosts Proportional gain if set
+        PID_CTRL_BOOST_P_TURBO         = 0x080,    // If in boost mode this sets even higher gain boost
+        PID_CTRL_AUTOSHIFT_TO_SQUARED  = 0x100,    // Will shift to P squared mode if rotating
+        PID_CTRL_AUTOSHIFT_TO_BOOST_P  = 0x200,    // Will shift to a higher P factor if rotating
+        PID_CTRL_USE_VELOCITY_TERM     = 0x800     // Allow a PID velocity term. IF it is 0 it has no effect
     };
 
     // Bitfield values for hardware options enabled in the firmware
@@ -178,7 +192,9 @@ public:
         OPT_ENC_6_STATE = 0x01,
         OPT_WHEEL_TYPE_THIN = 0x02,    // As of rev v37 we support a 'thin' wheel type, gearless
         OPT_WHEEL_DIR_REVERSE = 0x04,  // As of rev v38 we support wheels to move in reverse direction
+        OPT_DRIVE_TYPE_4WD = 0x08,     // 4WD is separate option as of late July, 2021
         OPT_WHEEL_TYPE_STANDARD = 0,   // Default original, standard wheels
+        OPT_DRIVE_TYPE_STANDARD = 0,   // Default original magni, 2 wheel drive	
         OPT_WHEEL_DIR_STANDARD = 0     // Default original, standard wheels
     };
 
