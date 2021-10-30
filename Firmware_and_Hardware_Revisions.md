@@ -14,16 +14,20 @@ To do a firmware upgrade for the motor controller board please see our instructi
 
 Firmware Revision History
 
-* `v40`  20201209.  Our most current Magni release candidate firmware. This has been looking very good as of Jan 2021
+* 'v43'  20210829.  Our most recent and promising beta release for Magni and new products yet un-announced.  Likely to be set as over the air update in early 2022
+
+* 'v42'  The v41 and v42 firmware versions are custom versions for customers with unique systems.  Do NOT use these in a Magni Product.
+
+* `v40`  20201209.  Our most current Magni release firmware. This is what over the air firmware upgrade provides.
     * Just about the same as v39 but has proper defaults for a shipping Magni Products. Has everything discussed for v29
 
 * `v39`  2020-11-29. NOT A MAGNI Compatible Release! Custom build for a 4 wheel drive architecture in development
     * Adds new modes for advanced wheel control options to improve higher load turning response.
     * Adds new feedback and registers for indication of wheel currents and control state
-    * Added support for MCB rev 5.3 testpoints.  
+    * Added support for MCB rev 5.3 testpoints. Simple selftest connect TP4 to center on P706 on rev 5.3 (this will move motors on powerup!)
 
 * `v37`  2020-06-20. Used as initial code on MCB board production. Not qualified for final product.
-    * Contains built in selftest ability including a wheel test.
+    * Contains built in selftest ability including a wheel test. Simple selftest always but wheel test is use P706 on rev 5.3 connect TP4 to center for test on poweron.
     * Contains runtime checks for power supply and main battery levels
 
 * `v35`  2019-08-15. Available as version v35 using upgrade_firmware tool.
@@ -68,6 +72,7 @@ To identify the motor controller board you have you can try to read the version 
     * use 3 pin back loaded header, P706, with center pin to ground and side pins are TP3 and TP4. This allows jumper usage in testing board.
     * Just one 25mm standoff for Raspberry Pi support in middle of board. Two standoffs next to P701 removed for assembly reasons.
     * BOM corrections for C411 (12V Main) and C1411 (12V Aux) 3.5mm lead space 680uf 25V, C312 (5V Aux) and C1312 (5V Main) 3.5mm lead space and will be 1000uf @ 16V
+    * The testpoints used to start a now available selftest are now on a 0.1" spacing connector, P706.  Use 0.1 inch jumper center to TP4 for power on self test that moves wheels.
     * Fix 'WiFi' diode silkscreen (reversed) and make 'WiFi' text larger
     * Q903 is loaded large topside Mosfet, TI CSD19532KTT, for ECB Main (reliability fix)
     * R1901 (100k) and Q1904 are now backside loaded parts on the bom and higher current and take the place of topside Q1903. (reliability fix)
@@ -77,7 +82,7 @@ To identify the motor controller board you have you can try to read the version 
 * `5.2` A major revision placed into production in early April 2020.
     * The CAD system was changed to be a full KiCAD based design.  This was a huge change that required renumbering of most all of the part reference designators and of course the goal was after it was done to have an identical board.
     * An onboard 3.3V regulator supplies the onboard 3.3V for some parts.  This means that we no longer put the Raspberry Pi 3.3 at risk that can destroy a Raspberry Pi. This also means we have more current locally on 3.3V.
-    * Two leds now indicate serial traffic has made it through the level converters. This is a huge debug assist as we can tell if the host raspberry Pi is actively talking and can detect failures in level converters.
+    * Two leds SIN and SOUT now indicate serial traffic has made it through the level converters. This is a huge debug assist as we can tell if the host raspberry Pi is actively talking and can detect failures in level converters.  These are located near the top of the MCB and in center of the board.
     * A WiFi led has been added so for users who do not use a sonar board they can see the state of the WiFi for Hotspot or user wifi connect debug.
     * Added optional 2-pin connectors for wheel breaks. Normally not loaded.
     * Two of the Analog pins now are fed with multiple resistors to allow verification that the 4 power supplies are ok AND to set power-on options.
