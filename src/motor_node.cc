@@ -478,9 +478,25 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        // Read in and process all serial packets that came from the MCB.
+        // The MotorSerial class has been receiving and queing packets from the MCB
         robot->readInputs(loopIdx);
+
+        // Here is the update call that ties our motor node to the standard ROS classes.
+        // We will supply a brief overview of how this ROS robot interfaces to our hardware.
+        // At the top is the controller_manager and just below it is hardware_interface
+        // The ROS DiffDriveController works with one 'joint' for each wheel.
+        // to know and publish /odom and generate the odom to base_footprint in /tf topic
+        //
+        // Refer to motor_hardware.cc code and study any interfaces to the joints_ array
+        // where there is one 'joint' for each wheel. 
+        // The joints_ used by ROS DiffDriveController have these 3 key members:
+        //   position         - We incrementally update wheel position (from encoders)
+        //   velocity         - We set desired wheel velocity in Rad/Sec
+        //   velocity_command - We are told what speeds to set our MCB hardware with from this
+
         if ((minCycleTime < elapsed_loop_time) && (elapsed_loop_time < maxCycleTime)) {
-            cm.update(current_time, elapsed_loop_time);
+            cm.update(current_time, elapsed_loop_time);  // Key update to controller_manager
         }
         else {
             ROS_WARN("Resetting controller due to time jump %f seconds",
