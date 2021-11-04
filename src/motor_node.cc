@@ -240,7 +240,7 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
         ROS_INFO("Wheel slip nulling will be enabled for this 4wd system when velocity remains at zero.");
     }
 
-    // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
+    // Tell the MCB board what the port that is on the Pi I2c says on it (the mcb cannot read it's own switchs!)
     // We could re-read periodically but perhaps only every 5-10 sec but should do it from main loop
     if (robot->firmware_version >= MIN_FW_OPTION_SWITCH && robot->hardware_version >= MIN_HW_OPTION_SWITCH) {
         g_firmware_params.option_switch = robot->getOptionSwitch();
@@ -407,7 +407,7 @@ int main(int argc, char* argv[]) {
         current_time = ros::Time::now();
         elapsed_loop_time = current_time - last_loop_time;
         last_loop_time = current_time;
-	loopIdx += 1;
+        loopIdx += 1;
 
         // Speical handling if motor control is disabled.  skip the entire loop
         if (g_node_params.mcbControlEnabled == 0) {

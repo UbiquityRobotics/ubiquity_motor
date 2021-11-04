@@ -203,7 +203,7 @@ struct NodeParams {
     NodeParams() : controller_loop_rate(10.0),
         wheel_type("firmware_default"), 
         wheel_direction("firmware_default"),
-	wheel_gear_ratio(WHEEL_GEAR_RATIO_1),
+        wheel_gear_ratio(WHEEL_GEAR_RATIO_1),
         drive_type("firmware_default"),
         mcbControlEnabled(1),
         mcbSpeedEnabled(1){};
