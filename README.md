@@ -100,7 +100,7 @@ Divisor for the above `PID` paramaters.
 Size of a moving buffer used in the control loop.
 
 `pid_control` (int, default: 0)
-This word enables non-standard modes for motor control in the firmware. Consult factor for guidance in usage of this parameter.
+This word enables non-standard modes for motor control in the firmware. Consult factory for guidance in usage of this parameter.
 
 `drive_type`  (string, default: "standard")
 This modifies turning and some other motor control parameters if not set to 'standard'.  This parameter is set to '4wd' on some custom systems but those require dual MCB controllers and are far more complex systems so do not change this unless instructed to do so by the factory.  This setting is only of value for MCB firmware of version v41 or later.
