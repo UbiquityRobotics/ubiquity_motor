@@ -119,7 +119,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
     RawMotorMessage out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
 
     double left = robot->joints_[0].position;
     double right = robot->joints_[1].position;
@@ -134,7 +134,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
 
     // Make sure that the value stays same
     ASSERT_EQ(left, robot->joints_[0].position);
@@ -145,7 +145,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
 
     // Make sure that the value accumulates
     ASSERT_DOUBLE_EQ(left * 2, robot->joints_[0].position);
@@ -156,7 +156,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPosition) {
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
 
     // Values should be back the the first reading
     ASSERT_DOUBLE_EQ(left, robot->joints_[0].position);
@@ -173,7 +173,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
     RawMotorMessage out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
 
     double left = robot->joints_[0].position;
     double right = robot->joints_[1].position;
@@ -188,7 +188,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
 
     // Make sure that the value stays same
     ASSERT_EQ(left, robot->joints_[0].position);
@@ -200,7 +200,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
 
     // Make sure that the value accumulates
     ASSERT_DOUBLE_EQ(left * 2, robot->joints_[0].position);
@@ -212,7 +212,7 @@ TEST_F(MotorHardwareTests, odomUpdatesPositionMax) {
     out = mm.serialize();
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
 
     // Values should be back the the first reading
     // Need to use NEAR due to high precision loss
@@ -248,7 +248,7 @@ TEST_F(MotorHardwareTests, oldFirmwareThrows) {
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
 
     wait_for_write();
-    ASSERT_THROW(robot->readInputs(), std::runtime_error);
+    ASSERT_THROW(robot->readInputs(0), std::runtime_error);
 }
 
 TEST_F(MotorHardwareTests, setDeadmanTimerOutputs) {
@@ -317,7 +317,7 @@ TEST_F(MotorHardwareTests, debugRegisterUnsignedPublishes) {
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
 
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
     usleep(5000);
     ros::spinOnce();
     ASSERT_TRUE(called);
@@ -338,7 +338,7 @@ TEST_F(MotorHardwareTests, debugRegisterSignedPublishes) {
     ASSERT_EQ(out.size(), write(master_fd, out.c_array(), out.size()));
 
     wait_for_write();
-    robot->readInputs();
+    robot->readInputs(0);
     usleep(5000);
     ros::spinOnce();
     ASSERT_TRUE(called);
