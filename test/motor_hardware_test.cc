@@ -26,8 +26,9 @@ protected:
         CommsParams cp(nh);
         cp.serial_port = std::string(name);
         FirmwareParams fp(nh);
+        NodeParams np(nh);
 
-        robot = new MotorHardware(nh, cp, fp);
+        robot = new MotorHardware(nh, np, cp, fp);
     }
 
     virtual void TearDown() { delete robot; }
