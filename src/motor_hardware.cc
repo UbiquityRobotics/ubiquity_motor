@@ -43,24 +43,31 @@ const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits 
 
 //#define SENSOR_DISTANCE 0.002478
 
+
 // For experimental purposes users will see that the wheel encoders are three phases
 // of very neaar 43 pulses per revolution or about 43*3 edges so we see very about 129 ticks per rev
 // This leads to 129/(2*Pi)  or about 20.53 ticks per radian experimentally.
-// Below we will go with the exact ratio from gearbox specs
-// 60 ticks per revolution of the motor (pre gearbox)
-// 17.2328767123 and  gear ratio of 4.29411764706:1
-#define TICKS_PER_RADIAN_ENC_3_STATE (20.50251516)   // used to read more misleading value of (41.0058030317/2)
-#define QTICKS_PER_RADIAN   (ticks_per_radian*4)      // Quadrature ticks makes code more readable later
+// 60 ticks per revolution of the motor (pre gearbox) and a gear ratio of 4.2941176:1 for 1st rev Magni wheels
+// An unexplained constant from the past I leave here till explained is: 17.2328767
 
-#define VELOCITY_READ_PER_SECOND \
-    10.0  // read = ticks / (100 ms), so we have scale of 10 for ticks/second
+#define TICKS_PER_RAD_FROM_GEAR_RATIO   ((double)(4.774556)*(double)(2.0))  // Used to generate ticks per radian 
+#define TICKS_PER_RADIAN_DEFAULT        41.004  // For runtime use  getWheelGearRatio() * TICKS_PER_RAD_FROM_GEAR_RATIO    
+#define WHEEL_GEAR_RATIO_DEFAULT         4.29412
+
+// TODO: Make HIGH_SPEED_RADIANS, WHEEL_VELOCITY_NEAR_ZERO and ODOM_4WD_ROTATION_SCALE  all ROS params
+#define HIGH_SPEED_RADIANS        (1.8)               // threshold to consider wheel turning 'very fast'
+#define WHEEL_VELOCITY_NEAR_ZERO  ((double)(0.08))
+#define ODOM_4WD_ROTATION_SCALE   ((double)(1.65))    // Used to correct for 4WD skid rotation error
+
+#define MOTOR_AMPS_PER_ADC_COUNT   ((double)(0.0238)) // 0.1V/Amp  2.44V=1024 count so 41.97 cnt/amp
+
+#define VELOCITY_READ_PER_SECOND   ((double)(10.0))   // read = ticks / (100 ms), so we scale of 10 for ticks/second
 #define LOWEST_FIRMWARE_VERSION 28
 
 // Debug verification use only
 int32_t  g_odomLeft  = 0;
 int32_t  g_odomRight = 0;
 int32_t  g_odomEvent = 0;
-
 
 //lead acid battery percentage levels for a single cell
 const static float SLA_AGM[11] = {
@@ -92,13 +99,21 @@ const static float LI_ION[11] = {
     4.20, // 100
 };
 
+// We sometimes need to know if we are rotating in place due to special ways of dealing with
+// A 4wd robot must skid to turn. This factor approximates the actual rotation done vs what
+// the wheel encoders have indicated.  This only applies if in 4WD mode
+double   g_odom4wdRotationScale = ODOM_4WD_ROTATION_SCALE;
+
+// 4WD robot chassis that has to use extensive torque to rotate in place and due to wheel slip has odom scale factor
+double   g_radiansLeft  = 0.0;
+double   g_radiansRight = 0.0;
+
 // This utility opens and reads 1 or more bytes from a device on an I2C bus
 // This method was taken on it's own from a big I2C class we may choose to use later
 static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2cAddr,
                           uint8_t* pBuffer, uint16_t NumBytesToRead);
 
-
-MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
+MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsParams serial_params,
                              FirmwareParams firmware_params) {
     ros::V_string joint_names =
         boost::assign::list_of("left_wheel_joint")("right_wheel_joint");
@@ -119,7 +134,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     // Insert a delay prior to serial port setup to avoid a race defect.
     // We see soemtimes the OS sets the port to 115200 baud just after we set it
     ROS_INFO("Delay before MCB serial port initialization");
-    ros::Duration(3.0).sleep();
+    ros::Duration(5.0).sleep();
     ROS_INFO("Initialize MCB serial port '%s' for %d baud",
         serial_params.serial_port.c_str(), serial_params.baud_rate);
 
@@ -137,13 +152,18 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
     motor_power_active = nh.advertise<std_msgs::Bool>("motor_power_active", 1);
 
+    motor_state = nh.advertise<ubiquity_motor::MotorState>("motor_state", 1);
+    leftCurrent = nh.advertise<std_msgs::Float32>("left_current", 1);
+    rightCurrent = nh.advertise<std_msgs::Float32>("right_current", 1);
+
     sendPid_count = 0;
-    num_fw_params = 7;     // number of params sent if any change
+    num_fw_params = 8;     // number of params sent if any change
 
     estop_motor_power_off = false;  // Keeps state of ESTOP switch where true is in ESTOP state
 
-    // Save hardware encoder specifics for ticks in one radian of rotation of main wheel
-    ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE;
+    // Save default hardware encoder specifics for ticks in one radian of rotation of main wheel
+    this->ticks_per_radian = TICKS_PER_RADIAN_DEFAULT; 
+    this->wheel_gear_ratio = WHEEL_GEAR_RATIO_DEFAULT;
 
     fw_params = firmware_params;
 
@@ -152,6 +172,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, CommsParams serial_params,
     prev_fw_params.pid_derivative = -1;
     prev_fw_params.pid_velocity = -1;
     prev_fw_params.pid_denominator = -1;
+    prev_fw_params.pid_control = -1;
     prev_fw_params.pid_moving_buffer_size = -1;
     prev_fw_params.max_speed_fwd = -1;
     prev_fw_params.max_speed_rev = -1;
@@ -219,12 +240,31 @@ void MotorHardware::setWheelJointVelocities(double leftWheelVelocity, double rig
     return;
 }
 
+// Publish motor state conditions
+void MotorHardware::publishMotorState(void) {
+    ubiquity_motor::MotorState mstateMsg;
+
+    mstateMsg.header.frame_id = "";   // Could be base_link.  We will use empty till required
+    mstateMsg.header.stamp    = ros::Time::now();
+
+    mstateMsg.leftPosition    = joints_[WheelJointLocation::Left].position;
+    mstateMsg.rightPosition   = joints_[WheelJointLocation::Right].position;
+    mstateMsg.leftRotateRate  = joints_[WheelJointLocation::Left].velocity;
+    mstateMsg.rightRotateRate = joints_[WheelJointLocation::Right].velocity;
+    mstateMsg.leftCurrent     = motor_diag_.motorCurrentLeft;
+    mstateMsg.rightCurrent    = motor_diag_.motorCurrentRight;
+    mstateMsg.leftPwmDrive    = motor_diag_.motorPwmDriveLeft;
+    mstateMsg.rightPwmDrive   = motor_diag_.motorPwmDriveRight;
+    motor_state.publish(mstateMsg);
+    return;
+}
+
 // readInputs() will receive serial and act on the response from motor controller
 //
 // The motor controller sends unsolicited messages periodically so we must read the
 // messages to update status in near realtime
 //
-void MotorHardware::readInputs() {
+void MotorHardware::readInputs(uint32_t index) {
     while (motor_serial_->commandAvailable()) {
         MotorMessage mm;
         mm = motor_serial_->receiveCommand();
@@ -275,11 +315,52 @@ void MotorHardware::readInputs() {
                     g_odomEvent += 1;
                     //if ((g_odomEvent % 50) == 1) { ROS_ERROR("leftOdom %d rightOdom %d", g_odomLeft, g_odomRight); }
 
+		    // Due to extreme wheel slip that is required to turn a 4WD robot we are doing a scale factor.
+                    // When doing a rotation on the 4WD robot that is in place where linear velocity is zero
+                    // we will adjust the odom values for wheel joint rotation using the scale factor.
+                    double odom4wdRotationScale = 1.0;
+
+                    // Determine if we are rotating then set a scale to account for rotational wheel slip
+                    double near0WheelVel = (double)(WHEEL_VELOCITY_NEAR_ZERO);
+                    double leftWheelVel  =  g_radiansLeft;  // rotational speed of motor
+                    double rightWheelVel =  g_radiansRight; // rotational speed of motor
+
+                    int leftDir  = (leftWheelVel  >= (double)(0.0)) ? 1 : -1;
+                    int rightDir = (rightWheelVel >= (double)(0.0)) ? 1 : -1;
+                    int is4wdMode = (fw_params.hw_options & MotorMessage::OPT_DRIVE_TYPE_4WD);
+                    if (
+                        // Is this in 4wd robot mode
+                        (is4wdMode != 0)
+
+                        // Do the joints have Different rotational directions
+                        && ((leftDir + rightDir) == 0)
+
+                        // Are Both joints not near joint velocity of 0
+                        && ((fabs(leftWheelVel)  > near0WheelVel) && (fabs(rightWheelVel) > near0WheelVel))
+
+                        // Is the difference of the two absolute values of the joint velocities near zero
+                        && ((fabs(leftWheelVel) - fabs(rightWheelVel)) < near0WheelVel) )  {
+
+                        odom4wdRotationScale = g_odom4wdRotationScale;
+                        if ((index % 16) == 1) {   // This throttles the messages for rotational torque enhancement
+                            ROS_INFO("ROTATIONAL_SCALING_ACTIVE: odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
+                                odom4wdRotationScale, leftWheelVel, rightWheelVel, leftDir, rightDir, fw_params.hw_options, is4wdMode);
+                        }
+                    } else {
+                        if (fabs(leftWheelVel) > near0WheelVel) {
+                            ROS_DEBUG("odom4wdRotationScale = %4.2f [%4.2f, %4.2f] [%d,%d] opt 0x%x 4wd=%d",
+                                odom4wdRotationScale, leftWheelVel, rightWheelVel, leftDir, rightDir, fw_params.hw_options, is4wdMode);
+                        }
+                    }
+
                     // Add or subtract from position in radians using the incremental odom value
-                    joints_[WheelJointLocation::Left].position  += (odomLeft / ticks_per_radian);
-                    joints_[WheelJointLocation::Right].position += (odomRight / ticks_per_radian);
+                    joints_[WheelJointLocation::Left].position  +=
+                        ((double)odomLeft  / (this->ticks_per_radian * odom4wdRotationScale));
+                    joints_[WheelJointLocation::Right].position +=
+                        ((double)odomRight / (this->ticks_per_radian * odom4wdRotationScale));
 
                     motor_diag_.odom_update_status.tick(); // Let diag know we got odom
+
                     break;
                 }
                 case MotorMessage::REG_BOTH_ERROR: {
@@ -296,6 +377,30 @@ void MotorHardware::readInputs() {
                     break;
                 }
 
+		case MotorMessage::REG_PWM_BOTH_WHLS: {
+                    int32_t bothPwm = mm.getData();
+                    motor_diag_.motorPwmDriveLeft  = (bothPwm >> 16) & 0xffff;
+                    motor_diag_.motorPwmDriveRight = bothPwm & 0xffff;
+                    break;
+                }
+
+                case MotorMessage::REG_LEFT_CURRENT: {
+                    // Motor current is an absolute value and goes up from a nominal count of near 1024
+                    // So we subtract a nominal offset then multiply count * scale factor to get amps
+                    int32_t data = mm.getData() & 0xffff;
+                    motor_diag_.motorCurrentLeft =
+                        (double)(data - motor_diag_.motorAmpsZeroAdcCount) * MOTOR_AMPS_PER_ADC_COUNT;
+                    break;
+                }
+                case MotorMessage::REG_RIGHT_CURRENT: {
+                    // Motor current is an absolute value and goes up from a nominal count of near 1024
+                    // So we subtract a nominal offset then multiply count * scale factor to get amps
+                    int32_t data = mm.getData() & 0xffff;
+                    motor_diag_.motorCurrentRight =
+                        (double)(data - motor_diag_.motorAmpsZeroAdcCount) * MOTOR_AMPS_PER_ADC_COUNT;
+                    break;
+                }
+
                 case MotorMessage::REG_HW_OPTIONS: {
                     int32_t data = mm.getData();
 
@@ -306,19 +411,27 @@ void MotorHardware::readInputs() {
                     if (data & MotorMessage::OPT_ENC_6_STATE) {
                         ROS_WARN_ONCE("Encoder Resolution: 'Enhanced'");
                         fw_params.hw_options |= MotorMessage::OPT_ENC_6_STATE;
-                        ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE * 2;
+                        this->ticks_per_radian = this->getWheelTicksPerRadian();
                     } else {
                         ROS_WARN_ONCE("Encoder Resolution: 'Standard'");
                         fw_params.hw_options &= ~MotorMessage::OPT_ENC_6_STATE;
-                        ticks_per_radian  = TICKS_PER_RADIAN_ENC_3_STATE;
+                        this->ticks_per_radian  = this->getWheelTicksPerRadian() / (double)(2.0);
                     }
 
                     if (data & MotorMessage::OPT_WHEEL_TYPE_THIN) {
                         ROS_WARN_ONCE("Wheel type is: 'thin'");
-                        fw_params.hw_options |= MotorMessage::OPT_WHEEL_TYPE_THIN;
+                            fw_params.hw_options |= MotorMessage::OPT_WHEEL_TYPE_THIN;
                     } else {
                         ROS_WARN_ONCE("Wheel type is: 'standard'");
-                        fw_params.hw_options &= ~MotorMessage::OPT_WHEEL_TYPE_THIN;
+                            fw_params.hw_options &= ~MotorMessage::OPT_WHEEL_TYPE_THIN;
+                    }
+
+                    if (data & MotorMessage::OPT_DRIVE_TYPE_4WD) {
+                        ROS_WARN_ONCE("Drive type is: '4wd'");
+                        fw_params.hw_options |= MotorMessage::OPT_DRIVE_TYPE_4WD;
+                    } else {
+                        ROS_WARN_ONCE("Drive type is: '2wd'");
+                        fw_params.hw_options &= ~MotorMessage::OPT_DRIVE_TYPE_4WD;
                     }
 
                     if (data & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
@@ -336,31 +449,31 @@ void MotorHardware::readInputs() {
 
                     if (data & MotorMessage::LIM_M1_PWM) {
                         ROS_WARN("left PWM limit reached");
-                        motor_diag_.left_pwm_limit = true;
+                            motor_diag_.left_pwm_limit = true;
                     }
                     if (data & MotorMessage::LIM_M2_PWM) {
                         ROS_WARN("right PWM limit reached");
-                        motor_diag_.right_pwm_limit = true;
+                            motor_diag_.right_pwm_limit = true;
                     }
                     if (data & MotorMessage::LIM_M1_INTEGRAL) {
                         ROS_DEBUG("left Integral limit reached");
-                        motor_diag_.left_integral_limit = true;
+                            motor_diag_.left_integral_limit = true;
                     }
                     if (data & MotorMessage::LIM_M2_INTEGRAL) {
                         ROS_DEBUG("right Integral limit reached");
-                        motor_diag_.right_integral_limit = true;
+                            motor_diag_.right_integral_limit = true;
                     }
                     if (data & MotorMessage::LIM_M1_MAX_SPD) {
                         ROS_WARN("left Maximum speed reached");
-                        motor_diag_.left_max_speed_limit = true;
+                            motor_diag_.left_max_speed_limit = true;
                     }
                     if (data & MotorMessage::LIM_M2_MAX_SPD) {
                         ROS_WARN("right Maximum speed reached");
-                        motor_diag_.right_max_speed_limit = true;
+                            motor_diag_.right_max_speed_limit = true;
                     }
                     if (data & MotorMessage::LIM_PARAM_LIMIT) {
                         ROS_WARN_ONCE("parameter limit in firmware");
-                        motor_diag_.param_limit_in_firmware = true;
+                            motor_diag_.param_limit_in_firmware = true;
                     }
                     break;
                 }
@@ -481,6 +594,16 @@ void MotorHardware::writeSpeedsInRadians(double left_radians, double right_radia
     both.setRegister(MotorMessage::REG_BOTH_SPEED_SET);
     both.setType(MotorMessage::TYPE_WRITE);
 
+    g_radiansLeft  = left_radians;
+    g_radiansRight = right_radians;
+
+    // We are going to implement a message when robot is moving very fast or rotating very fast
+    if (((left_radians / VELOCITY_READ_PER_SECOND)  > HIGH_SPEED_RADIANS) || 
+        ((right_radians / VELOCITY_READ_PER_SECOND) > HIGH_SPEED_RADIANS)) {
+        ROS_WARN("Wheel rotation at high radians per sec.  Left %f rad/s Right %f rad/s",
+            left_radians, right_radians);
+    }
+
     int16_t left_speed  = calculateSpeedFromRadians(left_radians);
     int16_t right_speed = calculateSpeedFromRadians(right_radians);
 
@@ -512,6 +635,24 @@ void MotorHardware::writeSpeeds() {
     writeSpeedsInRadians(left_radians, right_radians);
 }
 
+// areWheelSpeedsLower()  Determine if all wheel joint speeds are below given threshold
+//
+int MotorHardware::areWheelSpeedsLower(double wheelSpeedRadPerSec) {
+    int retCode = 0;
+
+    // This call pulls in speeds from the joints array maintained by other layers
+
+    double  left_radians  = joints_[WheelJointLocation::Left].velocity_command;
+    double  right_radians = joints_[WheelJointLocation::Right].velocity_command;
+
+    if ((std::abs(left_radians)  < wheelSpeedRadPerSec) &&
+        (std::abs(right_radians) < wheelSpeedRadPerSec)) {
+        retCode = 1;
+    }
+
+    return retCode;
+}
+
 void MotorHardware::requestFirmwareVersion() {
     MotorMessage fw_version_msg;
     fw_version_msg.setRegister(MotorMessage::REG_FIRMWARE_VERSION);
@@ -538,12 +679,20 @@ void MotorHardware::requestSystemEvents() {
     motor_serial_->transmitCommand(sys_event_msg);
 }
 
+// Read the wheel currents in amps
+void MotorHardware::getMotorCurrents(double &currentLeft, double &currentRight) {
+    currentLeft  = motor_diag_.motorCurrentLeft;
+    currentRight = motor_diag_.motorCurrentRight;
+    return;
+}
+
 
 // Due to greatly limited pins on the firmware processor the host figures out the hardware rev and sends it to fw
 // The hardware version is 0x0000MMmm  where MM is major rev like 4 and mm is minor rev like 9 for first units.
 // The 1st firmware version this is set for is 32, before it was always 1
 void MotorHardware::setHardwareVersion(int32_t hardware_version) {
     ROS_INFO("setting hardware_version to %x", (int)hardware_version);
+    this->hardware_version = hardware_version;
     MotorMessage mm;
     mm.setRegister(MotorMessage::REG_HARDWARE_VERSION);
     mm.setType(MotorMessage::TYPE_WRITE);
@@ -606,6 +755,65 @@ void MotorHardware::setWheelType(int32_t new_wheel_type) {
     }
 }
 
+// A simple fetch of the wheel_gear_ratio 
+double MotorHardware::getWheelGearRatio(void) {
+    return this->wheel_gear_ratio;
+}
+
+// A simple fetch of the encoder ticks per radian of wheel rotation
+double MotorHardware::getWheelTicksPerRadian(void) {
+    double result = this->getWheelGearRatio() * TICKS_PER_RAD_FROM_GEAR_RATIO;
+    return result;
+}
+
+// Setup the local Wheel gear ratio so the motor hardware layer can adjust wheel odom reporting
+// This gear ratio was introduced for a new version of the standard wheels in late 2021 production
+// This is slightly more complex in that it is compounded with the now default 6 state encoder hw option
+void MotorHardware::setWheelGearRatio(double new_wheel_gear_ratio) {
+    // This gear ratio is not used by the firmware so it is a simple state element in this module
+    this->wheel_gear_ratio = new_wheel_gear_ratio;
+    this->ticks_per_radian  = this->getWheelTicksPerRadian();   // Need to also reset ticks_per_radian
+    if ((fw_params.hw_options & MotorMessage::OPT_ENC_6_STATE) == 0) {
+        this->ticks_per_radian = this->ticks_per_radian / (double)(2.0);   // 3 state was half
+    }
+    ROS_INFO("Setting Wheel gear ratio to %6.4f and tics_per_radian to %6.4f",
+        this->wheel_gear_ratio, this->ticks_per_radian);
+}
+
+// Setup the Drive Type. Overrides mode in use on hardware
+// This used to only be 2WD and use of THIN_WHEELS set 4WD
+// We are not trying to decouple wheel type from drive type
+// This register always existed but was a do nothing till firmware v42
+void MotorHardware::setDriveType(int32_t drive_type) {
+    ROS_INFO_ONCE("setting MCB drive type %d", (int)drive_type);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_DRIVE_TYPE);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(drive_type);
+    motor_serial_->transmitCommand(mm);
+}
+
+// Setup the PID control options. Overrides modes in use on hardware
+void MotorHardware::setPidControl(int32_t pid_control_word) {
+    ROS_INFO_ONCE("setting MCB pid control word to 0x%x", (int)pid_control_word);
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_PID_CONTROL);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(pid_control_word);
+    motor_serial_->transmitCommand(mm);
+}
+
+// Do a one time NULL of the wheel setpoint based on current position error
+// This allows to relieve stress in static situation where wheels cannot slip to match setpoint
+void MotorHardware::nullWheelErrors(void) {
+    ROS_DEBUG("Nulling MCB wheel errors using current wheel positions");
+    MotorMessage mm;
+    mm.setRegister(MotorMessage::REG_WHEEL_NULL_ERR);
+    mm.setType(MotorMessage::TYPE_WRITE);
+    mm.setData(MotorOrWheelNumber::Motor_M1|MotorOrWheelNumber::Motor_M2);
+    motor_serial_->transmitCommand(mm);
+}
+
 // Setup the Wheel direction. Overrides mode in use on hardware
 // This allows for customer to install wheels on cutom robots as they like
 void MotorHardware::setWheelDirection(int32_t wheel_direction) {
@@ -615,6 +823,13 @@ void MotorHardware::setWheelDirection(int32_t wheel_direction) {
     ho.setType(MotorMessage::TYPE_WRITE);
     ho.setData(wheel_direction);
     motor_serial_->transmitCommand(ho);
+}
+
+// A simple fetch of the pid_control word from firmware params
+int MotorHardware::getPidControlWord(void) {
+    int pidControlWord;
+    pidControlWord = motor_diag_.fw_pid_control;
+    return pidControlWord;
 }
 
 // Read the controller board option switch itself that resides on the I2C bus but is on the MCB
@@ -705,6 +920,7 @@ void MotorHardware::setParams(FirmwareParams fp) {
     fw_params.pid_denominator = fp.pid_denominator;
     fw_params.pid_moving_buffer_size = fp.pid_moving_buffer_size;
     fw_params.pid_denominator = fp.pid_denominator;
+    fw_params.pid_control = fp.pid_control;
     fw_params.max_pwm = fp.max_pwm;
     fw_params.estop_pid_threshold = fp.estop_pid_threshold;
 }
@@ -721,7 +937,7 @@ void MotorHardware::forcePidParamUpdates() {
     prev_fw_params.pid_denominator = -1;
     prev_fw_params.pid_moving_buffer_size = -1;
     prev_fw_params.max_pwm = -1;
-
+    prev_fw_params.pid_control = 1;
 }
 
 void MotorHardware::sendParams() {
@@ -820,6 +1036,18 @@ void MotorHardware::sendParams() {
         commands.push_back(maxpwm);
     }
 
+    if (cycle == 7 &&
+        fw_params.pid_control != prev_fw_params.pid_control) {
+        ROS_WARN("Setting PidParam pid_control to %d", fw_params.pid_control);
+        prev_fw_params.pid_control = fw_params.pid_control;
+        motor_diag_.fw_pid_control = fw_params.pid_control;
+        MotorMessage mmsg;
+        mmsg.setRegister(MotorMessage::REG_PID_CONTROL);
+        mmsg.setType(MotorMessage::TYPE_WRITE);
+        mmsg.setData(fw_params.pid_control);
+        commands.push_back(mmsg);
+    }
+
     // SUPPORT NOTE!  Adjust max modulo for total parameters in the cycle, be sure no duplicates used!
 
     if (commands.size() != 0) {
@@ -861,23 +1089,28 @@ void MotorHardware::setDebugLeds(bool led_1, bool led_2) {
 // calculate the binary speed value sent to motor controller board
 // using an input expressed in radians.
 // The firmware uses the same speed value no matter what type of encoder is used
-int16_t MotorHardware::calculateSpeedFromRadians(double radians) const {
+int16_t MotorHardware::calculateSpeedFromRadians(double radians) {
     int16_t speed;
     double  encoderFactor = 1.0;
+    double  speedFloat;
 
     // The firmware accepts same units for speed value
     // and will deal with it properly depending on encoder handling in use
     if (fw_params.hw_options & MotorMessage::OPT_ENC_6_STATE) {
-        encoderFactor = 0.5;
+        encoderFactor = (double)(0.5);
     }
 
-    speed =  boost::math::iround(encoderFactor * (radians * QTICKS_PER_RADIAN /
-                               VELOCITY_READ_PER_SECOND));
+    speedFloat = encoderFactor * radians * ((getWheelTicksPerRadian() * (double)(4.0)) / VELOCITY_READ_PER_SECOND);
+    speed =  boost::math::iround(speedFloat);
+
     return speed;
 }
 
-double MotorHardware::calculateRadiansFromTicks(int16_t ticks) const {
-    return (ticks * VELOCITY_READ_PER_SECOND / QTICKS_PER_RADIAN);
+double MotorHardware::calculateRadiansFromTicks(int16_t ticks) {
+    double result;
+
+    result =  ((double)ticks * VELOCITY_READ_PER_SECOND) / (getWheelTicksPerRadian() * (double)(4.0));
+    return result;
 }
 
 // Diagnostics Status Updater Functions
@@ -984,7 +1217,7 @@ void MotorDiagnostics::motor_max_pwm_status(DiagnosticStatusWrapper &stat) {
 void MotorDiagnostics::motor_power_status(DiagnosticStatusWrapper &stat) {
     stat.add("Motor Power", !estop_motor_power_off);
     if (estop_motor_power_off == false) {
-        stat.summary(DiagnosticStatusWrapper::ERROR, "Motor power on");
+        stat.summary(DiagnosticStatusWrapper::OK, "Motor power on");
     }
     else {
         stat.summary(DiagnosticStatusWrapper::WARN, "Motor power off");
@@ -1005,6 +1238,11 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
         option_descriptions +=  ", Thin gearless wheels";
     } else {
         option_descriptions +=  ", Standard wheels";
+    }
+    if (firmware_options & MotorMessage::OPT_DRIVE_TYPE_4WD) {
+        option_descriptions +=  ", 4 wheel drive";
+    } else {
+        option_descriptions +=  ", 2 wheel drive";
     }
     if (firmware_options & MotorMessage::OPT_WHEEL_DIR_REVERSE) {
         // Only indicate wheel reversal if that has been set as it is non-standard
