@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 14) # use C++14
 find_package(catkin REQUIRED COMPONENTS 
 	message_generation
 	roscpp 
-        rospy
+	rospy 
 	geometry_msgs  
 	std_msgs  
 	nav_msgs 
@@ -54,7 +54,7 @@ add_message_files(DIRECTORY msg FILES MotorState.msg)
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs # Or other packages containing msgs
+  std_msgs  # Or other packages containing msgs
 )
 
 ###################################

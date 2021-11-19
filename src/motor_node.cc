@@ -164,6 +164,12 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
     robot->wheel_type = wheel_type;
     mcbStatusPeriodSec.sleep();
 
+    // Determine the wheel gear ratio to be used by the robot base 
+    // Firmware does not use this setting so no message to firmware is required
+    // This gear ratio is contained in the hardware layer so if this node got new setting update hardware layer
+    robot->setWheelGearRatio(g_node_params.wheel_gear_ratio);
+    ROS_INFO("Wheel gear ratio of %5.3f will be used.", g_node_params.wheel_gear_ratio);
+
     // Determine the drive type to be used by the robot base
     int32_t drive_type = MotorMessage::OPT_DRIVE_TYPE_STANDARD;
     if (g_node_params.drive_type == "firmware_default") {
@@ -234,7 +240,7 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
         ROS_INFO("Wheel slip nulling will be enabled for this 4wd system when velocity remains at zero.");
     }
 
-    // Tell the MCB board what the I2C port on it is set to (mcb cannot read it's own switchs!)
+    // Tell the MCB board what the port that is on the Pi I2c says on it (the mcb cannot read it's own switchs!)
     // We could re-read periodically but perhaps only every 5-10 sec but should do it from main loop
     if (robot->firmware_version >= MIN_FW_OPTION_SWITCH && robot->hardware_version >= MIN_HW_OPTION_SWITCH) {
         g_firmware_params.option_switch = robot->getOptionSwitch();
@@ -401,7 +407,7 @@ int main(int argc, char* argv[]) {
         current_time = ros::Time::now();
         elapsed_loop_time = current_time - last_loop_time;
         last_loop_time = current_time;
-	loopIdx += 1;
+        loopIdx += 1;
 
         // Speical handling if motor control is disabled.  skip the entire loop
         if (g_node_params.mcbControlEnabled == 0) {
@@ -443,7 +449,7 @@ int main(int argc, char* argv[]) {
             robot-> getWheelJointPositions(leftWheelPos, rightWheelPos);
             leftWheelVel  = (leftWheelPos  - leftLastWheelPos)  / elapsed_time.toSec();
             rightWheelVel = (rightWheelPos - rightLastWheelPos) / elapsed_time.toSec();
-            robot-> setWheelJointVelocities(leftWheelVel, rightWheelVel); // rad/sec
+            robot->setWheelJointVelocities(leftWheelVel, rightWheelVel); // rad/sec
             leftLastWheelPos  = leftWheelPos;
             rightLastWheelPos = rightWheelPos;
 
@@ -472,9 +478,25 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        // Read in and process all serial packets that came from the MCB.
+        // The MotorSerial class has been receiving and queing packets from the MCB
         robot->readInputs(loopIdx);
+
+        // Here is the update call that ties our motor node to the standard ROS classes.
+        // We will supply a brief overview of how this ROS robot interfaces to our hardware.
+        // At the top is the controller_manager and just below it is hardware_interface
+        // The ROS DiffDriveController works with one 'joint' for each wheel.
+        // to know and publish /odom and generate the odom to base_footprint in /tf topic
+        //
+        // Refer to motor_hardware.cc code and study any interfaces to the joints_ array
+        // where there is one 'joint' for each wheel. 
+        // The joints_ used by ROS DiffDriveController have these 3 key members:
+        //   position         - We incrementally update wheel position (from encoders)
+        //   velocity         - We set desired wheel velocity in Rad/Sec
+        //   velocity_command - We are told what speeds to set our MCB hardware with from this
+
         if ((minCycleTime < elapsed_loop_time) && (elapsed_loop_time < maxCycleTime)) {
-            cm.update(current_time, elapsed_loop_time);
+            cm.update(current_time, elapsed_loop_time);  // Key update to controller_manager
         }
         else {
             ROS_WARN("Resetting controller due to time jump %f seconds",
@@ -500,10 +522,10 @@ int main(int argc, char* argv[]) {
             }
 
             // Post a status message for MCB state periodically. This may be nice to do more on as required
-            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x,  PidCtrl 0x%x, Wheel type '%s' DriveType '%s'",
+            ROS_INFO("Battery = %5.2f volts [%s], MCB system events 0x%x,  PidCtrl 0x%x, WheelType '%s' DriveType '%s' GearRatio %6.3f",
                 robot->getBatteryVoltage(), batStatus.c_str(), robot->system_events, robot->getPidControlWord(),
                 (robot->wheel_type == MotorMessage::OPT_WHEEL_TYPE_THIN) ? "thin" : "standard",
-                g_node_params.drive_type.c_str());
+                g_node_params.drive_type.c_str(), robot->getWheelGearRatio());
 
             // If we detect a power-on of MCB we should re-initialize MCB
             if ((robot->system_events & MotorMessage::SYS_EVENT_POWERON) != 0) {

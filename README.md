@@ -51,11 +51,20 @@ The value of `cmd_vel` after limits were applied. Available if the `publish_cmd`
 `motor_power_active` [std_msgs/Bool](http://docs.ros.org/api/std_msgs/html/msg/Bool.html)
 The state of motor power being active is published.  This follows the ESTOP switch within about a half second.
 
+`motor_state`  ubiquity_motor::MotorState
+The combined motor state for both wheels with positions, rotate rates, currents, pwm drive values
+
 `left_error` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
 The error in expected left wheel position relative to current left wheel position is published for diagnostics purposes.
 
 `right_error` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
 The error in expected right wheel position relative to current right wheel position is published for diagnostics purposes.
+
+`left_current` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Float32.html)
+The motor current in amps that the left motor is running at at this time
+
+`right_current` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Float32.html)
+The motor current in amps that the right motor is running at at this time
 
 `left_tick_interval` [std_msgs/Int32](http://docs.ros.org/api/std_msgs/html/msg/Int32.html)
 A value that is proportional to the time between left wheel encoder ticks for usage in diagnostics. This unsigned value is only published when velocity is non zero.
@@ -89,6 +98,21 @@ Divisor for the above `PID` paramaters.
 
 `pid_moving_buffer_size` (int, default: 10)
 Size of a moving buffer used in the control loop.
+
+`pid_control` (int, default: 0)
+This word enables non-standard modes for motor control in the firmware. Consult factory for guidance in usage of this parameter.
+
+`drive_type`  (string, default: "standard")
+This modifies turning and some other motor control parameters if not set to 'standard'.  This parameter is set to '4wd' on some custom systems but those require dual MCB controllers and are far more complex systems so do not change this unless instructed to do so by the factory.  This setting is only of value for MCB firmware of version v41 or later.
+
+`wheel_type`  (string, default: "standard")
+This is used to change the type of wheel and encoder combination in use.  The origional Magni up into 2021 was only one wheel type which we call 'standard' here.   This wheel had a chrome hubcap.  In 2021 we started some custom development for a wheel that would set this parameter to 'thin' as the wheel was thinner but also had different drive characteristics.  This setting is only of value for MCB firmware of version v41 or later.
+
+`wheel_gear_ratio`  (float, default: 4.294)
+We are looking into different ratios for the gearing internal to the wheel hub.   This ratio impacts the wheel control logic as it is in effect a ratio between the wheel encoders and the wheel itself on the ground.   The only other value of use as of late 2021 here is '5.17' which is not released at this time.
+
+`fw_max_pwm` (int, default: 350)
+This is a safety cap on the max value we will drive our low level motor control hardware.  Do not change this unless instructed to do so by the factory.   Prior to late 2021 this was defaulted to 250 internally in the firmware.
 
 `deadman_timer` (int, default: 2400000)
 If a message is not received after this interval (in MCU clock ticks), the motor controller should assume an error condition and stop.
