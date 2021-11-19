@@ -110,8 +110,8 @@ double   g_radiansRight = 0.0;
 
 // This utility opens and reads 1 or more bytes from a device on an I2C bus
 // This method was taken on it's own from a big I2C class we may choose to use later
-static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2cAddr,
-                          uint8_t* pBuffer, uint16_t NumBytesToRead);
+static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
+                          uint8_t *pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead);
 
 MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsParams serial_params,
                              FirmwareParams firmware_params) {
@@ -747,7 +747,6 @@ void MotorHardware::setWheelGearRatio(double new_wheel_gear_ratio) {
         this->wheel_gear_ratio, this->ticks_per_radian);
 }
 
->>>>>>> 4606a82... Updating with motor gear ratio, 4wd, pid control such as is in noetic_devel now
 // Setup the Drive Type. Overrides mode in use on hardware
 // This used to only be 2WD and use of THIN_WHEELS set 4WD
 // We are not trying to decouple wheel type from drive type
