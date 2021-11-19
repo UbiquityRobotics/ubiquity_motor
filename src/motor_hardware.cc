@@ -52,7 +52,7 @@ const static uint8_t  I2C_PCF8574_8BIT_ADDR = 0x40; // I2C addresses are 7 bits 
 
 #define TICKS_PER_RAD_FROM_GEAR_RATIO   ((double)(4.774556)*(double)(2.0))  // Used to generate ticks per radian 
 #define TICKS_PER_RADIAN_DEFAULT        41.004  // For runtime use  getWheelGearRatio() * TICKS_PER_RAD_FROM_GEAR_RATIO    
-#define WHEEL_GEAR_RATIO_DEFAULT         4.29412
+#define WHEEL_GEAR_RATIO_DEFAULT        WHEEL_GEAR_RATIO_1
 
 // TODO: Make HIGH_SPEED_RADIANS, WHEEL_VELOCITY_NEAR_ZERO and ODOM_4WD_ROTATION_SCALE  all ROS params
 #define HIGH_SPEED_RADIANS        (1.8)               // threshold to consider wheel turning 'very fast'
@@ -111,7 +111,7 @@ double   g_radiansRight = 0.0;
 // This utility opens and reads 1 or more bytes from a device on an I2C bus
 // This method was taken on it's own from a big I2C class we may choose to use later
 static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
-                          uint8_t *pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead);
+                          uint8_t *pBuffer, int16_t chipRegAddr, uint16_t NumBytesToRead);
 
 MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsParams serial_params,
                              FirmwareParams firmware_params) {
@@ -1228,7 +1228,7 @@ void MotorDiagnostics::firmware_options_status(DiagnosticStatusWrapper &stat) {
 // NOTE: The i2c8bitAddr will be shifted right one bit to use as 7-bit I2C addr
 //
 static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
-                          uint8_t *pBuffer, int16_t chipRegAddr, uint16_t NumByteToRead)
+                          uint8_t *pBuffer, int16_t chipRegAddr, uint16_t NumBytesToRead)
 {
    int bytesRead = 0;
    int retCode   = 0;
@@ -1258,8 +1258,8 @@ static int i2c_BufferRead(const char *i2cDevFile, uint8_t i2c8bitAddr,
       }
     }
 
-    bytesRead = read(fd, pBuffer, NumByteToRead);
-    if (bytesRead != NumByteToRead) {      // verify the number of bytes we requested were read
+    bytesRead = read(fd, pBuffer, NumBytesToRead);
+    if (bytesRead != NumBytesToRead) {      // verify the number of bytes we requested were read
       retCode = -9;
       goto exitWithFileClose;
     }

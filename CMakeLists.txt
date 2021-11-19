@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 14) # use C++14
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS 
-        message_generation
+	message_generation
 	roscpp 
 	rospy 
 	geometry_msgs  
