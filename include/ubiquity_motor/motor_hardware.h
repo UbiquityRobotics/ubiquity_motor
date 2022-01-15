@@ -138,6 +138,8 @@ public:
     bool openPort();
     void clearCommands();
     void readInputs(uint32_t index);
+    int serialRejectErrorAdmin(int clearErrors);
+    int serialOtherErrorAdmin(int clearErrors);
     void writeSpeeds();
     void writeSpeedsInRadians(double left_radians, double right_radians);
     float calculateBatteryPercentage(float voltage, int cells, const float* type);

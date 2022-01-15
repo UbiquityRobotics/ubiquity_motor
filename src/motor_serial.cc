@@ -75,12 +75,35 @@ int MotorSerial::commandAvailable() { return !output.fast_empty(); }
 
 void MotorSerial::appendOutput(MotorMessage command) { output.push(command); }
 
+// rejectErrorAdmin:  query of serial reject error count and optional clearing of the count
+// This error count is for rejected packets and is almost always bad baud rate related
+int MotorSerial::rejectErrorAdmin(int clearErrors) { 
+    int errorCount = reject_errors;
+
+    if (clearErrors > 0) {
+        reject_errors = 0;
+    }
+    return errorCount;
+}
+
+// otherErrorAdmin:  query of other serial error count and optional clearing of the count
+// This error count is generally unrecognized commands
+int MotorSerial::otherErrorAdmin(int clearErrors) { 
+    int errorCount = serial_errors;
+
+    if (clearErrors > 0) {
+        serial_errors = 0;
+    }
+    return errorCount;
+}
+
 void MotorSerial::closePort() { return motors.close(); }
 
 // After we have been offine this is called to re-open serial port
 // This returns true if port was open or if port opened with success
 bool MotorSerial::openPort()  { 
     bool retCode = true;
+    reject_errors = 0;     // Reset errors for bad baud rate faults
 
     if (motors.isOpen() == true) {
         return true; 
@@ -107,6 +130,8 @@ bool MotorSerial::openPort()  {
 }
 
 void MotorSerial::SerialThread() {
+    int rejectOnLastPacket = 0;
+    reject_errors = 0;
     try {
         while (motors.isOpen()) {
             boost::this_thread::interruption_point();
@@ -115,12 +140,23 @@ void MotorSerial::SerialThread() {
 
                 motors.read(innew.c_array(), 1);
                 if (innew[0] != MotorMessage::delimeter) {
-                    // The first byte was not the delimiter, so re-loop
-                    if (++serial_errors > error_threshold) {
-                        ROS_WARN("REJECT %02x", innew[0]);
+                    // The first byte was not the delimiter, so re-loop. 
+                    // Likely either a baud rate fault or corrupt serial connection 
+                    if (++reject_errors > error_threshold) {
+                        // An attempt to thin these errors for less log spam
+                        if (rejectOnLastPacket == 0) {
+                            ROS_WARN("REJECT %02x [%d]", innew[0], reject_errors);
+                        } else if ((reject_errors - error_threshold) < 10) {
+                            // For first few errors after startup show them always
+                            ROS_WARN("REJECT %02x [%d]", innew[0], reject_errors);
+                        } else if ((reject_errors % 1000) == 0) {   // thinner logging 
+                            ROS_WARN("MULTIPLE REJECTs %02x [%d]", innew[0], reject_errors);
+                        }
                     }
+                    rejectOnLastPacket = 1;
                     continue;
                 }
+                rejectOnLastPacket = 0;   // Indicate we got at least proper delimiter this time
 
                 // This will wait for the transmission time of 8 bytes
                 motors.waitByteTimes(innew.size());

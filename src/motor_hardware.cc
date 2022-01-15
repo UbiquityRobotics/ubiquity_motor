@@ -134,7 +134,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsPa
     // Insert a delay prior to serial port setup to avoid a race defect.
     // We see soemtimes the OS sets the port to 115200 baud just after we set it
     ROS_INFO("Delay before MCB serial port initialization");
-    ros::Duration(5.0).sleep();
+    ros::Duration(1.0).sleep();
     ROS_INFO("Initialize MCB serial port '%s' for %d baud",
         serial_params.serial_port.c_str(), serial_params.baud_rate);
 
@@ -223,6 +223,28 @@ void MotorHardware::clearCommands() {
     for (size_t i = 0; i < sizeof(joints_) / sizeof(joints_[0]); i++) {
         joints_[i].velocity_command = 0;
     }
+}
+
+// serialRejectErrorAdmin:  query of serial reject error count and optional clearing of the count
+// This error count is for rejected packets and is almost always bad baud rate related
+int MotorHardware::serialRejectErrorAdmin(int clearErrors) {
+    int errorCount = motor_serial_->rejectErrorAdmin(0);
+
+    if (clearErrors > 0) {
+        motor_serial_->rejectErrorAdmin(1);
+    }
+    return errorCount;
+}
+
+// serialOtherErrorAdmin:  query of other serial error count and optional clearing of the count
+// This error count is generally unrecognized commands
+int MotorHardware::serialOtherErrorAdmin(int clearErrors) {
+    int errorCount = motor_serial_->otherErrorAdmin(0);;
+
+    if (clearErrors > 0) {
+        motor_serial_->otherErrorAdmin(1);;
+    }
+    return errorCount;
 }
 
 // Read the current wheel positions in radians both at once for a snapshot of position

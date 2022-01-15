@@ -332,9 +332,14 @@ int main(int argc, char* argv[]) {
         robot->diag_updater.broadcast(0, "Establishing communication with motors");
         // Start times counter at 1 to prevent false error print (0 % n = 0)
         int times = 1;
+        int reject_errors = 0;
         while (ros::ok() && robot->firmware_version == 0) {
+            reject_errors = robot->serialRejectErrorAdmin(0);
             if (times % 30 == 0)
                 ROS_ERROR("The Firmware not reporting its version");
+                if (reject_errors > 50) {
+                    ROS_ERROR("There have been %d serial communication faults with the MCB!", reject_errors);
+                }
                 robot->requestFirmwareVersion();
             robot->readInputs(0);
             mcbStatusPeriodSec.sleep();

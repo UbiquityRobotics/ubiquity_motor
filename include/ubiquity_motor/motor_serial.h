@@ -51,6 +51,8 @@ public:
 
     MotorMessage receiveCommand();
     int commandAvailable();
+    int rejectErrorAdmin(int clearErrors);
+    int otherErrorAdmin(int clearErrors);
     void closePort();
     bool openPort();
 
@@ -67,6 +69,7 @@ private:
     void appendOutput(MotorMessage command);
 
     int serial_errors;
+    int reject_errors;
     int error_threshold;
 
     // Thread that has manages serial reads
