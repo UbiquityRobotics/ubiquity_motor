@@ -55,6 +55,10 @@ int    g_wheel_slip_nulling = 0;
 // Twice the period for status reports from MCB
 ros::Duration mcbStatusPeriodSec(0.02);
 
+// Define a workaround serial port re-initialize for cases of cannot contact MCB due to REJECT messages
+// A REJECT error comes from a UART framing error.  Bad commands sent to MCB do not lead to reboot.
+#define REINIT_MCB_SERIAL_REJECT_COUNT   1000
+
 // Dynamic reconfiguration callback for setting ROS parameters dynamically
 void PID_update_callback(const ubiquity_motor::PIDConfig& config,
                          uint32_t level) {
@@ -328,6 +332,7 @@ int main(int argc, char* argv[]) {
     mcbStatusPeriodSec.sleep();
 
     // Make sure firmware is listening
+    ros::Duration portResetPeriodSec(0.5);
     {
         robot->diag_updater.broadcast(0, "Establishing communication with motors");
         // Start times counter at 1 to prevent false error print (0 % n = 0)
@@ -335,10 +340,37 @@ int main(int argc, char* argv[]) {
         int reject_errors = 0;
         while (ros::ok() && robot->firmware_version == 0) {
             reject_errors = robot->serialRejectErrorAdmin(0);
-            if (times % 30 == 0)
-                ROS_ERROR("The Firmware not reporting its version");
-                if (reject_errors > 50) {
+            if (times % 50 == 0)
+                ROS_ERROR("Firmware not reporting its version. This can be MCB failure or a software issue");
+                ROS_ERROR("Verify fully charged battery. Check MCB board and if SOUT is not blinking this is an MCB board issue.");
+                ROS_ERROR("Check if both SIN and SOUT are blinking fast and if so there is a software issue.");
+                ROS_ERROR("If this problem continues after reboot contact support@ubiquityrobotics.com");
+                if (reject_errors > 100) {
                     ROS_ERROR("There have been %d serial communication faults with the MCB!", reject_errors);
+                }
+
+                // If enabled we will try to re-initialize MCB here.
+                // Note that for a broken MCB this may happen forever so wait between tries
+                if ((REINIT_MCB_SERIAL_REJECT_COUNT != 0) && (reject_errors > REINIT_MCB_SERIAL_REJECT_COUNT)) {
+                    ROS_ERROR("Excessive serial communication faults with the MCB [%d]!", reject_errors);
+                    robot->serialRejectErrorAdmin(1);
+
+                    //  Must re-initialize serial port here and reset error counts
+                    bool portOpenStatus;
+                    ROS_WARN("Motor controller serial port will be closed and re opened");
+                    robot->closePort(); 
+                    portResetPeriodSec.sleep();
+
+                    ROS_WARN("Re-Open MCB serial port");
+                    portOpenStatus = robot->openPort();  // Must re-open serial port
+                    if (portOpenStatus == true) {
+                        robot->setSystemEvents(0);  // Clear entire system events register
+                        robot->system_events = 0;
+                        ROS_WARN("Done re-opening the MCB serial port");
+                    } else {
+                        ROS_ERROR("Unable to re-open the MCB serial port!");
+                    }
+                    portResetPeriodSec.sleep();
                 }
                 robot->requestFirmwareVersion();
             robot->readInputs(0);
