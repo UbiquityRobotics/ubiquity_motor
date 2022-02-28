@@ -111,6 +111,13 @@ This is used to change the type of wheel and encoder combination in use.  The or
 `wheel_gear_ratio`  (float, default: 4.294)
 We are looking into different ratios for the gearing internal to the wheel hub.   This ratio impacts the wheel control logic as it is in effect a ratio between the wheel encoders and the wheel itself on the ground.   The only other value of use as of late 2021 here is '5.17' which is not released at this time.
 
+`fw_max_speed_fwd` (int, default: 80)
+Sets the maximum forward speed the firmware will allow itself to be set to obtain.  This is a firmware level register that involves physics of the wheel size and encoder ticks per revolution.  A value of 80 is 1 meter per second for a standard robot set of wheels.
+
+`fw_max_speed_rev` (int, default: 80)
+Sets the maximum reverse speed the firmware will allow itself to be set to obtain.  This is a firmware level register that involves physics of the wheel size and encoder ticks per revolution.  A value of 80 is 1 meter per second for a standard robot set of wheels.
+
+`fw_max_pwm` (int, default: 350)
 `fw_max_pwm` (int, default: 350)
 This is a safety cap on the max value we will drive our low level motor control hardware.  Do not change this unless instructed to do so by the factory.   Prior to late 2021 this was defaulted to 250 internally in the firmware.
 
