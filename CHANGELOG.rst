@@ -2,6 +2,21 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* made upgrade_firmware be run with py2 because `#149 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/149>`_
+* Rename v43 to no longer be beta2wd in the name
+* Update4wd and gear ratio for noetic (`#160 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/160>`_)
+* Updated readme to include new parameters and topics.
+* Adding clarity in comments only to our interface to controller_manager and thus DiffDriveController
+* Fix issue of i2c routine and a left over git merge marker failed make
+* Update motor_hardware_test for changes to readInputs and MotorHardware interfaces.
+* Major merge of 4WD features to Magni 2wd. This is include and message files
+* Major merge of 4WD features to Magni 2wd. This is initial motor_hardware source changes.
+* Major merge of 4WD features to Magni 2wd. This is initial motor_node source changes.
+* Adding v43_20210829_beta2wd_enc.cyacd for testing
+* Contributors: Janez Cimerman, Mark Johnston, Rohan Agrawal
+
 0.13.2 (2021-07-27)
 -------------------
 * Added ros noetic github action
