@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.14.0 (2022-03-09)
+-------------------
 * made upgrade_firmware be run with py2 because `#149 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/149>`_
 * Rename v43 to no longer be beta2wd in the name
 * Update4wd and gear ratio for noetic (`#160 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/160>`_)
