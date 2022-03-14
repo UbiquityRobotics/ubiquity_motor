@@ -1,4 +1,11 @@
 #! /usr/bin/env python2
+
+# firmware upgrade script still has not been converted to py3: 
+# https://github.com/UbiquityRobotics/ubiquity_motor/issues/149
+# https://github.com/UbiquityRobotics/ubiquity_motor/pull/152
+# the nasty workaround for Noetic has been to still have py2 installed on the system
+# and trigger the update with that. That is why this script is still on py2.  
+
 import requests
 
 import time
@@ -40,7 +47,9 @@ if args.file:
 else:
     path_to_file = TMP_FILE_PATH
 
-    email = input("Please enter your email address: ").strip()
+    email = raw_input("Please enter your email address: ").strip()
+
+    print(email)
 
     if email != "":
         r = requests.post('https://api.ubiquityrobotics.com/token/', json = {'email': email}) 
@@ -53,9 +62,9 @@ else:
 
     print("An access token was sent to your email address")
 
-    token = input("Please enter your access token: ").strip()
+    token = raw_input("Please enter your access token: ").strip()
 
-    version = input("What version would you like (press enter for latest): ").strip()
+    version = raw_input("What version would you like (press enter for latest): ").strip()
 
     if version == "":
         version = "latest"
