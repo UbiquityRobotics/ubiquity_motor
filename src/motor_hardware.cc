@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_hardware.h>
 #include <ubiquity_motor/motor_message.h>
 #include <boost/assign.hpp>
-
 #include <boost/math/special_functions/round.hpp>
 
 // To access I2C we need some system includes
@@ -150,6 +149,7 @@ MotorHardware::MotorHardware(ros::NodeHandle nh, NodeParams node_params, CommsPa
     leftTickInterval  = nh.advertise<std_msgs::Int32>("left_tick_interval", 1);
     rightTickInterval = nh.advertise<std_msgs::Int32>("right_tick_interval", 1);
 
+    firmware_state = nh.advertise<std_msgs::String>("firmware_version", 1, true);
     battery_state = nh.advertise<sensor_msgs::BatteryState>("battery_state", 1);
     motor_power_active = nh.advertise<std_msgs::Bool>("motor_power_active", 1);
 
@@ -288,6 +288,7 @@ void MotorHardware::readInputs(uint32_t index) {
                         firmware_version = mm.getData();
                         motor_diag_.firmware_version = firmware_version;
                     }
+                    publishFirmwareInfo();
                     break;
 
                 case MotorMessage::REG_FIRMWARE_DATE:
@@ -295,6 +296,8 @@ void MotorHardware::readInputs(uint32_t index) {
                     ROS_INFO_ONCE("Firmware date 0x%x (format 0xYYYYMMDD)", mm.getData());
                     firmware_date = mm.getData();
                     motor_diag_.firmware_date = firmware_date;
+
+                    publishFirmwareInfo();
                     break;
 
                 case MotorMessage::REG_BOTH_ODOM: {
@@ -550,6 +553,26 @@ void MotorHardware::readInputs(uint32_t index) {
                     break;
             }
         }
+    }
+}
+
+
+void MotorHardware::publishFirmwareInfo(){
+    //publish the firmware version and optional date to ROS
+    if(firmware_version > 0){
+
+        std_msgs::String fstate;
+        fstate.data = "v"+std::to_string(firmware_version);
+
+        if(firmware_date > 0){
+            std::stringstream stream;
+            stream << std::hex << firmware_date;
+            std::string daycode(stream.str());
+
+            fstate.data +=" "+daycode;
+        }
+
+        firmware_state.publish(fstate);
     }
 }
 

@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "std_msgs/UInt32.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/String.h"
 #include "sensor_msgs/BatteryState.h"
 #include "ubiquity_motor/MotorState.h"
 
@@ -140,6 +141,7 @@ public:
     void readInputs(uint32_t index);
     void writeSpeeds();
     void writeSpeedsInRadians(double left_radians, double right_radians);
+    void publishFirmwareInfo();
     float calculateBatteryPercentage(float voltage, int cells, const float* type);
     int  areWheelSpeedsLower(double wheelSpeedRadPerSec);
     void requestFirmwareVersion();
@@ -244,6 +246,7 @@ private:
     ros::Publisher leftTickInterval;
     ros::Publisher rightTickInterval;
 
+    ros::Publisher firmware_state;
     ros::Publisher battery_state;
     ros::Publisher motor_power_active;
     ros::Publisher motor_state;
