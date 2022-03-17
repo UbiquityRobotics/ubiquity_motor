@@ -71,18 +71,19 @@ int32_t  g_odomEvent = 0;
 
 //lead acid battery percentage levels for a single cell
 const static float SLA_AGM[11] = {
-    1.8, // 0
-    1.89, // 10
-    1.93, // 20
-    1.96, // 30
-    1.98, // 40
-    2.01, // 50
-    2.03, // 60
-    2.05, // 70
-    2.07, // 80
-    2.08, // 90
+    1.800, // 0
+    1.837, // 10
+    1.875, // 20
+    1.912, // 30
+    1.950, // 40
+    2.010, // 50
+    2.025, // 60
+    2.062, // 70
+    2.100, // 80
+    2.137, // 90
     2.175, // 100
 };
+
 
 //li-ion battery percentage levels for a single cell
 const static float LI_ION[11] = {
@@ -285,7 +286,7 @@ void MotorHardware::readInputs(uint32_t index) {
                     } else {
                         ROS_INFO_ONCE("Firmware version %d", mm.getData());
                         firmware_version = mm.getData();
-			motor_diag_.firmware_version = firmware_version;
+                        motor_diag_.firmware_version = firmware_version;
                     }
                     break;
 
@@ -293,7 +294,7 @@ void MotorHardware::readInputs(uint32_t index) {
                     // Firmware date is only supported as of fw version MIN_FW_FIRMWARE_DATE
                     ROS_INFO_ONCE("Firmware date 0x%x (format 0xYYYYMMDD)", mm.getData());
                     firmware_date = mm.getData();
-		    motor_diag_.firmware_date = firmware_date;
+                    motor_diag_.firmware_date = firmware_date;
                     break;
 
                 case MotorMessage::REG_BOTH_ODOM: {
@@ -315,7 +316,7 @@ void MotorHardware::readInputs(uint32_t index) {
                     g_odomEvent += 1;
                     //if ((g_odomEvent % 50) == 1) { ROS_ERROR("leftOdom %d rightOdom %d", g_odomLeft, g_odomRight); }
 
-		    // Due to extreme wheel slip that is required to turn a 4WD robot we are doing a scale factor.
+                    // Due to extreme wheel slip that is required to turn a 4WD robot we are doing a scale factor.
                     // When doing a rotation on the 4WD robot that is in place where linear velocity is zero
                     // we will adjust the odom values for wheel joint rotation using the scale factor.
                     double odom4wdRotationScale = 1.0;
@@ -377,7 +378,7 @@ void MotorHardware::readInputs(uint32_t index) {
                     break;
                 }
 
-		case MotorMessage::REG_PWM_BOTH_WHLS: {
+                case MotorMessage::REG_PWM_BOTH_WHLS: {
                     int32_t bothPwm = mm.getData();
                     motor_diag_.motorPwmDriveLeft  = (bothPwm >> 16) & 0xffff;
                     motor_diag_.motorPwmDriveRight = bothPwm & 0xffff;
@@ -486,36 +487,38 @@ void MotorHardware::readInputs(uint32_t index) {
                     bstate.charge = std::numeric_limits<float>::quiet_NaN();
                     bstate.capacity = std::numeric_limits<float>::quiet_NaN();
                     bstate.design_capacity = std::numeric_limits<float>::quiet_NaN();
-                    bstate.percentage = std::max(0.0, std::min(1.0, (bstate.voltage - 20.0) * 0.125));
+
+                    // Hardcoded to a sealed lead acid 12S battery, but adjustable for future use
+                    bstate.percentage = calculateBatteryPercentage(bstate.voltage, 12, SLA_AGM);
                     bstate.power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
                     bstate.power_supply_health = sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
                     bstate.power_supply_technology = sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
                     battery_state.publish(bstate);
 
-		    motor_diag_.battery_voltage = bstate.voltage;
-		    motor_diag_.battery_voltage_low_level = MotorHardware::fw_params.battery_voltage_low_level;
-		    motor_diag_.battery_voltage_critical = MotorHardware::fw_params.battery_voltage_critical;
+                    motor_diag_.battery_voltage = bstate.voltage;
+                    motor_diag_.battery_voltage_low_level = MotorHardware::fw_params.battery_voltage_low_level;
+                    motor_diag_.battery_voltage_critical = MotorHardware::fw_params.battery_voltage_critical;
                     break;
                 }
                 case MotorMessage::REG_MOT_PWR_ACTIVE: {   // Starting with rev 5.0 board we can see power state
                     int32_t data = mm.getData();
 
                     if (data & MotorMessage::MOT_POW_ACTIVE) {
-		    	if (estop_motor_power_off == true) {
+                        if (estop_motor_power_off == true) {
                             ROS_WARN("Motor power has gone from inactive to active. Most likely from ESTOP switch");
                         }
-		    	estop_motor_power_off = false;
+                        estop_motor_power_off = false;
                     } else {
-		    	if (estop_motor_power_off == false) {
+                        if (estop_motor_power_off == false) {
                             ROS_WARN("Motor power has gone inactive. Most likely from ESTOP switch active");
                         }
-		    	estop_motor_power_off = true;
+                        estop_motor_power_off = true;
                     }
                     motor_diag_.estop_motor_power_off = estop_motor_power_off;  // A copy for diagnostics topic
 
-		    std_msgs::Bool estop_message;
-		    estop_message.data = !estop_motor_power_off;
-		    motor_power_active.publish(estop_message);
+                    std_msgs::Bool estop_message;
+                    estop_message.data = !estop_motor_power_off;
+                    motor_power_active.publish(estop_message);
                 }
 
                 case MotorMessage::REG_TINT_BOTH_WHLS: {   // As of v41 show time between wheel enc edges
@@ -548,6 +551,37 @@ void MotorHardware::readInputs(uint32_t index) {
             }
         }
     }
+}
+
+// calculateBatteryPercentage() takes in battery voltage, number of cells, and type; returns approximate percentage
+//
+// A battery type is defined by an array of 11 values, each corresponding to one 10% sized step from 0% to 100%.
+// If the values fall between the steps, they are linearly interpolated to give a more accurate reading.
+//
+float MotorHardware::calculateBatteryPercentage(float voltage, int cells, const float* type) {
+    float onecell = voltage / (float)cells;
+
+    if(onecell >= type[10])
+        return 1.0;
+    else if(onecell <= type[0])
+        return 0.0;
+
+    int upper = 0;
+    int lower = 0;
+
+    for(int i = 0; i < 11; i++){
+        if(onecell > type[i]){
+            lower = i;
+        }else{
+            upper = i;
+            break;
+        }
+    }
+
+    float deltavoltage = type[upper] - type[lower];
+    float between_percent = (onecell - type[lower]) / deltavoltage;
+
+    return (float)lower * 0.1 + between_percent * 0.1;
 }
 
 // writeSpeedsInRadians()  Take in radians per sec for wheels and send in message to controller
@@ -1116,32 +1150,32 @@ void MotorDiagnostics::limit_status(DiagnosticStatusWrapper &stat) {
     stat.summary(DiagnosticStatus::OK, "Limits reached:");
     if (left_pwm_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::ERROR, " left pwm,");
-	left_pwm_limit = false;
+        left_pwm_limit = false;
     }
     if (right_pwm_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::ERROR, " right pwm,");
-	right_pwm_limit = false;
+        right_pwm_limit = false;
     }
     if (left_integral_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " left integral,");
-	left_integral_limit = false;
+        left_integral_limit = false;
     }
     if (right_integral_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " right integral,");
-	right_integral_limit = false;
+        right_integral_limit = false;
     }
     if (left_max_speed_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " left speed,");
-	left_max_speed_limit = false;
+        left_max_speed_limit = false;
     }
     if (right_max_speed_limit) {
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " right speed,");
-	right_max_speed_limit = false;
+        right_max_speed_limit = false;
     }
     if (param_limit_in_firmware) {
         // A parameter was sent to firmware that was out of limits for the firmware register
         stat.mergeSummary(DiagnosticStatusWrapper::WARN, " firmware limit,");
-	param_limit_in_firmware = false;
+        param_limit_in_firmware = false;
     }
 }
 
