@@ -2,8 +2,8 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.14.1 (2022-03-19)
+-------------------
 * bugfix: reverted input back to py2 to fix #169
 * Contributors: Janez Cimerman
 
