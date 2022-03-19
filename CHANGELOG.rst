@@ -2,6 +2,11 @@
 Changelog for package ubiquity_motor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* bugfix: reverted input back to py2 to fix #169
+* Contributors: Janez Cimerman
+
 0.14.0 (2022-03-09)
 -------------------
 * made upgrade_firmware be run with py2 because `#149 <https://github.com/UbiquityRobotics/ubiquity_motor/issues/149>`_
