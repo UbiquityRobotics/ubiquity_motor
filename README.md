@@ -42,6 +42,9 @@ Odometry computed from motor controller messages.
 `/tf` [tf/tfMessage](http://docs.ros.org/api/tf/html/msg/tfMessage.html)
 The transform from `odom` to `base_link`
 
+`firmware_version` [std_msgs/String](https://docs.ros.org/en/jade/api/std_msgs/html/msg/String.html)
+Version of motor control board (MCB) firmware formatted as "vXX YYYYMMDD" or just "vXX" if there's no daycode found.
+
 `battery_state` [sensor_msgs/BatteryState](http://docs.ros.org/jade/api/sensor_msgs/html/msg/BatteryState.html)
 Charge state of the robot's batteries.
 
