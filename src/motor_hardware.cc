@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ubiquity_motor/motor_message.h>
 #include <boost/assign.hpp>
 #include <boost/math/special_functions/round.hpp>
+#include <boost/circular_buffer.hpp>
 
 // To access I2C we need some system includes
 #include <linux/i2c-dev.h>
@@ -68,6 +69,8 @@ int32_t  g_odomLeft  = 0;
 int32_t  g_odomRight = 0;
 int32_t  g_odomEvent = 0;
 
+// 2x6S(12 V) Batteries connected in series
+const uint8_t SLA_AGM_CELLS = 6 * 2;
 //lead acid battery percentage levels for a single cell
 const static float SLA_AGM[11] = {
     1.800, // 0
@@ -83,6 +86,9 @@ const static float SLA_AGM[11] = {
     2.175, // 100
 };
 
+const float SLA_AGM_V_NOM = 2.175f * SLA_AGM_CELLS; // Maximum NOMINAL battery bank voltage
+const float SLA_AGM_V_CHG = 2.4f * SLA_AGM_CELLS; // Maximum CHARGING battery bank voltage
+const float SLA_AGM_V_TRI = 2.25f * SLA_AGM_CELLS; // Trickle charging battery bank voltage
 
 //li-ion battery percentage levels for a single cell
 const static float LI_ION[11] = {
@@ -491,9 +497,9 @@ void MotorHardware::readInputs(uint32_t index) {
                     bstate.capacity = std::numeric_limits<float>::quiet_NaN();
                     bstate.design_capacity = std::numeric_limits<float>::quiet_NaN();
 
-                    // Hardcoded to a sealed lead acid 12S battery, but adjustable for future use
-                    bstate.percentage = calculateBatteryPercentage(bstate.voltage, 12, SLA_AGM);
-                    bstate.power_supply_status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
+                    // Hardcoded to a sealed lead acid 2x6S(12V) batteries, but adjustable for future use
+                    bstate.percentage = calculateBatteryPercentage(bstate.voltage, SLA_AGM_CELLS, SLA_AGM);
+                    bstate.power_supply_status = getPowerSupplyStatus(bstate.voltage);
                     bstate.power_supply_health = sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
                     bstate.power_supply_technology = sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
                     battery_state.publish(bstate);
@@ -605,6 +611,80 @@ float MotorHardware::calculateBatteryPercentage(float voltage, int cells, const 
     float between_percent = (onecell - type[lower]) / deltavoltage;
 
     return (float)lower * 0.1 + between_percent * 0.1;
+}
+
+uint8_t MotorHardware::getPowerSupplyStatus(float battery_voltage) {
+    // Research implementation Scilab: https://github.com/UbiquityRobotics/charge_status_research
+    // Number of samples for averaging was chosen to minimize high-frequency noise
+    // while retaing as much responsiveness as possible
+    const uint32_t AVG_SAMPLE_NUM = 40;
+    // Exponentialy Weighted Moving Average (EWMA) params
+    const float ALPHA = 2.0f / (AVG_SAMPLE_NUM + 1);
+    const float BETA = 1.0f - ALPHA;
+    // When BELOW the absolute value of this voltage change rate
+    // the voltage is considered steady
+    const float STEADY_VOLT_RATE = 0.05f;
+    // When ABOVE the absolute value of this voltage change rate
+    // the voltage is considered as changing
+    const float UNSTEADY_VOLT_RATE = 0.2f;
+    static bool init = false;
+    static boost::circular_buffer<float> voltage_buf(AVG_SAMPLE_NUM);
+    static uint8_t status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
+    static bool was_v_chg_reached = false;
+    static float voltage_avg; // Averaged measured voltage with EWMA
+    static ros::Time last_loop_time;
+    // Initialize power status estimation
+    if (!init) {
+        voltage_avg = battery_voltage;
+        last_loop_time = ros::Time::now();
+        init = true;
+    }
+    // Calculate delta-time
+    ros::Time t = ros::Time::now();
+    float dt = (t - last_loop_time).toSec();
+    last_loop_time = t;
+    // Average measured voltage with EWMA to filter out high-frequency noise
+    voltage_avg = ALPHA * battery_voltage + BETA * voltage_avg;
+    voltage_buf.push_back(voltage_avg);
+    // Wait until there are enough samples to start estimation
+    if (voltage_buf.size() < AVG_SAMPLE_NUM) {
+        return status;
+    }
+    // Past-looking Voltage average derivative
+    // This is done under the assumption that the samples contain predominantly
+    // high-frequency noise of a small and fairly constant amplitude
+    float d = (voltage_avg - voltage_buf.front()) / (AVG_SAMPLE_NUM * dt);
+
+    bool is_v_rising = d > UNSTEADY_VOLT_RATE;
+    bool is_v_dropping = d < -UNSTEADY_VOLT_RATE;
+    bool is_v_idle = std::abs(d) < STEADY_VOLT_RATE;
+    bool is_v_peak = voltage_avg >= SLA_AGM_V_CHG;
+    bool is_in_trickle_range = voltage_avg > SLA_AGM_V_NOM && voltage_avg < SLA_AGM_V_TRI;
+    bool was_unplugged = (status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_CHARGING
+                                && is_v_dropping && !was_v_chg_reached);
+
+    if ((is_v_rising && battery_voltage > SLA_AGM_V_NOM) || (is_v_peak && is_v_idle)) {
+        // Charging - this happens in 3 stages
+        // CC (Constant Current) stage is where the voltage is steadily rising
+        // CV (Constant Voltage) stage is where the voltage is steady and held at a peak until the current drops
+        // The third stage is handled below under 'Trickle charging'
+        // NOTE: battery_voltage is check instead of voltage_avg to improve response time
+        status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_CHARGING;
+        was_v_chg_reached = is_v_peak;
+    } else if (was_unplugged || (is_v_idle && voltage_avg < SLA_AGM_V_NOM)) {
+        // Not charging
+        status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_NOT_CHARGING;
+        was_v_chg_reached = false;
+    } else if (was_v_chg_reached && is_v_idle && is_in_trickle_range) {
+        // Trickle charging
+        status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_FULL;
+    } else if (is_v_dropping && voltage_avg < SLA_AGM_V_NOM) {
+        // Discharging
+        status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_DISCHARGING;
+        was_v_chg_reached = false;
+    }
+    printf("%f, %f, %f, %f, %d\n", ros::Time::now().toSec(), battery_voltage, voltage_avg, d, status);
+    return status;
 }
 
 // writeSpeedsInRadians()  Take in radians per sec for wheels and send in message to controller
