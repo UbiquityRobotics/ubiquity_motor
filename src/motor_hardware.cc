@@ -617,7 +617,9 @@ uint8_t MotorHardware::getPowerSupplyStatus(float battery_voltage) {
     // Research implementation Scilab: https://github.com/UbiquityRobotics/charge_status_research
     // Number of samples for averaging was chosen to minimize high-frequency noise
     // while retaing as much responsiveness as possible
-    const uint32_t AVG_SAMPLE_NUM = 40;
+
+    // Number of samples to average
+    const uint16_t AVG_SAMPLE_NUM = 40;
     // Exponentialy Weighted Moving Average (EWMA) params
     const float ALPHA = 2.0f / (AVG_SAMPLE_NUM + 1);
     const float BETA = 1.0f - ALPHA;
@@ -633,6 +635,7 @@ uint8_t MotorHardware::getPowerSupplyStatus(float battery_voltage) {
     static bool was_v_chg_reached = false;
     static float voltage_avg; // Averaged measured voltage with EWMA
     static ros::Time last_loop_time;
+    static uint16_t sample_num = 0;
     // Initialize power status estimation
     if (!init) {
         voltage_avg = battery_voltage;
@@ -647,7 +650,9 @@ uint8_t MotorHardware::getPowerSupplyStatus(float battery_voltage) {
     voltage_avg = ALPHA * battery_voltage + BETA * voltage_avg;
     voltage_buf.push_back(voltage_avg);
     // Wait until there are enough samples to start estimation
-    if (voltage_buf.size() < AVG_SAMPLE_NUM) {
+    // and voltage average has settled
+    if (sample_num < AVG_SAMPLE_NUM * 2) {
+        sample_num++;
         return status;
     }
     // Past-looking Voltage average derivative
@@ -655,15 +660,15 @@ uint8_t MotorHardware::getPowerSupplyStatus(float battery_voltage) {
     // high-frequency noise of a small and fairly constant amplitude
     float d = (voltage_avg - voltage_buf.front()) / (AVG_SAMPLE_NUM * dt);
 
+    bool is_charging = status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_CHARGING;
     bool is_v_rising = d > UNSTEADY_VOLT_RATE;
     bool is_v_dropping = d < -UNSTEADY_VOLT_RATE;
     bool is_v_idle = std::abs(d) < STEADY_VOLT_RATE;
     bool is_v_peak = voltage_avg >= SLA_AGM_V_CHG;
     bool is_in_trickle_range = voltage_avg > SLA_AGM_V_NOM && voltage_avg < SLA_AGM_V_TRI;
-    bool was_unplugged = (status == sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_CHARGING
-                                && is_v_dropping && !was_v_chg_reached);
+    bool was_unplugged = is_charging && is_v_dropping && !was_v_chg_reached;
 
-    if ((is_v_rising && battery_voltage > SLA_AGM_V_NOM) || (is_v_peak && is_v_idle)) {
+    if (is_v_rising || (voltage_avg > SLA_AGM_V_TRI)) {
         // Charging - this happens in 3 stages
         // CC (Constant Current) stage is where the voltage is steadily rising
         // CV (Constant Voltage) stage is where the voltage is steady and held at a peak until the current drops
@@ -671,14 +676,14 @@ uint8_t MotorHardware::getPowerSupplyStatus(float battery_voltage) {
         // NOTE: battery_voltage is check instead of voltage_avg to improve response time
         status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_CHARGING;
         was_v_chg_reached = is_v_peak;
-    } else if (was_unplugged || (is_v_idle && voltage_avg < SLA_AGM_V_NOM)) {
+    } else if (was_unplugged || (is_v_idle && voltage_avg < SLA_AGM_V_NOM && !is_charging)) {
         // Not charging
         status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_NOT_CHARGING;
         was_v_chg_reached = false;
     } else if (was_v_chg_reached && is_v_idle && is_in_trickle_range) {
         // Trickle charging
         status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_FULL;
-    } else if (is_v_dropping && voltage_avg < SLA_AGM_V_NOM) {
+    } else if (is_v_dropping && voltage_avg < SLA_AGM_V_NOM && !is_charging) {
         // Discharging
         status = sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_DISCHARGING;
         was_v_chg_reached = false;
