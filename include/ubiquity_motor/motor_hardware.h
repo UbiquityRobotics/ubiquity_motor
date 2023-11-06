@@ -143,6 +143,7 @@ public:
     void writeSpeedsInRadians(double left_radians, double right_radians);
     void publishFirmwareInfo();
     float calculateBatteryPercentage(float voltage, int cells, const float* type);
+    uint8_t getPowerSupplyStatus(float battery_voltage);
     int  areWheelSpeedsLower(double wheelSpeedRadPerSec);
     void requestFirmwareVersion();
     void requestFirmwareDate();
