@@ -91,7 +91,7 @@ print("\nUpdating firmware now. Do not power off the robot. This is expected to 
 
 
 # Begin the code firmware uploading code
-DEBUG = False
+DEBUG = True
 class InvalidFileException(Exception):
     def __init__(self):
         pass
@@ -236,9 +236,10 @@ class Packet:
 
     def send(self):
         self.is_sent = True
+        print(len(self.out) / 1)
         init_bytes = [chr(0x1), self.cmd, 
-                      chr((len(self.out) / 1) % 256),
-                      chr((len(self.out) / 256) % 256)]
+                      chr(int(len(self.out) / 1) % 256),
+                      chr(int(len(self.out) / 256) % 256)]
         init_bytes.extend(self.out)
 
         if DEBUG: print("-"*120)
@@ -251,11 +252,11 @@ class Packet:
         checksum = compute_checksum(ib_buf)
         if DEBUG: print("Checksum is", checksum, "LSB", (checksum / 1) % 256, "MSB", (checksum / 256) % 256)
 
-        ib_buf += chr((checksum / 1) % 256)
-        ib_buf += chr((checksum / 256) % 256)
+        ib_buf += chr(int(checksum / 1) % 256)
+        ib_buf += chr(int(checksum / 256) % 256)
         ib_buf += chr(0x17)
 
-        self.ser.write(ib_buf)
+        self.ser.write(ib_buf.encode())
         self.ser.flush()
 
         if self.ignore_response:
@@ -436,8 +437,7 @@ ser = serial.Serial(serial_port, 38400, timeout=1, bytesize=8,
 # Write to request the bootloader to the correct state.
 request_bootloader = [0x7E, 0x3E, 0x01, 0x01, 0x01, 0x01, 0x01]
 request_bootloader.append(0xFF - sum(request_bootloader[1:]))
-ser.write("".join([chr(x) for x in request_bootloader]))
-ser.flush()
+ser.write(("".join([chr(x) for x in request_bootloader])).encode())
 ser.read(65536) # Clear out the response
 
 silicon_id, silicon_rev, bootloader_version = send__enter_bootloader(ser)
