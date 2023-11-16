@@ -59,6 +59,7 @@ typedef boost::array<uint8_t, 8> RawMotorMessage;
 #define MIN_FW_WHEEL_NULL_ERROR   38
 #define MIN_FW_PID_CONTROL_REV2   39
 #define MIN_FW_DRIVE_TYPE         42   // Separated wheel type from drive type July 2021
+#define MIN_FW_SUGGESTED          43   // We suggest this as the firmware to use if fw is lower revision
 
 // It is CRITICAL that the values in the Registers enum remain in sync with Firmware register numbers.
 // In fact once a register is defined and released, it should NOT be re-used at a later time for another purpose

@@ -230,6 +230,17 @@ void initMcbParameters(std::unique_ptr<MotorHardware> &robot )
         mcbStatusPeriodSec.sleep();
     }
 
+    // Suggest to customer to have current firmware version
+    if (robot->firmware_version < MIN_FW_SUGGESTED) {
+        ROS_ERROR_ONCE("Firmware is version V%d. We strongly recommend minimum firmware version of at least V%d", 
+            robot->firmware_version, MIN_FW_SUGGESTED);
+        mcbStatusPeriodSec.sleep();
+    } else {
+        ROS_INFO_ONCE("Firmware is version V%d. This meets the recommend minimum firmware versionof V%d", 
+            robot->firmware_version, MIN_FW_SUGGESTED);
+        mcbStatusPeriodSec.sleep();
+    }
+
     // Certain 4WD robots rely on wheels to skid to reach final positions.
     // For such robots when loaded down the wheels can get in a state where they cannot skid.
     // This leads to motor overheating.  This code below sacrifices accurate odometry which
